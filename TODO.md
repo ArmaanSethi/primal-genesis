@@ -14,7 +14,7 @@
 
 - **Colyseus Client Listeners:** After significant debugging, the correct and stable way to implement client-side state listeners is by using the `getStateCallbacks` utility from `colyseus.js`.
 - **Phaser Scene Lifecycle:** Asynchronous operations, such as connecting to the Colyseus server, should be performed in the `create()` method, which can be safely marked `async`. The `init()` method is not compatible with `await` and should be used only for synchronous data initialization.
-- **Test Runner Timeout:** Configured Mocha to have a 5-second timeout for tests to prevent hanging processes (`--timeout 5000` in `package.json`).
+- **Test Runner Timeout:** Conf'd Mocha to have a 5-second timeout for tests to prevent hanging processes (`--timeout 5000` in `package.json`).
 
 *Meta-Note: This document must be kept up-to-date. As tasks are completed, they should be marked with `[x]`. Unit tests should be added for all new functionality where possible. A 'Current Bugs' section will be maintained below, detailing active issues, diagnostic steps, and relevant logs.*
 
@@ -73,7 +73,63 @@
 
 ---
 
-## Phase 3: Item System & World Interaction
+## Phase 3: Combat Rework & Enemy Spawning - COMPLETE
+
+### 1. Core Combat Loop (Complete)
+- [x] **Schema:** Create a `Projectile` schema for tracking bullets.
+- [x] **Server:** Implement automatic projectile firing from the player.
+- [x] **Server:** Implement projectile movement and collision detection.
+- [x] **Server:** Apply damage to enemies on projectile hit.
+- [x] **Server:** Remove enemies when their health reaches zero.
+- [x] **Client:** Render projectiles.
+- [x] **Client:** Fix damage flash bug by using `Image` instead of `Rectangle`.
+
+### 2. Enemy Spawning (Complete)
+- [x] **Server:** Implement a timer to spawn enemies continuously.
+- [x] **Server:** Increase the maximum number of enemies allowed.
+- [x] **Server:** Adjust enemy movement speed (from previous bug fix).
+
+### 3. Testing (Complete)
+- [x] **Unit Testing:** Add tests for projectile creation and movement.
+- [x] **Unit Testing:** Add tests for projectile-enemy collision and damage.
+- [x] **Unit Testing:** Add tests for continuous enemy spawning.
+
+---
+
+## Phase 4: Player Health & Enemy Variety
+
+### 1. Player Health & Damage
+- [ ] **Schema:** Add `health` and `maxHealth` to `Player` schema (if not already there, based on GDD it's there but `currentHealth` might be better).
+- [ ] **Server Logic:** Implement enemies dealing damage to players on collision (melee enemies).
+- [ ] **Server Logic:** Handle player death (e.g., remove player from game, respawn, end run).
+- [ ] **Client:** Display player's current health and max health (basic HUD element).
+- [ ] **Client:** Visual feedback for player damage (e.g., screen tint, flash).
+- [ ] **Unit Testing:** Add tests for player taking damage and health reduction.
+- [ ] **Unit Testing:** Add tests for player death.
+
+### 2. Enemy Variety (Spitter - Stationary Ranged)
+- [ ] **Data:** Add `spitter` enemy type to `enemies.json` with appropriate `baseStats`, `behavior: "stationary"`, and `attackType: "ranged"`.
+- [ ] **Schema:** Update `Enemy` schema to include fields for ranged attack (e.g., `attackRange`, `projectileType`).
+- [ ] **Server Logic (Spawning):** Update enemy spawning to randomly select between `waspDrone` and `spitter`.
+- [ ] **Server Logic (AI):** Implement stationary behavior for `spitter`.
+- [ ] **Server Logic (Attack):** Implement `spitter`'s ranged attack (lobbing projectile).
+- [ ] **Client:** Render `spitter` enemy with a distinct sprite/color.
+- [ ] **Client:** Render `spitter`'s projectiles with a distinct sprite/color.
+- [ ] **Unit Testing:** Add tests for `spitter` spawning and stationary behavior.
+- [ ] **Unit Testing:** Add tests for `spitter` ranged attack and projectile.
+
+### 3. Enemy Variety (Charger - Melee with Charge Attack)
+- [ ] **Data:** Add `charger` enemy type to `enemies.json` with appropriate `baseStats`, `behavior: "charge"`, and `attackType: "melee"`.
+- [ ] **Schema:** Update `Enemy` schema to include fields for charge attack (e.g., `chargeCooldown`, `chargeSpeed`).
+- [ ] **Server Logic (Spawning):** Update enemy spawning to include `charger`.
+- [ ] **Server Logic (AI):** Implement `charger` behavior (telegraph, rush).
+- [ ] **Client:** Render `charger` enemy with a distinct sprite/color.
+- [ ] **Client:** Visual feedback for `charger`'s telegraph and charge.
+- [ ] **Unit Testing:** Add tests for `charger` spawning and charge behavior.
+
+---
+
+## Phase 5: Item System & World Interaction (Moved from Phase 4)
 
 ### 1. Item System
 - [ ] **Data:** Define `Item` data structure in `items.json` (based on GDD examples).
@@ -96,13 +152,13 @@
 - [ ] **Client:** Visual feedback for interaction (e.g., opening chest animation, UI for Tri-Shop).
 - [ ] **Unit Testing:** Add tests for Director logic and player interaction.
 
-### 3. Player HUD (Basic)
+### 3. Player HUD (Basic) (Moved from Phase 4)
 - [ ] **Client:** Display player's current health and max health.
 - [ ] **Client:** Display player's current items.
 
 ---
 
-## Phase 4: Core Gameplay Loop & Difficulty Scaling
+## Phase 6: Core Gameplay Loop & Difficulty Scaling (Moved and Renamed from Phase 4)
 
 ### 1. Leveling & XP
 - [ ] **Schema:** Add `xp` and `level` to `Player` schema.
@@ -143,7 +199,7 @@
 
 ---
 
-## Phase 5: Polish & Multiplayer Features
+## Phase 7: Polish & Multiplayer Features (Moved and Renamed from Phase 5)
 
 ### 1. Multiplayer Rules
 - [ ] **Server:** Implement loot distribution rules (first-come, first-served).
