@@ -1,5 +1,22 @@
 # Project Primal Genesis - Task List
 
+## Developer Notes
+
+- A `docs_context` directory exists in the project root. This folder is for providing me with documentation and context. It is ignored by `.gitignore` and its contents will not be committed to the repository.
+- The documentation is organized into the following files:
+  - `colyseus_server_api.md`: Covers the server-side room lifecycle.
+  - `colyseus_client_api.md`: Covers the client-side room events.
+  - `colyseus_schema.md`: Explains state synchronization and schema definition.
+  - `phaser_core_concepts.md`: Covers the Phaser Scene lifecycle and basic Game Objects.
+  - `phaser_gameplay_mechanics.md`: Covers Phaser physics, input, animations, cameras, and more.
+
+## Development Log & Conventions
+
+- **Colyseus Client Listeners:** After significant debugging, the correct and stable way to implement client-side state listeners is by using the `getStateCallbacks` utility from `colyseus.js`. Direct assignment (`.onChange = ...`) or direct calls (`.onChange(...)`) have proven unreliable.
+- **Phaser Scene Lifecycle:** Asynchronous operations, such as connecting to the Colyseus server, should be performed in the `create()` method, which can be safely marked `async`. The `init()` method is not compatible with `await` and should be used only for synchronous data initialization.
+- **Bug Tracking:** This `TODO.md` file will maintain a `Current Bugs` section to track active issues, their diagnostic steps, and relevant logs.
+- **Commits:** Major milestones or the completion of significant features should be committed to Git with a detailed and descriptive message.
+
 *Meta-Note: This document must be kept up-to-date. As tasks are completed, they should be marked with `[x]`. Unit tests should be added for all new functionality where possible. A 'Current Bugs' section will be maintained below, detailing active issues, diagnostic steps, and relevant logs.*
 
 This plan is structured to get the most barebones, playable version of the game running as quickly as possible (Phase 1), before moving on to the more detailed features outlined in the GDD (Phase 2).
