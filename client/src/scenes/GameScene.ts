@@ -42,7 +42,16 @@ export class GameScene extends Phaser.Scene {
 
             // Add a background to represent the world bounds
             const worldBackground = this.add.rectangle(0, 0, this.room.state.worldWidth, this.room.state.worldHeight, 0x333366).setOrigin(0);
-            worldBackground.setStrokeStyle(4, 0x666699); // Add a border
+            worldBackground.setStrokeStyle(4, 0x666699);
+
+            // Add a subtle grid
+            const graphics = this.add.graphics({ lineStyle: { width: 1, color: 0x666699, alpha: 0.5 } });
+            for (let x = 0; x < this.room.state.worldWidth; x += 64) {
+                graphics.lineBetween(x, 0, x, this.room.state.worldHeight);
+            }
+            for (let y = 0; y < this.room.state.worldHeight; y += 64) {
+                graphics.lineBetween(0, y, this.room.state.worldWidth, y);
+            }
 
             // Set camera bounds and follow player
             this.cameras.main.setBounds(0, 0, this.room.state.worldWidth, this.room.state.worldHeight);

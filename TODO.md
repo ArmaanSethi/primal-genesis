@@ -53,6 +53,8 @@
 - [x] **Client:** Implement a camera that follows the player.
 - [x] **Client:** Improve visual clarity of world boundaries (e.g., lighter background, distinct border).
 - [ ] **Client:** Implement a subtle grid over the world background for visual context.
+- [ ] **Client:** Fix grid rendering issue (appears as a square).
+- [ ] **Server:** Increase world size to 3200x3200.
 
 ### 4. Combat (To Do)
 - [ ] **Schema:** Add `health` to `Player` and `Enemy` schemas (already done, can be checked off).
