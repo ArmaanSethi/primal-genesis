@@ -47,12 +47,39 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   update(deltaTime: number) {
-    this.state.players.forEach((player, sessionId) => {
+    // Player movement
+    this.state.players.forEach((player) => {
       const speed = player.moveSpeed;
       if (player.inputX !== 0 || player.inputY !== 0) {
         player.x += player.inputX * speed;
         player.y += player.inputY * speed;
       }
+    });
+
+    // Enemy AI
+    const playersArray = Array.from(this.state.players.values());
+    if (playersArray.length === 0) {
+      return; // No players to target
+    }
+
+    this.state.enemies.forEach((enemy) => {
+      // Find the closest player
+      let closestPlayer = playersArray[0];
+      let minDistance = Math.hypot(enemy.x - closestPlayer.x, enemy.y - closestPlayer.y);
+
+      for (let i = 1; i < playersArray.length; i++) {
+        const player = playersArray[i];
+        const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestPlayer = player;
+        }
+      }
+
+      // Move enemy towards the determined closest player
+      const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
+      enemy.x += Math.cos(angle) * enemy.moveSpeed;
+      enemy.y += Math.sin(angle) * enemy.moveSpeed;
     });
   }
 

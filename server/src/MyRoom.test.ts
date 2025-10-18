@@ -77,4 +77,27 @@ describe("MyRoom Integration Tests", () => {
     assert.equal(enemy.typeId, "waspDrone");
   });
 
+  it("should move enemies towards the player", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
+
+    const player = room.state.players.get(client.sessionId);
+    assert.exists(player);
+    player.x = 400;
+    player.y = 300;
+
+    const enemy = room.state.enemies.values().next().value;
+    assert.exists(enemy);
+    enemy.x = 0;
+    enemy.y = 0;
+
+    const initialDistance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+
+    await room.waitForNextPatch(); // Process one tick
+
+    const newDistance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+    assert.isBelow(newDistance, initialDistance);
+  });
+
 });

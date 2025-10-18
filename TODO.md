@@ -23,7 +23,9 @@
 
 (No active bugs. All known issues resolved!)
 
----
+## Next Steps
+
+Phase 1 is complete. The next session will begin work on **Phase 2: Implementing Core GDD Features**, starting with adding enemies to the game.
 
 ## Phase 1: The Barebones Prototype (A Moving Player) - COMPLETE
 
@@ -35,7 +37,7 @@
 - [x] **Data:** Create `server/src/data/characters.json`.
 - [x] **Schema:** Add GDD stats to the `Player` schema.
 - [x] **Server Logic:** Initialize players with stats from data file.
-- [x] **Unit Testing:** Verify players are created with correct stats.
+- [x] **Unit Testing:** Verify players are created with correct base stats.
 
 ### 2. Enemies (In Progress)
 - [x] **Data:** Create `server/src/data/enemies.json`.
@@ -43,8 +45,8 @@
 - [x] **Server Logic (Spawning):** Implement a basic system to spawn enemies.
 - [x] **Unit Testing (Spawning):** Add tests for enemy schema and spawning.
 - [x] **Client:** Render enemy sprites based on server state.
-- [ ] **Server Logic (AI):** Implement simple "seek player" AI in the game loop.
-- [ ] **Unit Testing (AI):** Add a test for the enemy AI logic.
+- [x] **Server Logic (AI):** Implement simple "seek player" AI in the game loop.
+- [x] **Unit Testing (AI):** Add a test for the enemy AI logic.
 
 ### 3. Combat (To Do)
 - [ ] **Schema:** Add `health` to `Player` and `Enemy` schemas (already done, can be checked off).
