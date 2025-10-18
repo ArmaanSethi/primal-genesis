@@ -22,7 +22,15 @@
 
 ## Current Bugs
 
-(No active bugs. All known issues resolved!)
+### 1. Syntax Error in `server/src/rooms/MyRoom.ts`
+
+**Status:** Active
+
+**Issue:** The `update` method in `server/src/rooms/MyRoom.ts` has a syntax error (`Declaration or statement expected`) due to a previous text replacement, causing the tests to fail.
+
+**Next Diagnostic Step:**
+- Rewrite the `update` method in `server/src/rooms/MyRoom.ts` to correct the syntax and ensure all logic is properly structured.
+
 
 ---
 

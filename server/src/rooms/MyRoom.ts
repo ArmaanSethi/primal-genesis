@@ -35,9 +35,10 @@ export class MyRoom extends Room<MyRoomState> {
     const stats = enemyType.baseStats;
     const id = uuidv4();
 
+    enemy.id = id;
     enemy.typeId = typeId;
-    enemy.x = Math.random() * 800;
-    enemy.y = Math.random() * 600;
+    enemy.x = Math.random() * this.state.worldWidth;
+    enemy.y = Math.random() * this.state.worldHeight;
     enemy.maxHealth = stats.maxHealth;
     enemy.health = stats.health;
     enemy.damage = stats.damage;
@@ -72,12 +73,20 @@ export class MyRoom extends Room<MyRoomState> {
           }
         });
 
-        if (nearestEnemy) {
-          const targetEnemy = nearestEnemy;
+        if (minDistance !== Infinity) { // An enemy was found within range
+          const targetEnemy = nearestEnemy!;
           // Attack the enemy
           targetEnemy.health -= player.damage;
           console.log(`Player attacked enemy ${targetEnemy.typeId}. Enemy health: ${targetEnemy.health}`);
+
+          if (targetEnemy.health <= 0) {
+            this.state.enemies.delete(targetEnemy.id);
+            console.log(`Enemy ${targetEnemy.typeId} destroyed!`);
+          }
+
           player.attackCooldown = 1 / player.attackSpeed; // Reset cooldown based on attack speed
+        } else {
+          player.attackCooldown -= deltaTime / 1000; // Reduce cooldown based on delta time
         }
       } else {
         player.attackCooldown -= deltaTime / 1000; // Reduce cooldown based on delta time
@@ -128,12 +137,13 @@ export class MyRoom extends Room<MyRoomState> {
     player.moveSpeed = stats.moveSpeed;
     player.armor = stats.armor;
     player.critChance = stats.critChance;
+    player.attackCooldown = 0; // Initialize attack cooldown
 
     this.state.players.set(client.sessionId, player);
   }
 
   onLeave (client: Client, consented: boolean) {
-    console.log(client.sessionId, "left!");
+    console.log("room", this.roomId, client.sessionId, "left!");
     this.state.players.delete(client.sessionId);
   }
 

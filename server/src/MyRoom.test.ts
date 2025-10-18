@@ -77,6 +77,8 @@ describe("MyRoom Integration Tests", () => {
     const enemy = room.state.enemies.values().next().value;
     assert.exists(enemy);
     assert.equal(enemy.typeId, "waspDrone");
+    assert.isString(enemy.id); // Assert that id is a string
+    assert.isNotEmpty(enemy.id); // Assert that id is not empty
   });
 
   it("should move enemies towards the player", async () => {

@@ -20,6 +20,7 @@ export class Player extends Schema {
 }
 
 export class Enemy extends Schema {
+  @type("string") id: string = "";
   @type("number") x: number = 0;
   @type("number") y: number = 0;
   @type("string") typeId: string = "";
