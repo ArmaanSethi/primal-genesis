@@ -62,8 +62,9 @@
 - [x] **Server:** Implement hit detection and damage application.
 - [x] **Server:** Handle enemy death (remove from state).
 - [x] **Unit Testing:** Add tests for automatic attack, hit detection, and damage.
-- [ ] **Client:** Add visual feedback for damage (e.g., enemy flash).
+- [x] **Client:** Add visual feedback for damage (e.g., enemy flash).
 - [ ] **Client:** Display health bars for enemies.
+- [ ] **Client:** Standardize rendering depth for all game objects (players, enemies, health bars, projectiles).
 
 ### 5. Asset Placeholders (To Do)
 - [ ] **Client:** Replace the placeholder `Rectangle` for the player with a `player.png` sprite.

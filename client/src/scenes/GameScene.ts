@@ -21,6 +21,13 @@ export class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' });
     }
 
+    private createHealthBar(x: number, y: number, width: number, height: number, color: number): Phaser.GameObjects.Graphics {
+        const healthBar = this.add.graphics();
+        healthBar.fillStyle(color, 1);
+        healthBar.fillRect(x, y, width, height);
+        return healthBar;
+    }
+
     init() {
         // This is a standard lifecycle method, it should not be async.
     }
@@ -95,38 +102,52 @@ export class GameScene extends Phaser.Scene {
                                                     }
                                                 });
                                     
-                                                $(this.room.state).enemies.onAdd((enemy, sessionId) => {
-                                                    console.log(`Adding enemy: ${sessionId} at (${enemy.x}, ${enemy.y})`);
-                                                    const graphics = this.add.graphics({ fillStyle: { color: 0x0000ff } });
-                                                    graphics.fillRect(0, 0, 32, 32);
-                                                    const entity = this.physics.add.existing(graphics, false) as Phaser.Physics.Arcade.Image;
-                                                    entity.setPosition(enemy.x, enemy.y);
-                                                    this.enemyEntities[sessionId] = entity;
-                                    
-                                                                    $(enemy).onChange(() => {
-                                                                        // Visual feedback for damage
-                                                                        if (enemy.health < enemy.maxHealth) {
-                                                                            const entity = this.enemyEntities[sessionId];
-                                                                            if (entity) {
-                                                                                entity.setTint(0xff0000); // Red tint for damage
-                                                                                this.time.delayedCall(100, () => {
-                                                                                    entity.clearTint();
-                                                                                });
-                                                                            }
-                                                                        }
-                                                                        entity.x = enemy.x;
-                                                                        entity.y = enemy.y;
-                                                                        console.log(`Enemy ${sessionId} updated to (${enemy.x}, ${enemy.y})`);
-                                                                    });                });
+            $(this.room.state).enemies.onAdd((enemy, sessionId) => {
+                console.log(`Adding enemy: ${sessionId} at (${enemy.x}, ${enemy.y})`);
+                const graphics = this.add.graphics({ fillStyle: { color: 0x0000ff } });
+                graphics.fillRect(0, 0, 32, 32);
+                const entity = this.physics.add.existing(graphics, false) as Phaser.Physics.Arcade.Image;
+                entity.setPosition(enemy.x, enemy.y);
+                this.enemyEntities[sessionId] = entity;
 
-                $(this.room.state).enemies.onRemove((enemy, sessionId) => {
-                    console.log(`Removing enemy: ${sessionId}`);
-                    const entity = this.enemyEntities[sessionId];
-                    if (entity) {
-                        entity.destroy();
-                        delete this.enemyEntities[sessionId];
+                // Create health bar
+                const healthBar = this.createHealthBar(enemy.x - 16, enemy.y - 20, 32, 4, 0x00ff00);
+                entity.setData('healthBar', healthBar);
+
+                $(enemy).onChange(() => {
+                    // Visual feedback for damage
+                    if (enemy.health < enemy.maxHealth) {
+                        const entity = this.enemyEntities[sessionId];
+                        if (entity) {
+                            entity.setTint(0xff0000); // Red tint for damage
+                            this.time.delayedCall(100, () => {
+                                entity.clearTint();
+                            });
+                        }
                     }
+                    entity.x = enemy.x;
+                    entity.y = enemy.y;
+
+                    // Update health bar position and width
+                    const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
+                    healthBar.x = entity.x - 16;
+                    healthBar.y = entity.y - 20;
+                    healthBar.clear();
+                    healthBar.fillStyle(0x00ff00, 1);
+                    healthBar.fillRect(0, 0, (enemy.health / enemy.maxHealth) * 32, 4);
                 });
+            });
+
+            $(this.room.state).enemies.onRemove((enemy, sessionId) => {
+                console.log(`Removing enemy: ${sessionId}`);
+                const entity = this.enemyEntities[sessionId];
+                if (entity) {
+                    const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
+                    healthBar.destroy();
+                    entity.destroy();
+                    delete this.enemyEntities[sessionId];
+                }
+            });
             });
 
         } catch (e) {
