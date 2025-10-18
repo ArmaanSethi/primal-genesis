@@ -4,16 +4,29 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node src/index.ts",
+    "test": "mocha -r ts-node/register \"src/**/*.test.ts\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@colyseus/schema": "^3.0.64",
     "@colyseus/tools": "^0.16.14",
     "colyseus": "^0.16.5",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@colyseus/testing": "^0.16.3",
+    "@types/chai": "^5.2.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/mocha": "^10.0.10",
+    "chai": "^6.2.0",
+    "mocha": "^11.7.4"
   }
 }

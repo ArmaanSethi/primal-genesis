@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build"
+  },
+  "dependencies": {
+    "colyseus.js": "^0.16.21",
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.10"
+  }
+}
