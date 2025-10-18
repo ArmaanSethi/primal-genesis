@@ -52,8 +52,8 @@
 - [x] **Client:** Add a visual representation of the world boundaries.
 - [x] **Client:** Implement a camera that follows the player.
 - [x] **Client:** Improve visual clarity of world boundaries (e.g., lighter background, distinct border).
-- [ ] **Client:** Implement a subtle grid over the world background for visual context.
-- [ ] **Client:** Fix grid rendering issue (appears as a square).
+- [x] **Client:** Implement a subtle grid over the world background for visual context.
+- [ ] **Client:** Fix grid rendering issue (appears as a square, not a grid).
 - [ ] **Server:** Increase world size to 3200x3200.
 
 ### 4. Combat (To Do)

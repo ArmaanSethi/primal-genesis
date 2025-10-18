@@ -45,13 +45,15 @@ export class GameScene extends Phaser.Scene {
             worldBackground.setStrokeStyle(4, 0x666699);
 
             // Add a subtle grid
-            const graphics = this.add.graphics({ lineStyle: { width: 1, color: 0x666699, alpha: 0.5 } });
-            for (let x = 0; x < this.room.state.worldWidth; x += 64) {
+            const graphics = this.add.graphics({ lineStyle: { width: 1, color: 0x666699, alpha: 0.3 } }); // More subtle alpha
+            const gridSize = 128; // Larger grid cells
+            for (let x = 0; x < this.room.state.worldWidth; x += gridSize) {
                 graphics.lineBetween(x, 0, x, this.room.state.worldHeight);
             }
-            for (let y = 0; y < this.room.state.worldHeight; y += 64) {
+            for (let y = 0; y < this.room.state.worldHeight; y += gridSize) {
                 graphics.lineBetween(0, y, this.room.state.worldWidth, y);
             }
+            graphics.setDepth(-1); // Draw grid behind other objects
 
             // Set camera bounds and follow player
             this.cameras.main.setBounds(0, 0, this.room.state.worldWidth, this.room.state.worldHeight);
