@@ -7,6 +7,7 @@ import type { MyRoomState } from '../../../server/src/rooms/schema/MyRoomState';
 export class GameScene extends Phaser.Scene {
     private room: Room<MyRoomState>;
     private playerEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
+    private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
 
     // Input keys
     private keyW: Phaser.Input.Keyboard.Key;
@@ -58,6 +59,26 @@ export class GameScene extends Phaser.Scene {
                 if (entity) {
                     entity.destroy();
                     delete this.playerEntities[sessionId];
+                }
+            });
+
+            $(this.room.state).enemies.onAdd((enemy, sessionId) => {
+                console.log(`Adding enemy: ${sessionId}`);
+                const entity = this.add.rectangle(enemy.x, enemy.y, 32, 32, 0x0000ff);
+                this.enemyEntities[sessionId] = entity;
+
+                $(enemy).onChange(() => {
+                    entity.x = enemy.x;
+                    entity.y = enemy.y;
+                });
+            });
+
+            $(this.room.state).enemies.onRemove((enemy, sessionId) => {
+                console.log(`Removing enemy: ${sessionId}`);
+                const entity = this.enemyEntities[sessionId];
+                if (entity) {
+                    entity.destroy();
+                    delete this.enemyEntities[sessionId];
                 }
             });
 

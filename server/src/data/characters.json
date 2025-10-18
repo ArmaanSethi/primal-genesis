@@ -1,0 +1,14 @@
+{
+  "bioResearcher": {
+    "name": "Bio-Researcher",
+    "stats": {
+      "maxHealth": 100,
+      "healthRegen": 1.0,
+      "damage": 12,
+      "attackSpeed": 1.0,
+      "moveSpeed": 4,
+      "armor": 0,
+      "critChance": 0.05
+    }
+  }
+}

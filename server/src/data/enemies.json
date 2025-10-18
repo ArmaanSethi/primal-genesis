@@ -1,0 +1,16 @@
+{
+  "waspDrone": {
+    "name": "Wasp Drone",
+    "sprite": "wasp_drone.png",
+    "baseStats": {
+      "maxHealth": 30,
+      "health": 30,
+      "damage": 8,
+      "moveSpeed": 2,
+      "attackSpeed": 1,
+      "armor": 0
+    },
+    "behavior": "seekPlayer",
+    "attackType": "melee"
+  }
+}

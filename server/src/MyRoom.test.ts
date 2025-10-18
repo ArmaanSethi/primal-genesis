@@ -1,47 +1,80 @@
-import { Client } from 'colyseus';
-import { MyRoom } from './rooms/MyRoom';
-import { MyRoomState } from './rooms/schema/MyRoomState';
-import { assert } from 'chai';
+import { ColyseusTestServer, boot } from "@colyseus/testing";
+import { assert } from "chai";
+import appConfig from "./app.config";
+import { MyRoomState } from "./rooms/schema/MyRoomState";
 
-describe('MyRoom', () => {
-  let room: MyRoom;
+describe("MyRoom Integration Tests", () => {
+  let colyseus: ColyseusTestServer;
 
-  beforeEach(() => {
-    room = new MyRoom();
-    // Manually call onCreate to initialize the state and message handlers
-    room.onCreate({});
+  before(async () => {
+    colyseus = await boot(appConfig);
   });
 
-  it('should add a player on join', () => {
-    const client = { sessionId: '1' } as Client;
-    room.onJoin(client, {});
+  after(async () => {
+    await colyseus.shutdown();
+  });
+
+  beforeEach(async () => {
+    await colyseus.cleanup();
+  });
+
+  it("should add a player on join", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
+    assert.isTrue(room.state.players.has(client.sessionId));
     assert.equal(room.state.players.size, 1);
-    assert.isTrue(room.state.players.has('1'));
   });
 
-  it('should remove a player on leave', () => {
-    const client = { sessionId: '1' } as Client;
-    room.onJoin(client, {});
-    room.onLeave(client, false);
+  it("should remove a player on leave", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
+    assert.equal(room.state.players.size, 1);
+
+    await client.leave();
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     assert.equal(room.state.players.size, 0);
-    assert.isFalse(room.state.players.has('1'));
   });
 
-  it('should update player position on input', () => {
-    const client = { sessionId: '1' } as Client;
-    room.onJoin(client, {});
-    const player = room.state.players.get('1');
+  it("should initialize player with correct base stats", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
 
-    // Assert player exists to satisfy TypeScript's strict null check
+    const player = room.state.players.get(client.sessionId);
     assert.exists(player);
+    assert.equal(player.maxHealth, 100);
+    assert.equal(player.damage, 12);
+  });
 
+  it("should update player position on input", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
+
+    const player = room.state.players.get(client.sessionId);
+    assert.exists(player);
     const initialX = player.x;
     const initialY = player.y;
 
-    // Call the public handler method directly
-    room.handleInput(client, { x: 1, y: -1 });
+    client.send("input", { x: 1, y: -1 });
+
+    await room.waitForNextPatch();
 
     assert.isAbove(player.x, initialX);
     assert.isBelow(player.y, initialY);
   });
+
+  it("should spawn an enemy on create", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    await room.waitForNextPatch();
+    assert.equal(room.state.enemies.size, 1);
+    const enemy = room.state.enemies.values().next().value;
+    assert.exists(enemy);
+    assert.equal(enemy.typeId, "waspDrone");
+  });
+
 });
