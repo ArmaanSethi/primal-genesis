@@ -58,7 +58,7 @@
 - [x] **Client:** Fix rendering order of background elements (dots are behind the background).
 
 ### 4. Combat (In Progress)
-- [ ] **Server:** Implement player's automatic attack (targeting nearest enemy).
+- [x] **Server:** Implement player's automatic attack (targeting nearest enemy).
 - [ ] **Server:** Implement hit detection and damage application.
 - [ ] **Server:** Handle enemy death (remove from state).
 - [ ] **Unit Testing:** Add tests for automatic attack, hit detection, and damage.

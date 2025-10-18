@@ -47,16 +47,40 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   update(deltaTime: number) {
-    // Player movement
+    // Player movement and attack
     this.state.players.forEach((player) => {
       const speed = player.moveSpeed;
       if (player.inputX !== 0 || player.inputY !== 0) {
         player.x += player.inputX * speed;
         player.y += player.inputY * speed;
 
-        // Clamp player position to world boundaries
         player.x = Math.max(0, Math.min(this.state.worldWidth, player.x));
         player.y = Math.max(0, Math.min(this.state.worldHeight, player.y));
+      }
+
+      // Automatic attack logic
+      if (player.attackCooldown <= 0) {
+        let nearestEnemy: Enemy | null = null;
+        let minDistance = Infinity;
+        const attackRange = 100; // Example attack range
+
+        this.state.enemies.forEach((enemy) => {
+          const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+          if (distance <= attackRange && distance < minDistance) {
+            minDistance = distance;
+            nearestEnemy = enemy;
+          }
+        });
+
+        if (nearestEnemy) {
+          const targetEnemy = nearestEnemy;
+          // Attack the enemy
+          targetEnemy.health -= player.damage;
+          console.log(`Player attacked enemy ${targetEnemy.typeId}. Enemy health: ${targetEnemy.health}`);
+          player.attackCooldown = 1 / player.attackSpeed; // Reset cooldown based on attack speed
+        }
+      } else {
+        player.attackCooldown -= deltaTime / 1000; // Reduce cooldown based on delta time
       }
     });
 

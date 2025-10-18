@@ -21,7 +21,7 @@ describe("MyRoom Integration Tests", () => {
   it("should add a player on join", async () => {
     const room = await colyseus.createRoom<MyRoomState>("my_room", {});
     const client = await colyseus.connectTo(room, {});
-    await room.waitForNextPatch();
+    await room.waitForNextPatch(); // Wait for state to sync
     assert.isTrue(room.state.players.has(client.sessionId));
     assert.equal(room.state.players.size, 1);
   });
@@ -34,6 +34,7 @@ describe("MyRoom Integration Tests", () => {
 
     await client.leave();
 
+    // Wait a short moment for the server to process the leave event
     await new Promise(resolve => setTimeout(resolve, 50));
 
     assert.equal(room.state.players.size, 0);
@@ -62,6 +63,7 @@ describe("MyRoom Integration Tests", () => {
 
     client.send("input", { x: 1, y: -1 });
 
+    // Wait for the next server tick
     await room.waitForNextPatch();
 
     assert.isAbove(player.x, initialX);
@@ -98,6 +100,30 @@ describe("MyRoom Integration Tests", () => {
 
     const newDistance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
     assert.isBelow(newDistance, initialDistance);
+  });
+
+  it("should player automatically attack nearest enemy", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
+
+    const player = room.state.players.get(client.sessionId);
+    assert.exists(player);
+    player.x = 100;
+    player.y = 100;
+
+    const enemy = room.state.enemies.values().next().value;
+    assert.exists(enemy);
+    enemy.x = 100;
+    enemy.y = 100;
+    const initialEnemyHealth = enemy.health;
+
+    // Advance time to allow attack cooldown to reset and attack to occur
+    for (let i = 0; i < 10; i++) { // Simulate a few ticks
+      await room.waitForNextPatch();
+    }
+
+    assert.isBelow(enemy.health, initialEnemyHealth);
   });
 
 });

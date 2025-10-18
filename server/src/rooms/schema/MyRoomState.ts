@@ -12,6 +12,7 @@ export class Player extends Schema {
   @type("number") moveSpeed: number = 4;
   @type("number") armor: number = 0;
   @type("number") critChance: number = 0.05;
+  @type("number") attackCooldown: number = 0;
 
   // Input buffer for server-side processing
   inputX: number = 0;
