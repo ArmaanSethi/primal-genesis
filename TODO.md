@@ -14,7 +14,7 @@
 
 - **Colyseus Client Listeners:** After significant debugging, the correct and stable way to implement client-side state listeners is by using the `getStateCallbacks` utility from `colyseus.js`.
 - **Phaser Scene Lifecycle:** Asynchronous operations, such as connecting to the Colyseus server, should be performed in the `create()` method, which can be safely marked `async`. The `init()` method is not compatible with `await` and should be used only for synchronous data initialization.
-- **Test Runner Timeout:** Conf'd Mocha to have a 5-second timeout for tests to prevent hanging processes (`--timeout 5000` in `package.json`).
+- **Test Runner Timeout:** Configured Mocha to have a 5-second timeout for tests to prevent hanging processes (`--timeout 5000` in `package.json`).
 
 *Meta-Note: This document must be kept up-to-date. As tasks are completed, they should be marked with `[x]`. Unit tests should be added for all new functionality where possible. A 'Current Bugs' section will be maintained below, detailing active issues, diagnostic steps, and relevant logs.*
 
@@ -22,139 +22,66 @@
 
 ## Current Bugs
 
-(No active bugs. All known issues resolved!)
+- [ ] `Uncaught TypeError: entity.setTint is not a function` in `GameScene.ts` at lines 109 and 159. This occurs because `entity` is a `Phaser.GameObjects.Rectangle` in some contexts where `setTint` is called, but `setTint` is a method of `Phaser.GameObjects.Image` or `Phaser.GameObjects.Sprite`.
 
 ---
 
-## Phase 1: The Barebones Prototype (A Moving Player) - COMPLETE
+## Functional Right Now
+
+- **Server-Side:**
+    - Player connection and disconnection.
+    - Player movement based on input.
+    - Player stats initialized from `characters.json`.
+    - Enemy spawning (WaspDrone, Spitter, Charger) with stats from `enemies.json`.
+    - WaspDrone (seekPlayer) movement.
+    - Spitter (stationary) behavior.
+    - Spitter ranged attack (creates projectiles).
+    - Charger (charge) behavior (telegraph and rush).
+    - Player automatic attack (fires projectiles).
+    - Projectile movement and collision with enemies.
+    - Enemy health reduction and death.
+    - Enemy melee damage to players.
+    - Player health reduction and death.
+    - World boundaries enforcement.
+    - All server-side unit tests are passing.
+
+- **Client-Side:**
+    - Connects to server and receives game state.
+    - Renders world background and random dots.
+    - Renders player as `player.png` sprite.
+    - Renders enemies (WaspDrone, Spitter, Charger) as `enemy.png` sprites with distinct tints.
+    - Renders player projectiles as light blue rectangles.
+    - Renders spitter projectiles as dark green rectangles.
+    - Camera follows local player.
+    - Displays player health HUD.
+    - Visual feedback for player damage (red tint).
+    - Visual feedback for Charger's charging state (yellow tint).
 
 ---
 
-## Phase 2: Implementing Core GDD Features - COMPLETE
+## Next Steps: Fixing Client-Side Rendering and Completing Unit Tests
 
-### 1. Player Character Enhancement (Complete)
-- [x] **Data:** Create `server/src/data/characters.json`.
-- [x] **Schema:** Add GDD stats to the `Player` schema.
-- [x] **Server Logic:** Initialize players with stats from data file.
-- [x] **Unit Testing:** Verify players are created with correct base stats.
+### 1. Fix Client-Side `setTint` Error
+- [ ] **Client:** Identify all remaining instances where `entity` is created as a `Phaser.GameObjects.Rectangle` but `setTint` is called on it.
+    - **Details:** The error `Uncaught TypeError: entity.setTint is not a function` indicates that some entities are still being created as `Rectangle` objects, which do not have the `setTint` method. This needs to be systematically corrected to use `Phaser.GameObjects.Image` or `Phaser.GameObjects.Sprite` where tinting is required.
+- [ ] **Client:** Ensure all player and enemy entities are created as `Phaser.GameObjects.Image` (or `Sprite`) and use the preloaded assets.
+    - **Details:** Review `GameScene.ts` `players.onAdd` and `enemies.onAdd` callbacks. Confirm that `this.add.image()` is used instead of `this.add.rectangle()`, and that the correct image keys (`'player'`, `'enemy'`) are supplied.
 
-### 2. Enemies (Complete)
-- [x] **Data:** Create `server/src/data/enemies.json`.
-- [x] **Schema:** Create an `Enemy` schema and add to `RoomState`.
-- [x] **Server Logic (Spawning):** Implement a basic system to spawn enemies.
-- [x] **Unit Testing (Spawning):** Add tests for enemy schema and spawning.
-- [x] **Client:** Render enemy sprites based on server state.
-- [x] **Server Logic (AI):** Implement simple "seek player" AI in the game loop.
-- [x] **Unit Testing (AI):** Add a test for the enemy AI logic.
-
-### 3. World & Camera (Complete)
-- [x] **Schema:** Add `worldWidth` and `worldHeight` to the `RoomState`.
-- [x] **Server Logic:** Enforce world boundaries for all entities in the `update` loop.
-- [x] **Client:** Add a visual representation of the world boundaries.
-- [x] **Client:** Implement a camera that follows the player.
-- [x] **Client:** Improve visual clarity of world boundaries (e.g., lighter background, distinct border).
-- [x] **Server:** Increase world size to 3200x3200.
-- [x] **Client:** Implement random background dots for visual context.
-- [x] **Client:** Fix rendering order of background elements (dots are behind the background).
-
-### 4. Combat (Complete)
-- [x] **Server:** Implement player's automatic attack (targeting nearest enemy).
-- [x] **Server:** Implement hit detection and damage application.
-- [x] **Server:** Handle enemy death (remove from state).
-- [x] **Unit Testing:** Add tests for automatic attack, hit detection, and damage.
-- [x] **Client:** Add visual feedback for damage (e.g., enemy flash).
-- [x] **Client:** Display health bars for enemies.
-- [x] **Client:** Fix health bar centering for enemies.
-- [x] **Client:** Standardize rendering depth for all game objects (players, enemies, health bars, projectiles).
-
-### 5. Asset Placeholders (Complete)
-- [x] **Client:** Replace the placeholder `Rectangle` for the player with a `player.png` sprite.
-- [x] **Client:** Replace the placeholder `Rectangle` for the enemy with an `enemy.png` sprite.
-
----
-
-## Phase 3: Combat Rework & Enemy Spawning - COMPLETE
-
-### 1. Core Combat Loop (Complete)
-- [x] **Schema:** Create a `Projectile` schema for tracking bullets.
-- [x] **Server:** Implement automatic projectile firing from the player.
-- [x] **Server:** Implement projectile movement and collision detection.
-- [x] **Server:** Apply damage to enemies on projectile hit.
-- [x] **Server:** Remove enemies when their health reaches zero.
-- [x] **Client:** Render projectiles.
-- [x] **Client:** Fix damage flash bug by using `Image` instead of `Rectangle`.
-
-### 2. Enemy Spawning (Complete)
-- [x] **Server:** Implement a timer to spawn enemies continuously.
-- [x] **Server:** Increase the maximum number of enemies allowed.
-- [x] **Server:** Adjust enemy movement speed (from previous bug fix).
-
-### 3. Testing (Complete)
-- [x] **Unit Testing:** Add tests for projectile creation and movement.
-- [x] **Unit Testing:** Add tests for projectile-enemy collision and damage.
-- [x] **Unit Testing:** Add tests for continuous enemy spawning.
-
----
-
-## Phase 4: Player Health & Enemy Variety
-
-### 1. Player Health & Damage
-- [x] **Schema:** Add `health` and `maxHealth` to `Player` schema (already present, no changes needed).
-- [x] **Server Logic:** Implement enemies dealing damage to players on collision (melee enemies).
-    - **Details:** In `MyRoom.ts`, within the `update` loop, iterate through active enemies and players. For each enemy-player pair, check for collision using a circular collision model. If a collision occurs and the enemy's `attackCooldown` is ready, reduce the player's `health` by the enemy's `damage`. Apply a cooldown to the enemy's attack to prevent rapid damage.
-- [x] **Server Logic:** Handle player death (e.g., remove player from game, respawn, end run).
-    - **Details:** In `MyRoom.ts`, immediately after a player takes damage, check if `player.health` has dropped to 0 or below. If so, remove the player from `this.state.players`. (Future: Implement respawn or game over conditions).
-- [x] **Client:** Display player's current health and max health (basic HUD element).
-    - **Details:** In `GameScene.ts`, create a `Phaser.GameObjects.Text` object (`playerHealthText`) in the `onAdd` callback for the local player. Position it in a fixed location on the camera (using `setScrollFactor(0)`) and set its depth high (`setDepth(100)`). Update its text content (`Health: ${player.health}/${player.maxHealth}`) in the local player's `onChange` callback. Destroy the text object if the local player is removed.
-- [x] **Client:** Visual feedback for player damage (e.g., screen tint, flash).
-    - **Details:** In `GameScene.ts`, within the local player's `onChange` callback, compare the current `player.health` with a `previousHealth` value (stored on the player object). If health has decreased, apply a temporary red tint (`0xff0000`) to the player's sprite (`entity.setTint(0xff0000)`). Use `this.time.delayedCall(100, () => { entity.clearTint(); })` to remove the tint after 100ms. Update `player.previousHealth` after processing.
+### 2. Complete Unit Tests for Phase 4
 - [ ] **Unit Testing:** Add tests for player taking damage and health reduction.
     - **Details:** Create a new test file (e.g., `MyRoom.test.ts` or a new `PlayerCombat.test.ts`). Simulate a player and an enemy. Position them to collide. Advance the simulation and assert that the player's health decreases.
 - [ ] **Unit Testing:** Add tests for player death.
     - **Details:** Extend the damage test. Simulate enough damage to reduce player health to 0 or below. Assert that the player is removed from `room.state.players`.
-
-### 2. Enemy Variety (Spitter - Stationary Ranged)
-- [x] **Data:** Add `spitter` enemy type to `enemies.json` with appropriate `baseStats`, `behavior: "stationary"`, and `attackType: "ranged"`.
-    - **Details:** Added a new JSON entry for "spitter" in `server/src/data/enemies.json`. Defined `baseStats` (e.g., `maxHealth: 50`, `damage: 10`, `moveSpeed: 0`, `attackSpeed: 0.5`, `armor: 5`), `behavior: "stationary"`, `attackType: "ranged"`, and `projectileType: "spitterProjectile"`.
-- [x] **Schema:** Update `Enemy` schema to include fields for ranged attack (e.g., `attackRange`, `projectileType`, `projectileSpeed`).
-    - **Details:** Added `@type("number") attackRange: number = 0;` and `@type("string") projectileType: string = "";` to the `Enemy` class in `server/src/rooms/schema/MyRoomState.ts`.
-- [x] **Server Logic (Spawning):** Update enemy spawning to randomly select between `waspDrone` and `spitter`.
-    - **Details:** In `MyRoom.ts`, modified the enemy spawning logic within the `update` method to randomly pick between "waspDrone" and "spitter". Ensured the `Enemy` instance is initialized with the correct `baseStats` (including `attackRange` and `projectileType`) from the selected enemy type.
-- [x] **Server Logic (AI):** Implement stationary behavior for `spitter`.
-    - **Details:** In `MyRoom.ts`, within the enemy AI loop, added a check for `enemy.behavior`. If `enemy.behavior === "stationary"`, the enemy's position update logic is skipped.
-- [x] **Server Logic (Attack):** Implement `spitter`'s ranged attack (lobbing projectile).
-    - **Details:** For `spitter` enemies, if `enemy.attackCooldown` is ready and a player is within `enemy.attackRange`, a new `Projectile` instance is created. The projectile's properties (`ownerId`, `damage`, `speed`, `projectileType`, `rotation`, `x`, `y`) are set based on the `spitter`'s stats and target. The projectile is added to `this.state.projectiles`, and `enemy.attackCooldown` is reset.
-- [x] **Client:** Render `spitter` enemy with a distinct sprite/color.
-    - **Details:** In `GameScene.ts`, within the `enemies.onAdd` callback, added logic to check `enemy.typeId`. If it's "spitter", the enemy is rendered as a green rectangle (`0x00ff00`).
-- [x] **Client:** Render `spitter`'s projectiles with a distinct sprite/color.
-    - **Details:** In `GameScene.ts`, within the `projectiles.onAdd` callback, added logic to check `projectile.projectileType`. If it's "spitterProjectile", the projectile is rendered as a dark green rectangle (`0x008000`).
 - [ ] **Unit Testing:** Add tests for `spitter` spawning and stationary behavior.
     - **Details:** Create a test that spawns a `spitter`. Assert that its `moveSpeed` is 0 and its position does not change over time.
 - [ ] **Unit Testing:** Add tests for `spitter` ranged attack and projectile.
     - **Details:** Simulate a `spitter` and a player within its `attackRange`. Advance the simulation. Assert that a projectile is created with the correct properties and owner.
-
-### 3. Enemy Variety (Charger - Melee with Charge Attack)
-- [x] **Data:** Add `charger` enemy type to `enemies.json` with appropriate `baseStats`, `behavior: "charge"`, and `attackType: "melee"`.
-    - **Details:** Added a new JSON entry for "charger" in `server/src/data/enemies.json`. Defined `baseStats` (e.g., `maxHealth: 70`, `damage: 15`, `moveSpeed: 5`, `attackSpeed: 0.7`, `armor: 10`), `behavior: "charge"`, `attackType: "melee"`. Added new properties like `chargeSpeed: 20` and `chargeDuration: 1000`.
-- [x] **Schema:** Update `Enemy` schema to include fields for charge attack (e.g., `chargeCooldown`, `chargeSpeed`, `isCharging`, `chargeTargetX`, `chargeTargetY`).
-    - **Details:** Added `@type("number") chargeCooldown: number = 0;`, `@type("number") chargeSpeed: number = 0;`, `@type("boolean") isCharging: boolean = false;`, `@type("number") chargeTargetX: number = 0;`, `@type("number") chargeTargetY: number = 0;` to the `Enemy` class in `server/src/rooms/schema/MyRoomState.ts`.
-- [x] **Server Logic (Spawning):** Update enemy spawning to include `charger`.
-    - **Details:** In `MyRoom.ts`, added "charger" to the array of randomly selected enemy `typeId`s. Ensured the `Enemy` instance is initialized with the correct `baseStats` for the charger.
-- [x] **Server Logic (AI):** Implement `charger` behavior (telegraph, rush).
-    - **Details:** For `charger` enemies, if `enemy.behavior === "charge"`:
-        - If not `isCharging` and `chargeCooldown` is ready, the charger enters a telegraph phase, setting `chargeTargetX`, `chargeTargetY`, and a short `chargeCooldown`.
-        - If `isCharging` and `chargeCooldown` is ready, the charger moves rapidly towards its `chargeTarget` using `chargeSpeed`.
-        - Upon reaching the target, `isCharging` is reset, and a longer `chargeCooldown` is applied. `chargeCooldown` is decremented over time.
-- [x] **Client:** Render `charger` enemy with a distinct sprite/color.
-    - **Details:** In `GameScene.ts`, within the `enemies.onAdd` callback, added logic to check `enemy.typeId`. If it's "charger", the enemy is rendered as a purple rectangle (`0x800080`).
-- [x] **Client:** Visual feedback for `charger`'s telegraph and charge.
-    - **Details:** In `GameScene.ts`, within the `enemy.onChange` callback, if `enemy.typeId` is "charger" and `enemy.isCharging` is true, a yellow tint (`0xffff00`) is applied to the enemy sprite. The tint is cleared when `isCharging` is false.
 - [ ] **Unit Testing:** Add tests for `charger` spawning and charge behavior.
     - **Details:** Create a test that spawns a `charger` and a player. Assert that the `charger` eventually enters a charging state and moves rapidly towards the player.
 
 ---
 
-## Phase 5: Item System & World Interaction (Moved from Phase 4)
+## Phase 5: Item System & World Interaction
 
 ### 1. Item System
 - [ ] **Data:** Define `Item` data structure in `items.json` (based on GDD examples).
@@ -221,7 +148,7 @@
 - [ ] **Schema:** Add `difficultyLevel` to `RoomState`.
     - **Details:** In `server/src/rooms/schema/MyRoomState.ts`, add `@type("string") difficultyLevel: string = "Easy";` and `@type("number") timeElapsed: number = 0;` to `MyRoomState`.
 - [ ] **Server Logic:** Implement difficulty meter that increases over time.
-    - **Details:** In `MyRoom.ts`, within the `update` loop, increment `timeElapsed`. Every minute (or other defined interval), update `room.state.difficultyLevel` (Easy -> Medium -> Hard -> Very Hard -> INSANE) as per `GDD.md` section "6.1. Time-Based Difficulty Scaling".
+    - **Details:** In `MyRoom.ts`, within the `update` loop, increment `timeElapsed`. Every minute (or other defined interval), update `room.state.difficultyLevel` (Easy -> Medium -> Hard -> Very Hard -> INSANE) as per `GDD.md` section "6.1. Time-Based Difficulty Scaling`.
 - [ ] **Server Logic:** Adjust enemy spawn rates, health, damage based on difficulty.
     - **Details:** Modify enemy spawning logic and enemy stat initialization in `MyRoom.ts` to use `room.state.difficultyLevel` as a multiplier or lookup key for `SPAWN_INTERVAL`, `MAX_ENEMIES`, and enemy `baseStats`.
 - [ ] **Unit Testing:** Add tests for difficulty scaling.
