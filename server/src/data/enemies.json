@@ -8,7 +8,9 @@
       "damage": 8,
       "moveSpeed": 8,
       "attackSpeed": 1,
-      "armor": 0
+      "armor": 0,
+      "projectileSpeed": 0,
+      "chargeSpeed": 0
     },
     "behavior": "seekPlayer",
     "attackType": "melee"
@@ -23,11 +25,12 @@
       "moveSpeed": 0,
       "attackSpeed": 0.5,
       "armor": 5,
-      "projectileSpeed": 200
+      "projectileSpeed": 400,
+      "chargeSpeed": 0
     },
     "behavior": "stationary",
     "attackType": "ranged",
-    "attackRange": 300,
+    "attackRange": 500,
     "projectileType": "spitterProjectile"
   },
   "charger": {

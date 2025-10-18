@@ -21,6 +21,16 @@ export class Player extends Schema {
   inputY: number = 0;
 }
 
+export class Enemy extends Schema {
+  @type("string") id: string = "";
+  @type("number") x: number = 0;
+  @type("number") y: number = 0;
+  @type("string") typeId: string = "";
+
+  @type("number") health: number = 1;
+  @type("number") maxHealth: number = 1;
+  @type("number") damage: number = 1;
+  @type("number") moveSpeed: number = 1;
   @type("number") attackCooldown: number = 0;
   @type("number") attackRange: number = 0;
   @type("number") projectileSpeed: number = 0;
@@ -30,6 +40,7 @@ export class Player extends Schema {
   @type("boolean") isCharging: boolean = false;
   @type("number") chargeTargetX: number = 0;
   @type("number") chargeTargetY: number = 0;
+  @type("number") telegraphTimer: number = 0; // Timer for the telegraph phase of Charger
 }
 
 export class Projectile extends Schema {
@@ -40,6 +51,8 @@ export class Projectile extends Schema {
   @type("number") speed: number = 0;
   @type("number") damage: number = 0;
   @type("string") ownerId: string = "";
+  @type("string") projectileType: string = "";
+  @type("number") timeToLive: number = 0; // Time in seconds before projectile despawns
 }
 
 export class MyRoomState extends Schema {

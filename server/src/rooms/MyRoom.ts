@@ -32,7 +32,7 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private noop = (...args: any[]) => {};
-  private log = this.noop;
+  private log = console.log;
 
   update = (deltaTime: number) => {
     this.log(`Update method called. DeltaTime: ${deltaTime}`);
@@ -62,17 +62,27 @@ export class MyRoom extends Room<MyRoomState> {
           const player = playersArray[randomPlayerIndex];
                       this.log(`Spawning enemy near player ${player.sessionId} at (${player.x}, ${player.y})`); // Debug player position for spawn
 
-          const spawnRadius = 400; // Radius around the player to spawn enemies (increased for better visibility)
-          const angle = Math.random() * Math.PI * 2; // Random angle around the player
-          const distance = Math.random() * spawnRadius; // Random distance within the radius
+          const minSpawnDistance = 300; // Minimum distance from player
+          const spawnRadius = 600; // Maximum radius around the player to spawn enemies
+          let spawnX, spawnY, distance;
+          do {
+            const angle = Math.random() * Math.PI * 2; // Random angle around the player
+            distance = minSpawnDistance + (Math.random() * (spawnRadius - minSpawnDistance)); // Random distance between min and max
 
-          enemy.x = player.x + Math.cos(angle) * distance;
-          enemy.y = player.y + Math.sin(angle) * distance;
+            spawnX = player.x + Math.cos(angle) * distance;
+            spawnY = player.y + Math.sin(angle) * distance;
 
-          // Clamp enemy position to world boundaries
-          enemy.x = Math.max(0, Math.min(this.state.worldWidth, enemy.x));
-          enemy.y = Math.max(0, Math.min(this.state.worldHeight, enemy.y));
-                      this.log(`Enemy ${enemy.id} spawned at (${enemy.x}, ${enemy.y})`); // Debug enemy spawn position
+            // Clamp to world boundaries
+            spawnX = Math.max(0, Math.min(this.state.worldWidth, spawnX));
+            spawnY = Math.max(0, Math.min(this.state.worldHeight, spawnY));
+
+            // Recalculate distance from player to clamped spawn point
+            distance = Math.hypot(spawnX - player.x, spawnY - player.y);
+          } while (distance < minSpawnDistance); // Keep trying until a valid spawn point is found
+
+          enemy.x = spawnX;
+          enemy.y = spawnY;
+                      this.log(`Enemy ${enemy.id} (type: ${enemy.typeId}) spawned at (${enemy.x.toFixed(2)}, ${enemy.y.toFixed(2)}) near player ${player.sessionId} at (${player.x.toFixed(2)}, ${player.y.toFixed(2)}). Calculated distance: ${distance.toFixed(2)}`); // Debug enemy spawn position
         } else {
           // Fallback: if no players, spawn randomly (shouldn't happen in normal gameplay)
           enemy.x = Math.random() * this.state.worldWidth;
@@ -133,18 +143,33 @@ export class MyRoom extends Room<MyRoomState> {
           projectile.speed = player.projectileSpeed;
           projectile.damage = player.damage;
           projectile.ownerId = player.sessionId;
+          projectile.timeToLive = 2; // Player projectiles last for 2 seconds
+          this.log(`DEBUG: Player projectile ${projectileId} about to be added to state. TTL: ${projectile.timeToLive.toFixed(2)}`);
 
           this.state.projectiles.set(projectileId, projectile);
+          this.log(`Player projectile ${projectileId} created at (${projectile.x.toFixed(2)}, ${projectile.y.toFixed(2)}) with speed ${projectile.speed}, rotation ${projectile.rotation.toFixed(2)})`);
           player.attackCooldown = 1 / player.attackSpeed; // Reset cooldown
+        } else {
+          this.log(`Player ${player.sessionId} attack cooldown met, but no enemy in range.`);
         }
       } else {
         player.attackCooldown -= deltaTime / 1000; // Reduce cooldown
+        this.log(`Player ${player.sessionId} attack cooldown: ${player.attackCooldown.toFixed(2)}`);
       }
     });
 
     // Projectile movement and collision
     const projectilesArray: Projectile[] = Array.from(this.state.projectiles.values());
     for (const projectile of projectilesArray) {
+      // Update timeToLive
+      projectile.timeToLive -= deltaTime / 1000;
+      if (projectile.timeToLive <= 0) {
+        this.state.projectiles.delete(projectile.id);
+        this.log(`Projectile ${projectile.id} removed due to timeToLive.`);
+        continue; // Skip further processing for this projectile
+      }
+
+      this.log(`Projectile ${projectile.id} at (${projectile.x.toFixed(2)}, ${projectile.y.toFixed(2)}). TTL: ${projectile.timeToLive.toFixed(2)}`);
       // @ts-ignore
       projectile.x += Math.cos(projectile.rotation) * projectile.speed * (deltaTime / 1000);
       // @ts-ignore
@@ -153,7 +178,7 @@ export class MyRoom extends Room<MyRoomState> {
       // Check for collision with enemies
       for (const enemy of this.state.enemies.values()) {
         const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
-        const collisionRadius = 16; // Approximate collision radius for projectile and enemy
+        const collisionRadius = 20; // Increased collision radius for projectile and enemy
 
         if (distance < collisionRadius) {
           // Collision detected
@@ -172,6 +197,7 @@ export class MyRoom extends Room<MyRoomState> {
       if (projectile.x < 0 || projectile.x > this.state.worldWidth ||
           projectile.y < 0 || projectile.y > this.state.worldHeight) {
         this.state.projectiles.delete(projectile.id);
+        this.log(`Projectile ${projectile.id} removed out of bounds.`);
       }
     }
 
@@ -203,7 +229,9 @@ export class MyRoom extends Room<MyRoomState> {
 
       // Ranged attack logic for stationary enemies (Spitter)
       if (enemyTypeData.behavior === "stationary" && enemyTypeData.attackType === "ranged") {
+        this.log(`Spitter ${enemy.id} is being processed.`);
         if (enemy.attackCooldown <= 0 && minDistance <= enemy.attackRange) {
+          this.log(`Spitter ${enemy.id} attack cooldown ready and player in range. Firing projectile.`);
           const projectileId = uuidv4();
           const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
 
@@ -212,13 +240,20 @@ export class MyRoom extends Room<MyRoomState> {
           projectile.x = enemy.x;
           projectile.y = enemy.y;
           projectile.rotation = angle;
-          projectile.speed = enemyTypeData.baseStats.projectileSpeed || 200; // Use defined or default
+          projectile.speed = 200; // Use defined or default, reduced for visibility
           projectile.damage = enemy.damage; // Use enemy's current damage
           projectile.ownerId = enemy.id;
           projectile.projectileType = enemy.projectileType; // Assign the specific projectile type
+          projectile.timeToLive = 5; // Projectile lasts for 5 seconds
+          this.log(`DEBUG: Spitter projectile ${projectileId} about to be added to state. projectileType: ${projectile.projectileType}, timeToLive: ${projectile.timeToLive.toFixed(2)}`);
 
           this.state.projectiles.set(projectileId, projectile);
+          this.log(`Spitter projectile ${projectileId} created at (${projectile.x.toFixed(2)}, ${projectile.y.toFixed(2)}) with speed ${projectile.speed}, rotation ${projectile.rotation.toFixed(2)}, and type ${projectile.projectileType})`);
           enemy.attackCooldown = 1 / enemyTypeData.baseStats.attackSpeed; // Reset cooldown
+        } else if (enemy.attackCooldown > 0) {
+          this.log(`Spitter ${enemy.id} attack cooldown: ${enemy.attackCooldown.toFixed(2)}`);
+        } else if (minDistance > enemy.attackRange) {
+          this.log(`Spitter ${enemy.id} player out of range. Distance: ${minDistance.toFixed(2)} Range: ${enemy.attackRange}`);
         }
       } else if (enemyTypeData.behavior === "seekPlayer") { // Movement logic for seekPlayer enemies (WaspDrone)
         const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
@@ -233,31 +268,39 @@ export class MyRoom extends Room<MyRoomState> {
         // Clamp enemy position to world boundaries
         enemy.x = Math.max(0, Math.min(this.state.worldWidth, enemy.x));
         enemy.y = Math.max(0, Math.min(this.state.worldHeight, enemy.y));
+
       } else if (enemyTypeData.behavior === "charge") { // Charger behavior
+        this.log(`Charger ${enemy.id} START processing. isCharging: ${enemy.isCharging}, chargeCooldown: ${enemy.chargeCooldown.toFixed(2)}`);
         if (!enemy.isCharging && enemy.chargeCooldown <= 0) {
           // Telegraph phase: set target and start a short cooldown
           enemy.isCharging = true;
           enemy.chargeTargetX = closestPlayer.x;
           enemy.chargeTargetY = closestPlayer.y;
-          enemy.chargeCooldown = 0.5; // Short telegraph duration
-          this.log(`Charger ${enemy.id} telegraphing charge towards (${enemy.chargeTargetX}, ${enemy.chargeTargetY})`);
-        } else if (enemy.isCharging && enemy.chargeCooldown <= 0) {
+          enemy.telegraphTimer = 0.5; // Telegraph duration
+          this.log(`Charger ${enemy.id} telegraphing charge towards (${enemy.chargeTargetX.toFixed(2)}, ${enemy.chargeTargetY.toFixed(2)}). isCharging: ${enemy.isCharging}, telegraphTimer: ${enemy.telegraphTimer.toFixed(2)}`);
+        } else if (enemy.isCharging && enemy.telegraphTimer > 0) {
+          // Still telegraphing
+          enemy.telegraphTimer -= deltaTime / 1000;
+          this.log(`Charger ${enemy.id} telegraphing... remaining: ${enemy.telegraphTimer.toFixed(2)}. isCharging: ${enemy.isCharging}`);
+        } else if (enemy.isCharging && enemy.telegraphTimer <= 0) {
           // Charge phase: move rapidly towards target
           const angle = Math.atan2(enemy.chargeTargetY - enemy.y, enemy.chargeTargetX - enemy.x);
-          const moveX = Math.cos(angle) * enemyTypeData.chargeSpeed * (deltaTime / 1000);
-          const moveY = Math.sin(angle) * enemyTypeData.chargeSpeed * (deltaTime / 1000);
+          const moveX = Math.cos(angle) * (enemyTypeData as any).chargeSpeed * (deltaTime / 1000);
+          const moveY = Math.sin(angle) * (enemyTypeData as any).chargeSpeed * (deltaTime / 1000);
 
+          this.log(`Charger ${enemy.id} BEFORE move: (${enemy.x.toFixed(2)}, ${enemy.y.toFixed(2)}). isCharging: ${enemy.isCharging}, telegraphTimer: ${enemy.telegraphTimer.toFixed(2)}`);
           enemy.x += moveX;
           enemy.y += moveY;
-
-          this.log(`Charger ${enemy.id} charging to (${enemy.x}, ${enemy.y})`);
+          this.log(`Charger ${enemy.id} AFTER move: (${enemy.x.toFixed(2)}, ${enemy.y.toFixed(2)}). Target: (${enemy.chargeTargetX.toFixed(2)}, ${enemy.chargeTargetY.toFixed(2)}). isCharging: ${enemy.isCharging}, telegraphTimer: ${enemy.telegraphTimer.toFixed(2)}`);
+          // Re-assign the enemy to the map to force Colyseus to send updates
+          this.state.enemies.set(enemy.id, enemy);
 
           // Check if target reached or passed
           const distanceToTarget = Math.hypot(enemy.x - enemy.chargeTargetX, enemy.y - enemy.chargeTargetY);
           if (distanceToTarget < 10) { // Close enough to target
             enemy.isCharging = false;
             enemy.chargeCooldown = 3; // Longer cooldown after charge
-            this.log(`Charger ${enemy.id} reached target. Resetting.`);
+            this.log(`Charger ${enemy.id} reached target. Resetting. isCharging: ${enemy.isCharging}, chargeCooldown: ${enemy.chargeCooldown.toFixed(2)}`);
           }
         }
 
@@ -275,6 +318,7 @@ export class MyRoom extends Room<MyRoomState> {
       if (!enemy.isCharging && enemy.chargeCooldown > 0) {
         enemy.chargeCooldown -= deltaTime / 1000;
       }
+    }); // This brace closes the this.state.enemies.forEach((enemy) => { loop
 
     // Enemy-Player Collision and Damage
     this.state.enemies.forEach((enemy) => {
@@ -291,6 +335,7 @@ export class MyRoom extends Room<MyRoomState> {
             this.log(`Player ${player.sessionId} died!`);
             this.state.players.delete(player.sessionId);
           }
+        }
       });
 
       // Reduce enemy attack cooldown
@@ -298,10 +343,11 @@ export class MyRoom extends Room<MyRoomState> {
         enemy.attackCooldown -= deltaTime / 1000;
       }
     });
-  }
+  } // This brace closes the update = (deltaTime: number) => { method
 
-  onJoin (client: Client, options: any) {
-            this.log(client.sessionId, "joined!");    const player = new Player();
+  onJoin(client: Client, options: any) {
+    this.log(client.sessionId, "joined!");
+    const player = new Player();
     player.sessionId = client.sessionId; // Assign sessionId
     const stats = characterData.bioResearcher.stats;
 
@@ -319,11 +365,13 @@ export class MyRoom extends Room<MyRoomState> {
     this.state.players.set(client.sessionId, player);
   }
 
-  onLeave (client: Client, consented: boolean) {
-            this.log("room", this.roomId, client.sessionId, "left!");    this.state.players.delete(client.sessionId);
+  onLeave(client: Client, consented: boolean) {
+    this.log("room", this.roomId, client.sessionId, "left!");
+    this.state.players.delete(client.sessionId);
   }
 
   onDispose() {
-            this.log("room", this.roomId, "disposing...");  }
+    this.log("room", this.roomId, "disposing...");
+  }
 
 }

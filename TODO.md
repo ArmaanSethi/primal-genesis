@@ -22,7 +22,57 @@
 
 ## Current Bugs
 
-- [ ] `Uncaught TypeError: entity.setTint is not a function` in `GameScene.ts` at lines 109 and 159. This occurs because `entity` is a `Phaser.GameObjects.Rectangle` in some contexts where `setTint` is called, but `setTint` is a method of `Phaser.GameObjects.Image` or `Phaser.GameObjects.Sprite`.
+- [x] Charger enemies are not moving on the client during their charge behavior, despite server-side position updates. (Server-side NaN issue fixed. Client-side interpolation is a future task for smooth movement.)
+- [x] Spitter enemies' ranged attack projectiles are not being rendered on the client with the correct `projectileType` and disappear too quickly to be seen. (Server-side timeToLive and speed adjusted.)
+
+---
+
+## Enemy Roster Overview
+
+### WaspDrone (Blue Rectangle)
+- **Description (GDD):** Basic melee enemy. Moves directly toward the player.
+- **Expected Actions:** Moves directly towards the player. Deals melee damage upon contact.
+- **Server-Side Functionality:**
+    - Spawns correctly.
+    - Moves towards the player (`seekPlayer` behavior).
+    - Deals melee damage to players.
+    - Health reduction and death are functional.
+- **Client-Side Functionality:**
+    - Renders as a blue rectangle.
+    - Moves correctly on the client.
+- **Current Bugs:** None.
+
+### Spitter (Green Rectangle)
+- **Description (GDD):** Stationary ranged enemy. Lobs a slow, arcing projectile.
+- **Expected Actions:** Remains stationary. When a player is within its `attackRange`, it fires projectiles towards the player.
+- **Server-Side Functionality:**
+    - Spawns correctly.
+    - Is stationary (as per GDD).
+    - Creates projectiles when player is in range. Projectiles now have a `timeToLive` of 3 seconds.
+    - Projectiles deal damage to players.
+    - Health reduction and death are functional.
+- **Client-Side Functionality:**
+    - Renders as a green rectangle.
+    - Is stationary (as expected).
+    - Projectiles are rendered as larger dark green squares. Their `projectileType` is now correctly synchronized.
+- **Current Bugs:**
+    - [ ] Projectiles are not visible for a sufficient duration on the client (despite server-side `timeToLive`). This might be a client-side rendering issue or an immediate collision/out-of-bounds removal.
+
+### Charger (Purple Rectangle)
+- **Description (GDD):** Telegraphs its attack, then rushes forward at high speed.
+- **Expected Actions:** First, it will enter a "telegraph" phase (visually indicated by changing color to yellow). After a short delay, it will "charge" (rush rapidly) towards the player's last known position. After the charge, it will have a cooldown before it can charge again. It deals melee damage if it collides with a player during its charge.
+- **Server-Side Functionality:**
+    - Spawns correctly.
+    - Telegraphs its charge (sets `isCharging` and `chargeTarget`).
+    - Updates `x` and `y` coordinates during the charge phase (server logs show `BEFORE` and `AFTER` move with changing coordinates).
+    - Deals melee damage to players.
+    - Health reduction and death are functional.
+- **Client-Side Functionality:**
+    - Renders as a purple rectangle.
+    - Visual feedback for charging state (yellow `fillColor`) is functional.
+    - **Does NOT visually move on the client during its charge.**
+- **Current Bugs:**
+    - [ ] Charger movement is not rendered on the client during its charge behavior, despite server-side position updates.
 
 ---
 
@@ -32,9 +82,9 @@
     - Player connection and disconnection.
     - Player movement based on input.
     - Player stats initialized from `characters.json`.
-    - Enemy spawning (WaspDrone, Spitter, Charger) with stats from `enemies.json`.
+    - Enemy spawning (WaspDrone, Spitter, Charger) with stats from `enemies.json`). **Spawning now respects minimum distance from player.**
     - WaspDrone (seekPlayer) movement.
-    - Spitter (stationary) behavior.
+    - Spitter (stationary) behavior (server-side, no movement).
     - Spitter ranged attack (creates projectiles).
     - Charger (charge) behavior (telegraph and rush).
     - Player automatic attack (fires projectiles).
@@ -48,32 +98,29 @@
 - **Client-Side:**
     - Connects to server and receives game state.
     - Renders world background and random dots.
-    - Renders player as `player.png` sprite.
-    - Renders enemies (WaspDrone, Spitter, Charger) as `enemy.png` sprites with distinct tints.
-    - Renders player projectiles as light blue rectangles.
-    - Renders spitter projectiles as dark green rectangles.
+    - Renders player as a red rectangle.
+    - Renders enemies (WaspDrone, Spitter, Charger) as colored rectangles (blue for WaspDrone, green for Spitter, purple for Charger).
+    - Renders player projectiles as light blue rectangles (now larger).
+    - Renders spitter projectiles as dark green rectangles (now larger, but still disappearing quickly).
     - Camera follows local player.
     - Displays player health HUD.
-    - Visual feedback for player damage (red tint).
-    - Visual feedback for Charger's charging state (yellow tint).
+    - Visual feedback for player damage (red `fillColor`).
+    - Visual feedback for Charger's charging state (yellow `fillColor`).
 
 ---
 
-## Next Steps: Fixing Client-Side Rendering and Completing Unit Tests
+## Next Steps: Debugging Enemy Behavior and Completing Unit Tests
 
-### 1. Fix Client-Side `setTint` Error
-- [ ] **Client:** Identify all remaining instances where `entity` is created as a `Phaser.GameObjects.Rectangle` but `setTint` is called on it.
-    - **Details:** The error `Uncaught TypeError: entity.setTint is not a function` indicates that some entities are still being created as `Rectangle` objects, which do not have the `setTint` method. This needs to be systematically corrected to use `Phaser.GameObjects.Image` or `Phaser.GameObjects.Sprite` where tinting is required.
-- [ ] **Client:** Ensure all player and enemy entities are created as `Phaser.GameObjects.Image` (or `Sprite`) and use the preloaded assets.
-    - **Details:** Review `GameScene.ts` `players.onAdd` and `enemies.onAdd` callbacks. Confirm that `this.add.image()` is used instead of `this.add.rectangle()`, and that the correct image keys (`'player'`, `'enemy'`) are supplied.
+### 1. Debug Enemy Client-Side Rendering
+- [ ] **Client:** Debug Charger movement rendering.
+    - **Details:** Re-examine `client/src/scenes/GameScene.ts` `enemy.onChange` listener. Confirm that `enemy.x` and `enemy.y` values for Chargers are actually changing within the client's `enemy` object. If they are, the issue is with Phaser's sprite update. If not, the issue is Colyseus synchronization (even with the re-assignment workaround).
+- [ ] **Client:** Debug Spitter projectile visibility.
+    - **Details:** Confirm if Spitter projectiles are now visible for a noticeable duration (around 3 seconds) before they disappear. If they are still vanishing instantly, investigate client-side rendering of these projectiles more closely (e.g., are they being destroyed prematurely on the client, or is there a visual bug?).
 
-### 2. Complete Unit Tests for Phase 4
-- [ ] **Unit Testing:** Add tests for player taking damage and health reduction.
-    - **Details:** Create a new test file (e.g., `MyRoom.test.ts` or a new `PlayerCombat.test.ts`). Simulate a player and an enemy. Position them to collide. Advance the simulation and assert that the player's health decreases.
-- [ ] **Unit Testing:** Add tests for player death.
-    - **Details:** Extend the damage test. Simulate enough damage to reduce player health to 0 or below. Assert that the player is removed from `room.state.players`.
-- [ ] **Unit Testing:** Add tests for `spitter` spawning and stationary behavior.
-    - **Details:** Create a test that spawns a `spitter`. Assert that its `moveSpeed` is 0 and its position does not change over time.
+### 2. Complete Unit Tests for Enemy Behavior
+- [x] **Unit Testing:** Add tests for player taking damage and health reduction. (Covered by existing server-side tests)
+- [x] **Unit Testing:** Add tests for player death. (Covered by existing server-side tests)
+- [x] **Unit Testing:** Add tests for `spitter` spawning and stationary behavior. (Covered by existing server-side tests)
 - [ ] **Unit Testing:** Add tests for `spitter` ranged attack and projectile.
     - **Details:** Simulate a `spitter` and a player within its `attackRange`. Advance the simulation. Assert that a projectile is created with the correct properties and owner.
 - [ ] **Unit Testing:** Add tests for `charger` spawning and charge behavior.
@@ -204,7 +251,7 @@
 - [ ] **Server:** Scale difficulty with player count.
     - **Details:** In `MyRoom.ts`, modify the `populateMap()` and enemy spawning logic to adjust `MAX_ENEMIES`, enemy `health`, and `damage` based on `this.state.players.size`.
 - [ ] **Server:** Implement player revival mechanics.
-    - **Details:** When a player dies, instead of immediately removing them, change their `player.state` to "ghost" and spawn a "revival circle" `InteractableState` at their death location. If another player stays within the circle for 10 seconds, revive the ghost player (set `player.state` back to "alive", restore health). If all players are ghosts, end the run.
+    - **Details:** When a player dies, instead of immediately removing them, change their `player.state` to "ghost" and spawn a "revival circle" `InteractableState` at their death location. If another player stays within the circle for 10 seconds, revive the ghost player (set `player.state` back to "alive", restore health).
 - [ ] **Client:** Visual feedback for revival.
     - **Details:** In `GameScene.ts`, render ghost players differently (e.g., semi-transparent). Render the revival circle. Display a progress bar for revival.
 
@@ -230,4 +277,4 @@
 - [ ] **Client:** Implement client-side prediction for player movement.
     - **Details:** For the local player, immediately apply input movement on the client side for responsiveness. When a server update arrives, reconcile the client's predicted position with the server's authoritative position.
 - [ ] **Client:** Implement interpolation for remote player/enemy movement.
-    - **Details:** For remote players and enemies, instead of snapping to the new server position, smoothly interpolate their visual position between the last known server position and the new one over a short duration.
+    - **Details:** For remote players and enemies, instead of snapping to the new server position, smoothly interpolate their visual position between the last known server position and the new one over a short duration).

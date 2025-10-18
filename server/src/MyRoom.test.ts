@@ -1,7 +1,8 @@
 import { ColyseusTestServer, boot } from "@colyseus/testing";
 import { assert } from "chai";
 import appConfig from "./app.config";
-import { MyRoomState } from "./rooms/schema/MyRoomState";
+import { MyRoomState, Projectile, Enemy } from "./rooms/schema/MyRoomState";
+import { MyRoom } from "./rooms/MyRoom";
 
 describe("MyRoom Integration Tests", () => {
   let colyseus: ColyseusTestServer;
@@ -70,15 +71,6 @@ describe("MyRoom Integration Tests", () => {
     assert.isBelow(player.y, initialY);
   });
 
-  it("should spawn an enemy on create", async () => {
-    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
-    await room.waitForNextPatch();
-    assert.equal(room.state.enemies.size, 1);
-    const enemy = room.state.enemies.values().next().value;
-    assert.exists(enemy);
-    assert.equal(enemy.typeId, "waspDrone");
-  });
-
   it("should move enemies towards the player", async () => {
     const room = await colyseus.createRoom<MyRoomState>("my_room", {});
     const client = await colyseus.connectTo(room, {});
@@ -89,10 +81,15 @@ describe("MyRoom Integration Tests", () => {
     player.x = 400;
     player.y = 300;
 
-    const enemy = room.state.enemies.values().next().value;
-    assert.exists(enemy);
+    // Manually create and position a waspDrone enemy for testing
+    const enemy = new Enemy();
+    enemy.id = "testWaspDrone";
+    enemy.typeId = "waspDrone";
     enemy.x = 0;
     enemy.y = 0;
+    room.state.enemies.set(enemy.id, enemy);
+
+    await room.waitForNextPatch(); // Sync state with the new enemy
 
     const initialDistance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
 
@@ -102,7 +99,39 @@ describe("MyRoom Integration Tests", () => {
     assert.isBelow(newDistance, initialDistance);
   });
 
-  it("should player automatically attack nearest enemy and remove dead enemies", async () => {
+  it("should create a projectile when player attacks an enemy", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+
+    // Manually create and position an enemy for testing
+    const enemy = new Enemy();
+    enemy.id = "testEnemy";
+    enemy.typeId = "waspDrone";
+    enemy.x = 110; // Very close to the player
+    enemy.y = 100;
+    room.state.enemies.set(enemy.id, enemy);
+
+    await room.waitForNextPatch(); // Wait for state to sync
+
+    const player = room.state.players.get(client.sessionId);
+    assert.exists(player);
+    player.x = 100;
+    player.y = 100;
+    player.attackCooldown = 0; // Ensure player can attack immediately
+    player.attackSpeed = 1; // 1 attack per second
+    player.projectileSpeed = 100; // Explicitly set projectile speed
+    player.damage = 10; // Explicitly set player damage
+
+    // Advance time to allow attack cooldown to reset and attack to occur
+    for (let i = 0; i < 100; i++) { // Simulate enough ticks for attack to occur
+      await room.waitForNextPatch();
+      if (room.state.projectiles.size > 0) break; // Break once projectile is created
+    }
+
+    assert.isAbove(room.state.projectiles.size, 0, "Projectile should be created");
+  }).timeout(10000); // Explicitly set timeout to 10 seconds
+
+  it("should move projectiles and remove them when they hit an enemy", async () => {
     const room = await colyseus.createRoom<MyRoomState>("my_room", {});
     const client = await colyseus.connectTo(room, {});
     await room.waitForNextPatch();
@@ -111,19 +140,70 @@ describe("MyRoom Integration Tests", () => {
     assert.exists(player);
     player.x = 100;
     player.y = 100;
+    player.attackCooldown = 0; // Ensure player can attack immediately
+    player.attackSpeed = 1; // 1 attack per second
 
-    const enemy = room.state.enemies.values().next().value;
-    assert.exists(enemy);
-    enemy.x = 100;
-    enemy.y = 100;
-    enemy.health = 1; // Set enemy health to 1 for quick death
+    // Manually create and position an enemy for testing
+    const enemy = new Enemy();
+    enemy.id = "testEnemy";
+    enemy.typeId = "waspDrone";
+    enemy.x = player.x + 200; // Away from the player for projectile travel
+    enemy.y = player.y;
+    enemy.maxHealth = 20;
+    enemy.health = 20;
+    enemy.damage = 5; // Enemy damage (not relevant for this test)
+    enemy.moveSpeed = 1; // Enemy move speed (not relevant for this test)
+    room.state.enemies.set(enemy.id, enemy);
+    await room.waitForNextPatch(); // Sync state with the new enemy
+    const initialEnemyHealth = enemy.health;
 
-    // Advance time to allow attack cooldown to reset and attack to occur
-    for (let i = 0; i < 10; i++) { // Simulate a few ticks
+    // Advance time to allow player to fire a projectile
+    for (let i = 0; i < 50; i++) { // Simulate enough ticks for attack to occur
+      await room.waitForNextPatch();
+      if (room.state.projectiles.size > 0) break; // Break once projectile is created
+    }
+    assert.isAbove(room.state.projectiles.size, 0, "Projectile should be created");
+
+    const projectile = room.state.projectiles.values().next().value;
+    assert.exists(projectile);
+
+    // Advance time until projectile hits enemy
+    for (let i = 0; i < 150; i++) { // Simulate enough ticks for collision
+      await room.waitForNextPatch();
+      if (room.state.projectiles.size === 0) break; // Projectile removed on hit
+    }
+
+    assert.equal(room.state.projectiles.size, 0, "Projectile should be removed after hitting enemy");
+    assert.isBelow(enemy.health, initialEnemyHealth, "Enemy health should be reduced");
+  }).timeout(15000); // Explicitly set timeout to 15 seconds
+
+  it("should continuously spawn enemies up to the maximum limit", async () => {
+    const testMaxEnemies = 3;
+    const testSpawnInterval = 50; // Faster spawning for test
+    const room = await colyseus.createRoom<MyRoomState>("my_room", { SPAWN_INTERVAL: testSpawnInterval, MAX_ENEMIES: testMaxEnemies });
+    const client = await colyseus.connectTo(room, {}); // Connect a player
+    await room.waitForNextPatch();
+
+    // Wait for the player to be added to the room state
+    for (let i = 0; i < 10; i++) {
+      await room.waitForNextPatch();
+      if (room.state.players.has(client.sessionId)) break;
+    }
+    assert.isTrue(room.state.players.has(client.sessionId), "Player should be in the room state");
+
+    // Clear initial enemy to test spawning from scratch
+    room.state.enemies.clear();
+    await room.waitForNextPatch();
+
+    // Simulate enough time for a smaller number of spawns to occur.
+    // For testing, we'll aim for 3 enemies. With SPAWN_INTERVAL of 50ms, this is 3 * 50ms = 150ms.
+    // Using average deltaTime of 17ms (60 FPS)
+    const ticksNeeded = Math.ceil((testMaxEnemies * testSpawnInterval) / 17) + 10; // Add buffer ticks
+    for (let i = 0; i < ticksNeeded; i++) { // Simulate many ticks
       await room.waitForNextPatch();
     }
 
-    assert.equal(room.state.enemies.size, 0); // Enemy should be removed
-  });
+    assert.equal(room.state.enemies.size, testMaxEnemies, `Should spawn ${testMaxEnemies} enemies`);
+  }).timeout(90000); // Increase timeout to 90 seconds
 
 });

@@ -106,9 +106,9 @@ export class GameScene extends Phaser.Scene {
 
                                                             // Visual feedback for damage
                                                             if (player.health < player.previousHealth) {
-                                                                entity.setTint(0xff0000); // Red tint
+                                                                (entity as Phaser.GameObjects.Rectangle).fillColor = 0xff0000; // Red color
                                                                 this.time.delayedCall(100, () => {
-                                                                    entity.clearTint();
+                                                                    (entity as Phaser.GameObjects.Rectangle).fillColor = 0xff0000; // Original player color
                                                                 });
                                                             }
                                                             player.previousHealth = player.health;
@@ -129,20 +129,28 @@ export class GameScene extends Phaser.Scene {
                                                 });
                                     
             $(this.room.state).enemies.onAdd((enemy, sessionId) => {
-                console.log(`Adding enemy: ${sessionId} at (${enemy.x}, ${enemy.y})`);
+                console.log(`Adding enemy: ${sessionId} of type ${enemy.typeId} at (${enemy.x}, ${enemy.y})`);
                 let enemyColor = 0x0000ff; // Default to blue for waspDrone
+                let healthBarColor = 0x00ff00; // Default green health bar
+                // let enemyImageKey = 'enemy'; // Default image key
                 if (enemy.typeId === "spitter") {
                     enemyColor = 0x00ff00; // Green for spitter
+                    healthBarColor = 0xff0000; // Red health bar for spitter
+                    // If we had a spitter.png, we'd use enemyImageKey = 'spitter';
                 } else if (enemy.typeId === "charger") {
                     enemyColor = 0x800080; // Purple for charger
+                    healthBarColor = 0x00ff00; // Green health bar for charger
+                    // If we had a charger.png, we'd use enemyImageKey = 'charger';
                 }
                 const rect = this.add.rectangle(enemy.x, enemy.y, 32, 32, enemyColor);
+                // image.setDisplaySize(32, 32); // Set size
+                // image.setTint(enemyColor); // Apply color as tint
                 const entity = this.physics.add.existing(rect, false) as Phaser.Physics.Arcade.Sprite;
                 entity.setDepth(0); // Explicitly set depth
                 this.enemyEntities[sessionId] = entity;
 
                 // Create health bar
-                const healthBar = this.createHealthBar(32, 4, 0x00ff00);
+                const healthBar = this.createHealthBar(32, 4, healthBarColor);
                 healthBar.setDepth(1); // Health bar on top of enemy
                 healthBar.x = enemy.x - 16;
                 healthBar.y = enemy.y - 20;
@@ -155,10 +163,11 @@ export class GameScene extends Phaser.Scene {
 
                     // Visual feedback for charger's charging state
                     if (enemy.typeId === "charger") {
+                        console.log(`Charger ${sessionId} client-received update: (${enemy.x}, ${enemy.y}). isCharging: ${enemy.isCharging}`);
                         if (enemy.isCharging) {
-                            entity.setTint(0xffff00); // Yellow tint for charging
+                            (entity as Phaser.GameObjects.Rectangle).fillColor = 0xffff00; // Yellow color
                         } else {
-                            entity.clearTint(); // Clear tint when not charging
+                            (entity as Phaser.GameObjects.Rectangle).fillColor = 0x800080; // Original charger color (purple)
                         }
                     }
 
@@ -184,24 +193,28 @@ export class GameScene extends Phaser.Scene {
                             });
             
                                             $(this.room.state).projectiles.onAdd((projectile, projectileId) => {
-                                                console.log(`Adding projectile: ${projectileId} at (${projectile.x}, ${projectile.y})`);
+                                                console.log(`Adding projectile: ${projectileId} of type ${projectile.projectileType} at (${projectile.x}, ${projectile.y})`);
                                                 let projectileColor = 0x00bfff; // Default to light blue for player projectiles
+                                                let projectileSize = 16; // Default size
                                                 if (projectile.projectileType === "spitterProjectile") {
                                                     projectileColor = 0x008000; // Dark green for spitter projectiles
+                                                    projectileSize = 24; // Larger size for spitter projectiles
                                                 }
-                                                const projectileRect = this.add.rectangle(projectile.x, projectile.y, 8, 8, projectileColor);
-                                                projectileRect.setDepth(0); // Explicitly set depth
+                                                const projectileRect = this.add.rectangle(projectile.x, projectile.y, projectileSize, projectileSize, projectileColor);
+                                                projectileRect.setDepth(999); // Ensure it's always on top
+                                                console.log(`DEBUG Client: Projectile ${projectileId} created. Active: ${projectileRect.active}, Visible: ${projectileRect.visible}, Depth: ${projectileRect.depth}, Pos: (${projectileRect.x}, ${projectileRect.y})`);
                                                                     this.projectileEntities[projectileId] = projectileRect;
                                                 
                                                                     $(projectile).onChange(() => {
                                                                         projectileRect.x = projectile.x;
                                                                         projectileRect.y = projectile.y;
                                                                         projectileRect.rotation = projectile.rotation;
+                                                                        console.log(`DEBUG Client: Projectile ${projectileId} client-received update: (${projectile.x.toFixed(2)}, ${projectile.y.toFixed(2)}). TTL: ${projectile.timeToLive.toFixed(2)}`);
                                                                     });
                             });
             
                             $(this.room.state).projectiles.onRemove((projectile, projectileId) => {
-                                console.log(`Removing projectile: ${projectileId}`);
+                                console.log(`Removing projectile: ${projectileId}. Final TTL: ${projectile.timeToLive.toFixed(2)}`);
                                 const entity = this.projectileEntities[projectileId];
                                 if (entity) {
                                     entity.destroy();

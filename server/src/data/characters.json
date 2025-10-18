@@ -7,6 +7,7 @@
       "damage": 12,
       "attackSpeed": 1.0,
       "moveSpeed": 4,
+      "projectileSpeed": 500,
       "armor": 0,
       "critChance": 0.05
     }
