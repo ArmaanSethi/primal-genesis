@@ -116,39 +116,39 @@
 ### 2. Enemy Variety (Spitter - Stationary Ranged)
 - [x] **Data:** Add `spitter` enemy type to `enemies.json` with appropriate `baseStats`, `behavior: "stationary"`, and `attackType: "ranged"`.
     - **Details:** Added a new JSON entry for "spitter" in `server/src/data/enemies.json`. Defined `baseStats` (e.g., `maxHealth: 50`, `damage: 10`, `moveSpeed: 0`, `attackSpeed: 0.5`, `armor: 5`), `behavior: "stationary"`, `attackType: "ranged"`, and `projectileType: "spitterProjectile"`.
-- [x] **Schema:** Update `Enemy` schema to include fields for ranged attack (e.g., `attackRange`, `projectileType`).
+- [x] **Schema:** Update `Enemy` schema to include fields for ranged attack (e.g., `attackRange`, `projectileType`, `projectileSpeed`).
     - **Details:** Added `@type("number") attackRange: number = 0;` and `@type("string") projectileType: string = "";` to the `Enemy` class in `server/src/rooms/schema/MyRoomState.ts`.
-- [ ] **Server Logic (Spawning):** Update enemy spawning to randomly select between `waspDrone` and `spitter`.
-    - **Details:** In `MyRoom.ts`, modify the enemy spawning logic within the `update` method. Instead of always selecting "waspDrone", create an array of available enemy `typeId`s (e.g., `["waspDrone", "spitter"]`). Randomly pick one `typeId` from this array for each new enemy spawn. Ensure the `Enemy` instance is initialized with the correct `baseStats` (including `attackRange` and `projectileType`) from the selected enemy type.
-- [ ] **Server Logic (AI):** Implement stationary behavior for `spitter`.
-    - **Details:** In `MyRoom.ts`, within the enemy AI loop, check `enemy.behavior`. If `enemy.behavior === "stationary"`, prevent the enemy from moving (i.e., skip the position update logic for this enemy).
-- [ ] **Server Logic (Attack):** Implement `spitter`'s ranged attack (lobbing projectile).
-    - **Details:** For `spitter` enemies, if `enemy.attackCooldown` is ready and a player is within `enemy.attackRange`, create a new `Projectile` instance. The projectile should have `ownerId` set to the enemy's ID, and its `damage` and `speed` should come from the `spitter`'s stats. The `projectileType` should be set to "spitterProjectile". The projectile's trajectory should be calculated to "lob" towards the closest player (e.g., a simple straight line for now, or a more complex arc if desired later). Reset `enemy.attackCooldown`.
-- [ ] **Client:** Render `spitter` enemy with a distinct sprite/color.
-    - **Details:** In `GameScene.ts`, within the `enemies.onAdd` callback, check `enemy.typeId`. If it's "spitter", render it with a different color (e.g., green `0x00ff00`) or load a specific sprite (if `spitter.png` is preloaded).
-- [ ] **Client:** Render `spitter`'s projectiles with a distinct sprite/color.
-    - **Details:** In `GameScene.ts`, within the `projectiles.onAdd` callback, check `projectile.projectileType`. If it's "spitterProjectile", render it with a different color (e.g., dark green `0x008000`).
+- [x] **Server Logic (Spawning):** Update enemy spawning to randomly select between `waspDrone` and `spitter`.
+    - **Details:** In `MyRoom.ts`, modified the enemy spawning logic within the `update` method to randomly pick between "waspDrone" and "spitter". Ensured the `Enemy` instance is initialized with the correct `baseStats` (including `attackRange` and `projectileType`) from the selected enemy type.
+- [x] **Server Logic (AI):** Implement stationary behavior for `spitter`.
+    - **Details:** In `MyRoom.ts`, within the enemy AI loop, added a check for `enemy.behavior`. If `enemy.behavior === "stationary"`, the enemy's position update logic is skipped.
+- [x] **Server Logic (Attack):** Implement `spitter`'s ranged attack (lobbing projectile).
+    - **Details:** For `spitter` enemies, if `enemy.attackCooldown` is ready and a player is within `enemy.attackRange`, a new `Projectile` instance is created. The projectile's properties (`ownerId`, `damage`, `speed`, `projectileType`, `rotation`, `x`, `y`) are set based on the `spitter`'s stats and target. The projectile is added to `this.state.projectiles`, and `enemy.attackCooldown` is reset.
+- [x] **Client:** Render `spitter` enemy with a distinct sprite/color.
+    - **Details:** In `GameScene.ts`, within the `enemies.onAdd` callback, added logic to check `enemy.typeId`. If it's "spitter", the enemy is rendered as a green rectangle (`0x00ff00`).
+- [x] **Client:** Render `spitter`'s projectiles with a distinct sprite/color.
+    - **Details:** In `GameScene.ts`, within the `projectiles.onAdd` callback, added logic to check `projectile.projectileType`. If it's "spitterProjectile", the projectile is rendered as a dark green rectangle (`0x008000`).
 - [ ] **Unit Testing:** Add tests for `spitter` spawning and stationary behavior.
     - **Details:** Create a test that spawns a `spitter`. Assert that its `moveSpeed` is 0 and its position does not change over time.
 - [ ] **Unit Testing:** Add tests for `spitter` ranged attack and projectile.
     - **Details:** Simulate a `spitter` and a player within its `attackRange`. Advance the simulation. Assert that a projectile is created with the correct properties and owner.
 
 ### 3. Enemy Variety (Charger - Melee with Charge Attack)
-- [ ] **Data:** Add `charger` enemy type to `enemies.json` with appropriate `baseStats`, `behavior: "charge"`, and `attackType: "melee"`.
-    - **Details:** Add a new JSON entry for "charger" in `server/src/data/enemies.json`. Define `baseStats` (e.g., `maxHealth: 70`, `damage: 15`, `moveSpeed: 10`, `attackSpeed: 0.7`, `armor: 10`), `behavior: "charge"`, `attackType: "melee"`. Add new properties like `chargeSpeed` and `chargeDuration`.
-- [ ] **Schema:** Update `Enemy` schema to include fields for charge attack (e.g., `chargeCooldown`, `chargeSpeed`, `isCharging`, `chargeTargetX`, `chargeTargetY`).
-    - **Details:** Add `@type("number") chargeCooldown: number = 0;`, `@type("number") chargeSpeed: number = 0;`, `@type("boolean") isCharging: boolean = false;`, `@type("number") chargeTargetX: number = 0;`, `@type("number") chargeTargetY: number = 0;` to the `Enemy` class in `server/src/rooms/schema/MyRoomState.ts`.
-- [ ] **Server Logic (Spawning):** Update enemy spawning to include `charger`.
-    - **Details:** In `MyRoom.ts`, add "charger" to the array of randomly selected enemy `typeId`s. Ensure the `Enemy` instance is initialized with the correct `baseStats` for the charger.
-- [ ] **Server Logic (AI):** Implement `charger` behavior (telegraph, rush).
+- [x] **Data:** Add `charger` enemy type to `enemies.json` with appropriate `baseStats`, `behavior: "charge"`, and `attackType: "melee"`.
+    - **Details:** Added a new JSON entry for "charger" in `server/src/data/enemies.json`. Defined `baseStats` (e.g., `maxHealth: 70`, `damage: 15`, `moveSpeed: 5`, `attackSpeed: 0.7`, `armor: 10`), `behavior: "charge"`, `attackType: "melee"`. Added new properties like `chargeSpeed: 20` and `chargeDuration: 1000`.
+- [x] **Schema:** Update `Enemy` schema to include fields for charge attack (e.g., `chargeCooldown`, `chargeSpeed`, `isCharging`, `chargeTargetX`, `chargeTargetY`).
+    - **Details:** Added `@type("number") chargeCooldown: number = 0;`, `@type("number") chargeSpeed: number = 0;`, `@type("boolean") isCharging: boolean = false;`, `@type("number") chargeTargetX: number = 0;`, `@type("number") chargeTargetY: number = 0;` to the `Enemy` class in `server/src/rooms/schema/MyRoomState.ts`.
+- [x] **Server Logic (Spawning):** Update enemy spawning to include `charger`.
+    - **Details:** In `MyRoom.ts`, added "charger" to the array of randomly selected enemy `typeId`s. Ensured the `Enemy` instance is initialized with the correct `baseStats` for the charger.
+- [x] **Server Logic (AI):** Implement `charger` behavior (telegraph, rush).
     - **Details:** For `charger` enemies, if `enemy.behavior === "charge"`:
-        - If not `isCharging` and `chargeCooldown` is ready, select a player as a target, set `chargeTargetX`, `chargeTargetY`, and set `isCharging = true`. Start a short "telegraph" phase (e.g., a brief delay or a visual cue).
-        - During `isCharging`, move the enemy rapidly towards `chargeTargetX`, `chargeTargetY` using `chargeSpeed`.
-        - After reaching the target or a certain duration, reset `isCharging = false` and set `chargeCooldown`.
-- [ ] **Client:** Render `charger` enemy with a distinct sprite/color.
-    - **Details:** In `GameScene.ts`, within the `enemies.onAdd` callback, check `enemy.typeId`. If it's "charger", render it with a different color (e.g., purple `0x800080`) or load a specific sprite.
-- [ ] **Client:** Visual feedback for `charger`'s telegraph and charge.
-    - **Details:** In `GameScene.ts`, within the `enemy.onChange` callback, if `enemy.isCharging` is true, apply a visual effect (e.g., a temporary tint, a trail, or a size increase) to indicate charging.
+        - If not `isCharging` and `chargeCooldown` is ready, the charger enters a telegraph phase, setting `chargeTargetX`, `chargeTargetY`, and a short `chargeCooldown`.
+        - If `isCharging` and `chargeCooldown` is ready, the charger moves rapidly towards its `chargeTarget` using `chargeSpeed`.
+        - Upon reaching the target, `isCharging` is reset, and a longer `chargeCooldown` is applied. `chargeCooldown` is decremented over time.
+- [x] **Client:** Render `charger` enemy with a distinct sprite/color.
+    - **Details:** In `GameScene.ts`, within the `enemies.onAdd` callback, added logic to check `enemy.typeId`. If it's "charger", the enemy is rendered as a purple rectangle (`0x800080`).
+- [x] **Client:** Visual feedback for `charger`'s telegraph and charge.
+    - **Details:** In `GameScene.ts`, within the `enemy.onChange` callback, if `enemy.typeId` is "charger" and `enemy.isCharging` is true, a yellow tint (`0xffff00`) is applied to the enemy sprite. The tint is cleared when `isCharging` is false.
 - [ ] **Unit Testing:** Add tests for `charger` spawning and charge behavior.
     - **Details:** Create a test that spawns a `charger` and a player. Assert that the `charger` eventually enters a charging state and moves rapidly towards the player.
 

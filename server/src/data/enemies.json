@@ -12,5 +12,38 @@
     },
     "behavior": "seekPlayer",
     "attackType": "melee"
+  },
+  "spitter": {
+    "name": "Spitter",
+    "sprite": "spitter.png",
+    "baseStats": {
+      "maxHealth": 50,
+      "health": 50,
+      "damage": 10,
+      "moveSpeed": 0,
+      "attackSpeed": 0.5,
+      "armor": 5,
+      "projectileSpeed": 200
+    },
+    "behavior": "stationary",
+    "attackType": "ranged",
+    "attackRange": 300,
+    "projectileType": "spitterProjectile"
+  },
+  "charger": {
+    "name": "Charger",
+    "sprite": "charger.png",
+    "baseStats": {
+      "maxHealth": 70,
+      "health": 70,
+      "damage": 15,
+      "moveSpeed": 5,
+      "attackSpeed": 0.7,
+      "armor": 10
+    },
+    "behavior": "charge",
+    "attackType": "melee",
+    "chargeSpeed": 20,
+    "chargeDuration": 1000
   }
 }

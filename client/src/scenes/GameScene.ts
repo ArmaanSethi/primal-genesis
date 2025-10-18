@@ -130,7 +130,13 @@ export class GameScene extends Phaser.Scene {
                                     
             $(this.room.state).enemies.onAdd((enemy, sessionId) => {
                 console.log(`Adding enemy: ${sessionId} at (${enemy.x}, ${enemy.y})`);
-                const rect = this.add.rectangle(enemy.x, enemy.y, 32, 32, 0x0000ff);
+                let enemyColor = 0x0000ff; // Default to blue for waspDrone
+                if (enemy.typeId === "spitter") {
+                    enemyColor = 0x00ff00; // Green for spitter
+                } else if (enemy.typeId === "charger") {
+                    enemyColor = 0x800080; // Purple for charger
+                }
+                const rect = this.add.rectangle(enemy.x, enemy.y, 32, 32, enemyColor);
                 const entity = this.physics.add.existing(rect, false) as Phaser.Physics.Arcade.Sprite;
                 entity.setDepth(0); // Explicitly set depth
                 this.enemyEntities[sessionId] = entity;
@@ -146,6 +152,15 @@ export class GameScene extends Phaser.Scene {
                     // Visual feedback for damage (removed tinting)
                     entity.x = enemy.x;
                     entity.y = enemy.y;
+
+                    // Visual feedback for charger's charging state
+                    if (enemy.typeId === "charger") {
+                        if (enemy.isCharging) {
+                            entity.setTint(0xffff00); // Yellow tint for charging
+                        } else {
+                            entity.clearTint(); // Clear tint when not charging
+                        }
+                    }
 
                     // Update health bar position and width
                     const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
@@ -170,7 +185,11 @@ export class GameScene extends Phaser.Scene {
             
                                             $(this.room.state).projectiles.onAdd((projectile, projectileId) => {
                                                 console.log(`Adding projectile: ${projectileId} at (${projectile.x}, ${projectile.y})`);
-                                                const projectileRect = this.add.rectangle(projectile.x, projectile.y, 8, 8, 0x00bfff); // Light blue square, 8x8 pixels
+                                                let projectileColor = 0x00bfff; // Default to light blue for player projectiles
+                                                if (projectile.projectileType === "spitterProjectile") {
+                                                    projectileColor = 0x008000; // Dark green for spitter projectiles
+                                                }
+                                                const projectileRect = this.add.rectangle(projectile.x, projectile.y, 8, 8, projectileColor);
                                                 projectileRect.setDepth(0); // Explicitly set depth
                                                                     this.projectileEntities[projectileId] = projectileRect;
                                                 

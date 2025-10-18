@@ -23,7 +23,13 @@ export class Player extends Schema {
 
   @type("number") attackCooldown: number = 0;
   @type("number") attackRange: number = 0;
+  @type("number") projectileSpeed: number = 0;
   @type("string") projectileType: string = "";
+  @type("number") chargeCooldown: number = 0;
+  @type("number") chargeSpeed: number = 0;
+  @type("boolean") isCharging: boolean = false;
+  @type("number") chargeTargetX: number = 0;
+  @type("number") chargeTargetY: number = 0;
 }
 
 export class Projectile extends Schema {
