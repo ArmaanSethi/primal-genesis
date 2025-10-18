@@ -21,10 +21,10 @@ export class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' });
     }
 
-    private createHealthBar(x: number, y: number, width: number, height: number, color: number): Phaser.GameObjects.Graphics {
+    private createHealthBar(width: number, height: number, color: number): Phaser.GameObjects.Graphics {
         const healthBar = this.add.graphics();
         healthBar.fillStyle(color, 1);
-        healthBar.fillRect(x, y, width, height);
+        healthBar.fillRect(0, 0, width, height);
         return healthBar;
     }
 
@@ -33,6 +33,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        this.load.setBaseURL('assets/images');
+        this.load.image('player', 'player.png');
+        this.load.image('enemy', 'enemy.png');
+
         this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -66,21 +70,19 @@ export class GameScene extends Phaser.Scene {
                     const y = Phaser.Math.Between(0, state.worldHeight);
                     dotGraphics.fillCircle(x, y, 2); // Small dots
                 }
-                // dotGraphics.setDepth(-1); // Remove this, dots should be on top of background
-                // Set camera bounds and follow player
+            dotGraphics.setDepth(0); // Ensure dots are on top of background
+
+            // Set camera bounds and follow player
                 this.cameras.main.setBounds(0, 0, state.worldWidth, state.worldHeight);
 
                 const $ = getStateCallbacks(this.room);
 
                 $(this.room.state).players.onAdd((player, sessionId) => {
-                                                    console.log(`Adding player: ${sessionId} at (${player.x}, ${player.y})`);
-                                                    const graphics = this.add.graphics({ fillStyle: { color: 0xff0000 } });
-                                                    graphics.fillRect(0, 0, 32, 32);
-                                                    const entity = this.physics.add.existing(graphics, false) as Phaser.Physics.Arcade.Image;
-                                                    entity.setPosition(player.x, player.y);
-                                                    this.playerEntities[sessionId] = entity;
-                                    
-                                                    // Make camera follow this client's player
+                console.log(`Adding player: ${sessionId} at (${player.x}, ${player.y})`);
+                const rect = this.add.rectangle(player.x, player.y, 32, 32, 0xff0000);
+                const entity = this.physics.add.existing(rect, false) as Phaser.Physics.Arcade.Sprite;
+                entity.setDepth(0); // Explicitly set depth
+                this.playerEntities[sessionId] = entity;                                                    // Make camera follow this client's player
                                                     if (sessionId === this.room.sessionId) {
                                                         console.log(`Camera: Starting to follow local player ${sessionId}. Entity:`, entity);
                                                         this.cameras.main.startFollow(entity);
@@ -104,14 +106,16 @@ export class GameScene extends Phaser.Scene {
                                     
             $(this.room.state).enemies.onAdd((enemy, sessionId) => {
                 console.log(`Adding enemy: ${sessionId} at (${enemy.x}, ${enemy.y})`);
-                const graphics = this.add.graphics({ fillStyle: { color: 0x0000ff } });
-                graphics.fillRect(0, 0, 32, 32);
-                const entity = this.physics.add.existing(graphics, false) as Phaser.Physics.Arcade.Image;
-                entity.setPosition(enemy.x, enemy.y);
+                const rect = this.add.rectangle(enemy.x, enemy.y, 32, 32, 0x0000ff);
+                const entity = this.physics.add.existing(rect, false) as Phaser.Physics.Arcade.Sprite;
+                entity.setDepth(0); // Explicitly set depth
                 this.enemyEntities[sessionId] = entity;
 
                 // Create health bar
-                const healthBar = this.createHealthBar(enemy.x - 16, enemy.y - 20, 32, 4, 0x00ff00);
+                const healthBar = this.createHealthBar(32, 4, 0x00ff00);
+                healthBar.setDepth(1); // Health bar on top of enemy
+                healthBar.x = enemy.x - 16;
+                healthBar.y = enemy.y - 20;
                 entity.setData('healthBar', healthBar);
 
                 $(enemy).onChange(() => {

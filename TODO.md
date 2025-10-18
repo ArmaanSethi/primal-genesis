@@ -63,9 +63,10 @@
 - [x] **Server:** Handle enemy death (remove from state).
 - [x] **Unit Testing:** Add tests for automatic attack, hit detection, and damage.
 - [x] **Client:** Add visual feedback for damage (e.g., enemy flash).
-- [ ] **Client:** Display health bars for enemies.
-- [ ] **Client:** Standardize rendering depth for all game objects (players, enemies, health bars, projectiles).
+- [x] **Client:** Display health bars for enemies.
+- [x] **Client:** Fix health bar centering for enemies.
+- [x] **Client:** Standardize rendering depth for all game objects (players, enemies, health bars, projectiles).
 
-### 5. Asset Placeholders (To Do)
+### 5. Asset Placeholders (In Progress)
 - [ ] **Client:** Replace the placeholder `Rectangle` for the player with a `player.png` sprite.
 - [ ] **Client:** Replace the placeholder `Rectangle` for the enemy with an `enemy.png` sprite.
