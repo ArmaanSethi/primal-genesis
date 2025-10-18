@@ -40,12 +40,24 @@ export class GameScene extends Phaser.Scene {
             this.room = await client.joinOrCreate('my_room');
             console.log('Joined successfully!');
 
+            // Add a background to represent the world bounds
+            const worldBackground = this.add.rectangle(0, 0, this.room.state.worldWidth, this.room.state.worldHeight, 0x333366).setOrigin(0);
+            worldBackground.setStrokeStyle(4, 0x666699); // Add a border
+
+            // Set camera bounds and follow player
+            this.cameras.main.setBounds(0, 0, this.room.state.worldWidth, this.room.state.worldHeight);
+
             const $ = getStateCallbacks(this.room);
 
             $(this.room.state).players.onAdd((player, sessionId) => {
                 console.log(`Adding player: ${sessionId}`);
                 const entity = this.add.rectangle(player.x, player.y, 32, 32, 0xff0000);
                 this.playerEntities[sessionId] = entity;
+
+                // Make camera follow this client's player
+                if (sessionId === this.room.sessionId) {
+                    this.cameras.main.startFollow(entity);
+                }
 
                 $(player).onChange(() => {
                     entity.x = player.x;

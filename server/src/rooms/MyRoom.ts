@@ -53,6 +53,10 @@ export class MyRoom extends Room<MyRoomState> {
       if (player.inputX !== 0 || player.inputY !== 0) {
         player.x += player.inputX * speed;
         player.y += player.inputY * speed;
+
+        // Clamp player position to world boundaries
+        player.x = Math.max(0, Math.min(this.state.worldWidth, player.x));
+        player.y = Math.max(0, Math.min(this.state.worldHeight, player.y));
       }
     });
 
@@ -80,6 +84,10 @@ export class MyRoom extends Room<MyRoomState> {
       const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
       enemy.x += Math.cos(angle) * enemy.moveSpeed;
       enemy.y += Math.sin(angle) * enemy.moveSpeed;
+
+      // Clamp enemy position to world boundaries
+      enemy.x = Math.max(0, Math.min(this.state.worldWidth, enemy.x));
+      enemy.y = Math.max(0, Math.min(this.state.worldHeight, enemy.y));
     });
   }
 

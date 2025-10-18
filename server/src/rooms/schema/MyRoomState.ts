@@ -32,4 +32,7 @@ export class Enemy extends Schema {
 export class MyRoomState extends Schema {
   @type({ map: Player }) players = new MapSchema<Player>();
   @type({ map: Enemy }) enemies = new MapSchema<Enemy>();
+
+  @type("number") worldWidth: number = 1600;
+  @type("number") worldHeight: number = 1600;
 }

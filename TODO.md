@@ -23,9 +23,7 @@
 
 (No active bugs. All known issues resolved!)
 
-## Next Steps
-
-Phase 1 is complete. The next session will begin work on **Phase 2: Implementing Core GDD Features**, starting with adding enemies to the game.
+---
 
 ## Phase 1: The Barebones Prototype (A Moving Player) - COMPLETE
 
@@ -39,7 +37,7 @@ Phase 1 is complete. The next session will begin work on **Phase 2: Implementing
 - [x] **Server Logic:** Initialize players with stats from data file.
 - [x] **Unit Testing:** Verify players are created with correct base stats.
 
-### 2. Enemies (In Progress)
+### 2. Enemies (Complete)
 - [x] **Data:** Create `server/src/data/enemies.json`.
 - [x] **Schema:** Create an `Enemy` schema and add to `RoomState`.
 - [x] **Server Logic (Spawning):** Implement a basic system to spawn enemies.
@@ -48,13 +46,21 @@ Phase 1 is complete. The next session will begin work on **Phase 2: Implementing
 - [x] **Server Logic (AI):** Implement simple "seek player" AI in the game loop.
 - [x] **Unit Testing (AI):** Add a test for the enemy AI logic.
 
-### 3. Combat (To Do)
+### 3. World & Camera (In Progress)
+- [x] **Schema:** Add `worldWidth` and `worldHeight` to the `RoomState`.
+- [x] **Server Logic:** Enforce world boundaries for all entities in the `update` loop.
+- [x] **Client:** Add a visual representation of the world boundaries.
+- [x] **Client:** Implement a camera that follows the player.
+- [x] **Client:** Improve visual clarity of world boundaries (e.g., lighter background, distinct border).
+- [ ] **Client:** Implement a subtle grid over the world background for visual context.
+
+### 4. Combat (To Do)
 - [ ] **Schema:** Add `health` to `Player` and `Enemy` schemas (already done, can be checked off).
 - [ ] **Server Logic:** Implement player's automatic attack.
 - [ ] **Server Logic:** Implement hit detection and damage application.
 - [ ] **Unit Testing:** Add tests for combat logic.
 - [ ] **Client:** Add visual feedback for damage.
 
-### 4. Asset Placeholders (To Do)
+### 5. Asset Placeholders (To Do)
 - [ ] **Client:** Replace the placeholder `Rectangle` for the player with a `player.png` sprite.
 - [ ] **Client:** Replace the placeholder `Rectangle` for the enemy with an `enemy.png` sprite.
