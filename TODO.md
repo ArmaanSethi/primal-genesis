@@ -13,6 +13,7 @@
 ## Development Log & Conventions
 
 - **Colyseus Client Listeners:** After significant debugging, the correct and stable way to implement client-side state listeners is by using the `getStateCallbacks` utility from `colyseus.js`.
+- **Phaser Scene Lifecycle:** Asynchronous operations, such as connecting to the Colyseus server, should be performed in the `create()` method, which can be safely marked `async`. The `init()` method is not compatible with `await` and should be used only for synchronous data initialization.
 - **Test Runner Timeout:** Configured Mocha to have a 5-second timeout for tests to prevent hanging processes (`--timeout 5000` in `package.json`).
 
 *Meta-Note: This document must be kept up-to-date. As tasks are completed, they should be marked with `[x]`. Unit tests should be added for all new functionality where possible. A 'Current Bugs' section will be maintained below, detailing active issues, diagnostic steps, and relevant logs.*
@@ -21,17 +22,7 @@
 
 ## Current Bugs
 
-### 1. Camera Not Following Player & Grid Rendering Issue
-
-**Status:** Active
-
-**Issue:** The camera is not following the player, resulting in a fixed viewport and the player appearing to go out of bounds. The grid is also not rendering correctly, appearing as a small square in the top-left.
-
-**Next Diagnostic Step:**
-- Analyze the debugging logs from `GameScene.ts` to verify client-side `worldWidth`/`worldHeight`, player positions, and camera state (position, bounds, zoom, scrollX, scrollY).
-
-**Required Logs:**
-- **Browser Console Output:** After refreshing client and moving player around.
+(No active bugs. All known issues resolved!)
 
 ---
 
@@ -56,21 +47,23 @@
 - [x] **Server Logic (AI):** Implement simple "seek player" AI in the game loop.
 - [x] **Unit Testing (AI):** Add a test for the enemy AI logic.
 
-### 3. World & Camera (In Progress)
+### 3. World & Camera (Complete)
 - [x] **Schema:** Add `worldWidth` and `worldHeight` to the `RoomState`.
 - [x] **Server Logic:** Enforce world boundaries for all entities in the `update` loop.
 - [x] **Client:** Add a visual representation of the world boundaries.
 - [x] **Client:** Implement a camera that follows the player.
 - [x] **Client:** Improve visual clarity of world boundaries (e.g., lighter background, distinct border).
 - [x] **Server:** Increase world size to 3200x3200.
-- [ ] **Client:** Implement random background dots for visual context.
+- [x] **Client:** Implement random background dots for visual context.
+- [x] **Client:** Fix rendering order of background elements (dots are behind the background).
 
-### 4. Combat (To Do)
-- [ ] **Schema:** Add `health` to `Player` and `Enemy` schemas (already done, can be checked off).
-- [ ] **Server Logic:** Implement player's automatic attack.
-- [ ] **Server Logic:** Implement hit detection and damage application.
-- [ ] **Unit Testing:** Add tests for combat logic.
-- [ ] **Client:** Add visual feedback for damage.
+### 4. Combat (In Progress)
+- [ ] **Server:** Implement player's automatic attack (targeting nearest enemy).
+- [ ] **Server:** Implement hit detection and damage application.
+- [ ] **Server:** Handle enemy death (remove from state).
+- [ ] **Unit Testing:** Add tests for automatic attack, hit detection, and damage.
+- [ ] **Client:** Add visual feedback for damage (e.g., enemy flash).
+- [ ] **Client:** Display health bars for enemies.
 
 ### 5. Asset Placeholders (To Do)
 - [ ] **Client:** Replace the placeholder `Rectangle` for the player with a `player.png` sprite.

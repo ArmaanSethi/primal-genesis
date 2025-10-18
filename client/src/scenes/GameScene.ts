@@ -49,18 +49,17 @@ export class GameScene extends Phaser.Scene {
                 // Add a background to represent the world bounds
                 const worldBackground = this.add.rectangle(0, 0, state.worldWidth, state.worldHeight, 0x333366).setOrigin(0);
                 worldBackground.setStrokeStyle(4, 0x666699);
+                worldBackground.setDepth(-1); // Ensure background is behind everything else
 
-                // Add a prominent grid for debugging
-                const graphics = this.add.graphics({ lineStyle: { width: 4, color: 0xffffff, alpha: 1 } });
-                const gridSize = 128;
-                for (let x = 0; x < state.worldWidth; x += gridSize) {
-                    graphics.lineBetween(x, 0, x, state.worldHeight);
+                // Add random dots for visual context
+                const dotGraphics = this.add.graphics({ fillStyle: { color: 0xaaaaaa, alpha: 0.5 } });
+                const numberOfDots = 500;
+                for (let i = 0; i < numberOfDots; i++) {
+                    const x = Phaser.Math.Between(0, state.worldWidth);
+                    const y = Phaser.Math.Between(0, state.worldHeight);
+                    dotGraphics.fillCircle(x, y, 2); // Small dots
                 }
-                for (let y = 0; y < state.worldHeight; y += gridSize) {
-                    graphics.lineBetween(0, y, state.worldWidth, y);
-                }
-                graphics.setDepth(-1);
-
+                // dotGraphics.setDepth(-1); // Remove this, dots should be on top of background
                 // Set camera bounds and follow player
                 this.cameras.main.setBounds(0, 0, state.worldWidth, state.worldHeight);
 
