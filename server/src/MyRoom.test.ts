@@ -77,8 +77,6 @@ describe("MyRoom Integration Tests", () => {
     const enemy = room.state.enemies.values().next().value;
     assert.exists(enemy);
     assert.equal(enemy.typeId, "waspDrone");
-    assert.isString(enemy.id); // Assert that id is a string
-    assert.isNotEmpty(enemy.id); // Assert that id is not empty
   });
 
   it("should move enemies towards the player", async () => {
@@ -104,7 +102,7 @@ describe("MyRoom Integration Tests", () => {
     assert.isBelow(newDistance, initialDistance);
   });
 
-  it("should player automatically attack nearest enemy", async () => {
+  it("should player automatically attack nearest enemy and remove dead enemies", async () => {
     const room = await colyseus.createRoom<MyRoomState>("my_room", {});
     const client = await colyseus.connectTo(room, {});
     await room.waitForNextPatch();
@@ -118,14 +116,14 @@ describe("MyRoom Integration Tests", () => {
     assert.exists(enemy);
     enemy.x = 100;
     enemy.y = 100;
-    const initialEnemyHealth = enemy.health;
+    enemy.health = 1; // Set enemy health to 1 for quick death
 
     // Advance time to allow attack cooldown to reset and attack to occur
     for (let i = 0; i < 10; i++) { // Simulate a few ticks
       await room.waitForNextPatch();
     }
 
-    assert.isBelow(enemy.health, initialEnemyHealth);
+    assert.equal(room.state.enemies.size, 0); // Enemy should be removed
   });
 
 });

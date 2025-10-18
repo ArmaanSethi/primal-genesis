@@ -22,15 +22,7 @@
 
 ## Current Bugs
 
-### 1. Syntax Error in `server/src/rooms/MyRoom.ts`
-
-**Status:** Active
-
-**Issue:** The `update` method in `server/src/rooms/MyRoom.ts` has a syntax error (`Declaration or statement expected`) due to a previous text replacement, causing the tests to fail.
-
-**Next Diagnostic Step:**
-- Rewrite the `update` method in `server/src/rooms/MyRoom.ts` to correct the syntax and ensure all logic is properly structured.
-
+(No active bugs. All known issues resolved!)
 
 ---
 
@@ -65,11 +57,11 @@
 - [x] **Client:** Implement random background dots for visual context.
 - [x] **Client:** Fix rendering order of background elements (dots are behind the background).
 
-### 4. Combat (In Progress)
+### 4. Combat (Complete)
 - [x] **Server:** Implement player's automatic attack (targeting nearest enemy).
-- [ ] **Server:** Implement hit detection and damage application.
-- [ ] **Server:** Handle enemy death (remove from state).
-- [ ] **Unit Testing:** Add tests for automatic attack, hit detection, and damage.
+- [x] **Server:** Implement hit detection and damage application.
+- [x] **Server:** Handle enemy death (remove from state).
+- [x] **Unit Testing:** Add tests for automatic attack, hit detection, and damage.
 - [ ] **Client:** Add visual feedback for damage (e.g., enemy flash).
 - [ ] **Client:** Display health bars for enemies.
 

@@ -103,12 +103,21 @@ export class GameScene extends Phaser.Scene {
                                                     entity.setPosition(enemy.x, enemy.y);
                                                     this.enemyEntities[sessionId] = entity;
                                     
-                                                    $(enemy).onChange(() => {
-                                                        entity.x = enemy.x;
-                                                        entity.y = enemy.y;
-                                                        console.log(`Enemy ${sessionId} updated to (${enemy.x}, ${enemy.y})`);
-                                                    });
-                });
+                                                                    $(enemy).onChange(() => {
+                                                                        // Visual feedback for damage
+                                                                        if (enemy.health < enemy.maxHealth) {
+                                                                            const entity = this.enemyEntities[sessionId];
+                                                                            if (entity) {
+                                                                                entity.setTint(0xff0000); // Red tint for damage
+                                                                                this.time.delayedCall(100, () => {
+                                                                                    entity.clearTint();
+                                                                                });
+                                                                            }
+                                                                        }
+                                                                        entity.x = enemy.x;
+                                                                        entity.y = enemy.y;
+                                                                        console.log(`Enemy ${sessionId} updated to (${enemy.x}, ${enemy.y})`);
+                                                                    });                });
 
                 $(this.room.state).enemies.onRemove((enemy, sessionId) => {
                     console.log(`Removing enemy: ${sessionId}`);
