@@ -40,69 +40,85 @@ export class GameScene extends Phaser.Scene {
             this.room = await client.joinOrCreate('my_room');
             console.log('Joined successfully!');
 
-            // Add a background to represent the world bounds
-            const worldBackground = this.add.rectangle(0, 0, this.room.state.worldWidth, this.room.state.worldHeight, 0x333366).setOrigin(0);
-            worldBackground.setStrokeStyle(4, 0x666699);
+            // Move this code inside onStateChange.once
+            // console.log(`Client World Dimensions: ${this.room.state.worldWidth}x${this.room.state.worldHeight}`);
 
-            // Add a subtle grid
-            const graphics = this.add.graphics({ lineStyle: { width: 1, color: 0x666699, alpha: 0.3 } }); // More subtle alpha
-            const gridSize = 128; // Larger grid cells
-            for (let x = 0; x < this.room.state.worldWidth; x += gridSize) {
-                graphics.lineBetween(x, 0, x, this.room.state.worldHeight);
-            }
-            for (let y = 0; y < this.room.state.worldHeight; y += gridSize) {
-                graphics.lineBetween(0, y, this.room.state.worldWidth, y);
-            }
-            graphics.setDepth(-1); // Draw grid behind other objects
+            this.room.onStateChange.once((state) => {
+                console.log(`Client World Dimensions: ${state.worldWidth}x${state.worldHeight}`);
 
-            // Set camera bounds and follow player
-            this.cameras.main.setBounds(0, 0, this.room.state.worldWidth, this.room.state.worldHeight);
+                // Add a background to represent the world bounds
+                const worldBackground = this.add.rectangle(0, 0, state.worldWidth, state.worldHeight, 0x333366).setOrigin(0);
+                worldBackground.setStrokeStyle(4, 0x666699);
 
-            const $ = getStateCallbacks(this.room);
-
-            $(this.room.state).players.onAdd((player, sessionId) => {
-                console.log(`Adding player: ${sessionId}`);
-                const entity = this.add.rectangle(player.x, player.y, 32, 32, 0xff0000);
-                this.playerEntities[sessionId] = entity;
-
-                // Make camera follow this client's player
-                if (sessionId === this.room.sessionId) {
-                    this.cameras.main.startFollow(entity);
+                // Add a prominent grid for debugging
+                const graphics = this.add.graphics({ lineStyle: { width: 4, color: 0xffffff, alpha: 1 } });
+                const gridSize = 128;
+                for (let x = 0; x < state.worldWidth; x += gridSize) {
+                    graphics.lineBetween(x, 0, x, state.worldHeight);
                 }
+                for (let y = 0; y < state.worldHeight; y += gridSize) {
+                    graphics.lineBetween(0, y, state.worldWidth, y);
+                }
+                graphics.setDepth(-1);
 
-                $(player).onChange(() => {
-                    entity.x = player.x;
-                    entity.y = player.y;
+                // Set camera bounds and follow player
+                this.cameras.main.setBounds(0, 0, state.worldWidth, state.worldHeight);
+
+                const $ = getStateCallbacks(this.room);
+
+                $(this.room.state).players.onAdd((player, sessionId) => {
+                                                    console.log(`Adding player: ${sessionId} at (${player.x}, ${player.y})`);
+                                                    const graphics = this.add.graphics({ fillStyle: { color: 0xff0000 } });
+                                                    graphics.fillRect(0, 0, 32, 32);
+                                                    const entity = this.physics.add.existing(graphics, false) as Phaser.Physics.Arcade.Image;
+                                                    entity.setPosition(player.x, player.y);
+                                                    this.playerEntities[sessionId] = entity;
+                                    
+                                                    // Make camera follow this client's player
+                                                    if (sessionId === this.room.sessionId) {
+                                                        console.log(`Camera: Starting to follow local player ${sessionId}. Entity:`, entity);
+                                                        this.cameras.main.startFollow(entity);
+                                                    }
+                                    
+                                                    $(player).onChange(() => {
+                                                        entity.x = player.x;
+                                                        entity.y = player.y;
+                                                        // console.log(`Player ${sessionId} updated to (${player.x}, ${player.y})`); // Keep this commented for now
+                                                    });
+                                                });
+                                    
+                                                $(this.room.state).players.onRemove((player, sessionId) => {
+                                                    console.log(`Removing player: ${sessionId}`);
+                                                    const entity = this.playerEntities[sessionId];
+                                                    if (entity) {
+                                                        entity.destroy();
+                                                        delete this.playerEntities[sessionId];
+                                                    }
+                                                });
+                                    
+                                                $(this.room.state).enemies.onAdd((enemy, sessionId) => {
+                                                    console.log(`Adding enemy: ${sessionId} at (${enemy.x}, ${enemy.y})`);
+                                                    const graphics = this.add.graphics({ fillStyle: { color: 0x0000ff } });
+                                                    graphics.fillRect(0, 0, 32, 32);
+                                                    const entity = this.physics.add.existing(graphics, false) as Phaser.Physics.Arcade.Image;
+                                                    entity.setPosition(enemy.x, enemy.y);
+                                                    this.enemyEntities[sessionId] = entity;
+                                    
+                                                    $(enemy).onChange(() => {
+                                                        entity.x = enemy.x;
+                                                        entity.y = enemy.y;
+                                                        console.log(`Enemy ${sessionId} updated to (${enemy.x}, ${enemy.y})`);
+                                                    });
                 });
-            });
 
-            $(this.room.state).players.onRemove((player, sessionId) => {
-                console.log(`Removing player: ${sessionId}`);
-                const entity = this.playerEntities[sessionId];
-                if (entity) {
-                    entity.destroy();
-                    delete this.playerEntities[sessionId];
-                }
-            });
-
-            $(this.room.state).enemies.onAdd((enemy, sessionId) => {
-                console.log(`Adding enemy: ${sessionId}`);
-                const entity = this.add.rectangle(enemy.x, enemy.y, 32, 32, 0x0000ff);
-                this.enemyEntities[sessionId] = entity;
-
-                $(enemy).onChange(() => {
-                    entity.x = enemy.x;
-                    entity.y = enemy.y;
+                $(this.room.state).enemies.onRemove((enemy, sessionId) => {
+                    console.log(`Removing enemy: ${sessionId}`);
+                    const entity = this.enemyEntities[sessionId];
+                    if (entity) {
+                        entity.destroy();
+                        delete this.enemyEntities[sessionId];
+                    }
                 });
-            });
-
-            $(this.room.state).enemies.onRemove((enemy, sessionId) => {
-                console.log(`Removing enemy: ${sessionId}`);
-                const entity = this.enemyEntities[sessionId];
-                if (entity) {
-                    entity.destroy();
-                    delete this.enemyEntities[sessionId];
-                }
             });
 
         } catch (e) {
@@ -114,6 +130,9 @@ export class GameScene extends Phaser.Scene {
         if (!this.room) {
             return;
         }
+
+        // Log camera state
+        console.log(`Camera: x=${this.cameras.main.scrollX}, y=${this.cameras.main.scrollY}, zoom=${this.cameras.main.zoom}`);
 
         this.inputPayload.x = 0;
         this.inputPayload.y = 0;

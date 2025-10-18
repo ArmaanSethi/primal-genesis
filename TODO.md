@@ -21,7 +21,17 @@
 
 ## Current Bugs
 
-(No active bugs. All known issues resolved!)
+### 1. Camera Not Following Player & Grid Rendering Issue
+
+**Status:** Active
+
+**Issue:** The camera is not following the player, resulting in a fixed viewport and the player appearing to go out of bounds. The grid is also not rendering correctly, appearing as a small square in the top-left.
+
+**Next Diagnostic Step:**
+- Analyze the debugging logs from `GameScene.ts` to verify client-side `worldWidth`/`worldHeight`, player positions, and camera state (position, bounds, zoom, scrollX, scrollY).
+
+**Required Logs:**
+- **Browser Console Output:** After refreshing client and moving player around.
 
 ---
 
@@ -52,9 +62,8 @@
 - [x] **Client:** Add a visual representation of the world boundaries.
 - [x] **Client:** Implement a camera that follows the player.
 - [x] **Client:** Improve visual clarity of world boundaries (e.g., lighter background, distinct border).
-- [x] **Client:** Implement a subtle grid over the world background for visual context.
-- [ ] **Client:** Fix grid rendering issue (appears as a square, not a grid).
-- [ ] **Server:** Increase world size to 3200x3200.
+- [x] **Server:** Increase world size to 3200x3200.
+- [ ] **Client:** Implement random background dots for visual context.
 
 ### 4. Combat (To Do)
 - [ ] **Schema:** Add `health` to `Player` and `Enemy` schemas (already done, can be checked off).
