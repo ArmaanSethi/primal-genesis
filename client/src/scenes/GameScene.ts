@@ -6,8 +6,10 @@ import type { MyRoomState } from '../../../server/src/rooms/schema/MyRoomState';
 
 export class GameScene extends Phaser.Scene {
     private room: Room<MyRoomState>;
-    private playerEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
-    private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
+    private playerEntities: { [sessionId: string]: Phaser.GameObjects.Image } = {};
+    private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Image } = {};
+    private projectileEntities: { [projectileId: string]: Phaser.GameObjects.Image } = {};
+    private playerHealthText: Phaser.GameObjects.Text;
 
     // Input keys
     private keyW: Phaser.Input.Keyboard.Key;
@@ -33,6 +35,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        // Removed this.load.image('projectile', 'assets/projectile.png');
+
         this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -82,12 +86,33 @@ export class GameScene extends Phaser.Scene {
                                                     if (sessionId === this.room.sessionId) {
                                                         console.log(`Camera: Starting to follow local player ${sessionId}. Entity:`, entity);
                                                         this.cameras.main.startFollow(entity);
+
+                                                        // Initialize player health text
+                                                        this.playerHealthText = this.add.text(10, 10, '', { fontSize: '24px', color: '#ffffff' });
+                                                        this.playerHealthText.setScrollFactor(0); // Keep text fixed on camera
+                                                        this.playerHealthText.setDepth(100); // Ensure it's always on top
+
+                                                        // Initialize previous health for damage feedback
+                                                        player.previousHealth = player.health;
                                                     }
                                     
                                                     $(player).onChange(() => {
                                                         entity.x = player.x;
                                                         entity.y = player.y;
                                                         // console.log(`Player ${sessionId} updated to (${player.x}, ${player.y})`); // Keep this commented for now
+
+                                                        if (sessionId === this.room.sessionId) {
+                                                            this.playerHealthText.setText(`Health: ${player.health}/${player.maxHealth}`);
+
+                                                            // Visual feedback for damage
+                                                            if (player.health < player.previousHealth) {
+                                                                entity.setTint(0xff0000); // Red tint
+                                                                this.time.delayedCall(100, () => {
+                                                                    entity.clearTint();
+                                                                });
+                                                            }
+                                                            player.previousHealth = player.health;
+                                                        }
                                                     });
                                                 });
                                     
@@ -97,6 +122,9 @@ export class GameScene extends Phaser.Scene {
                                                     if (entity) {
                                                         entity.destroy();
                                                         delete this.playerEntities[sessionId];
+                                                    }
+                                                    if (sessionId === this.room.sessionId && this.playerHealthText) {
+                                                        this.playerHealthText.destroy();
                                                     }
                                                 });
                                     
@@ -115,16 +143,7 @@ export class GameScene extends Phaser.Scene {
                 entity.setData('healthBar', healthBar);
 
                 $(enemy).onChange(() => {
-                    // Visual feedback for damage
-                    if (enemy.health < enemy.maxHealth) {
-                        const entity = this.enemyEntities[sessionId];
-                        if (entity) {
-                            entity.setTint(0xff0000); // Red tint for damage
-                            this.time.delayedCall(100, () => {
-                                entity.clearTint();
-                            });
-                        }
-                    }
+                    // Visual feedback for damage (removed tinting)
                     entity.x = enemy.x;
                     entity.y = enemy.y;
 
@@ -138,17 +157,38 @@ export class GameScene extends Phaser.Scene {
                 });
             });
 
-            $(this.room.state).enemies.onRemove((enemy, sessionId) => {
-                console.log(`Removing enemy: ${sessionId}`);
-                const entity = this.enemyEntities[sessionId];
-                if (entity) {
-                    const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
-                    healthBar.destroy();
-                    entity.destroy();
-                    delete this.enemyEntities[sessionId];
-                }
-            });
-            });
+                            $(this.room.state).enemies.onRemove((enemy, sessionId) => {
+                                console.log(`Removing enemy: ${sessionId}`);
+                                const entity = this.enemyEntities[sessionId];
+                                if (entity) {
+                                    const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
+                                    healthBar.destroy();
+                                    entity.destroy();
+                                    delete this.enemyEntities[sessionId];
+                                }
+                            });
+            
+                                            $(this.room.state).projectiles.onAdd((projectile, projectileId) => {
+                                                console.log(`Adding projectile: ${projectileId} at (${projectile.x}, ${projectile.y})`);
+                                                const projectileRect = this.add.rectangle(projectile.x, projectile.y, 8, 8, 0x00bfff); // Light blue square, 8x8 pixels
+                                                projectileRect.setDepth(0); // Explicitly set depth
+                                                                    this.projectileEntities[projectileId] = projectileRect;
+                                                
+                                                                    $(projectile).onChange(() => {
+                                                                        projectileRect.x = projectile.x;
+                                                                        projectileRect.y = projectile.y;
+                                                                        projectileRect.rotation = projectile.rotation;
+                                                                    });
+                            });
+            
+                            $(this.room.state).projectiles.onRemove((projectile, projectileId) => {
+                                console.log(`Removing projectile: ${projectileId}`);
+                                const entity = this.projectileEntities[projectileId];
+                                if (entity) {
+                                    entity.destroy();
+                                    delete this.projectileEntities[projectileId];
+                                }
+                            });            });
 
         } catch (e) {
             console.error('Join error', e);
