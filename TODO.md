@@ -30,7 +30,7 @@
 
 ---
 
-## Phase 2: Implementing Core GDD Features
+## Phase 2: Implementing Core GDD Features - COMPLETE
 
 ### 1. Player Character Enhancement (Complete)
 - [x] **Data:** Create `server/src/data/characters.json`.
@@ -67,6 +67,101 @@
 - [x] **Client:** Fix health bar centering for enemies.
 - [x] **Client:** Standardize rendering depth for all game objects (players, enemies, health bars, projectiles).
 
-### 5. Asset Placeholders (In Progress)
-- [ ] **Client:** Replace the placeholder `Rectangle` for the player with a `player.png` sprite.
-- [ ] **Client:** Replace the placeholder `Rectangle` for the enemy with an `enemy.png` sprite.
+### 5. Asset Placeholders (Complete)
+- [x] **Client:** Replace the placeholder `Rectangle` for the player with a `player.png` sprite.
+- [x] **Client:** Replace the placeholder `Rectangle` for the enemy with an `enemy.png` sprite.
+
+---
+
+## Phase 3: Item System & World Interaction
+
+### 1. Item System
+- [ ] **Data:** Define `Item` data structure in `items.json` (based on GDD examples).
+- [ ] **Schema:** Define `ItemState` schema in `MyRoomState.ts`.
+- [ ] **Schema:** Add `items: ArraySchema<ItemState>` to `Player` schema.
+- [ ] **Server Logic:** Implement item generation logic (e.g., what items can drop, rarity distribution).
+- [ ] **Server Logic:** Implement item pickup logic (player collides with item, item added to player's `items` array).
+- [ ] **Server Logic:** Apply item effects to player stats (e.g., increase `attackSpeed`, `damage`).
+- [ ] **Client:** Render item sprites in the world.
+- [ ] **Client:** Display item information on pickup (e.g., temporary HUD message).
+- [ ] **Unit Testing:** Add tests for item generation, pickup, and stat application.
+
+### 2. Interactables (Chests, Tri-Shops, etc.)
+- [ ] **Data:** Define `Interactable` data structure (e.g., `chests.json`, `trishops.json`).
+- [ ] **Schema:** Define `InteractableState` schema in `MyRoomState.ts` (type, position, state).
+- [ ] **Schema:** Add `interactables: MapSchema<InteractableState>` to `RoomState`.
+- [ ] **Server Logic (Director):** Implement procedural map population logic to spawn interactables based on GDD credit budget.
+- [ ] **Server Logic:** Implement player interaction logic (e.g., `room.onMessage("interact", ...)` to open chests, activate shops).
+- [ ] **Client:** Render interactable sprites in the world.
+- [ ] **Client:** Visual feedback for interaction (e.g., opening chest animation, UI for Tri-Shop).
+- [ ] **Unit Testing:** Add tests for Director logic and player interaction.
+
+### 3. Player HUD (Basic)
+- [ ] **Client:** Display player's current health and max health.
+- [ ] **Client:** Display player's current items.
+
+---
+
+## Phase 4: Core Gameplay Loop & Difficulty Scaling
+
+### 1. Leveling & XP
+- [ ] **Schema:** Add `xp` and `level` to `Player` schema.
+- [ ] **Server Logic:** Enemies drop XP orbs on death.
+- [ ] **Server Logic:** Player collects XP, levels up, and gains small stat increases.
+- [ ] **Client:** Render XP orbs.
+- [ ] **Client:** Visual feedback for leveling up.
+- [ ] **Unit Testing:** Add tests for XP gain and leveling.
+
+### 2. Time-Based Difficulty Scaling
+- [ ] **Schema:** Add `difficultyLevel` to `RoomState`.
+- [ ] **Server Logic:** Implement difficulty meter that increases over time.
+- [ ] **Server Logic:** Adjust enemy spawn rates, health, damage based on difficulty.
+- [ ] **Unit Testing:** Add tests for difficulty scaling.
+
+### 3. Bio-Resonance Beacon & Holdout Phase
+- [ ] **Schema:** Add `beaconState` and `holdoutTimer` to `RoomState`.
+- [ ] **Server Logic:** Implement beacon activation, holdout timer, and increased enemy spawns.
+- [ ] **Client:** Render Beacon sprite.
+- [ ] **Client:** Display holdout timer and visual feedback.
+- [ ] **Unit Testing:** Add tests for beacon logic.
+
+### 4. Boss Fight
+- [ ] **Schema:** Define `BossState` schema.
+- [ ] **Schema:** Add `boss: BossState` to `RoomState`.
+- [ ] **Server Logic:** Spawn boss after holdout phase.
+- [ ] **Server Logic:** Implement boss AI and attack patterns.
+- [ ] **Client:** Render boss sprite and health bar.
+- [ ] **Unit Testing:** Add tests for boss spawning and basic AI.
+
+### 5. Exit Gates
+- [ ] **Schema:** Define `ExitGateState` schema.
+- [ ] **Schema:** Add `exitGates: ArraySchema<ExitGateState>` to `RoomState`.
+- [ ] **Server Logic:** Spawn exit gates after boss defeat.
+- [ ] **Server Logic:** Implement player interaction with exit gates.
+- [ ] **Client:** Render exit gate sprites.
+- [ ] **Unit Testing:** Add tests for exit gate logic.
+
+---
+
+## Phase 5: Polish & Multiplayer Features
+
+### 1. Multiplayer Rules
+- [ ] **Server:** Implement loot distribution rules (first-come, first-served).
+- [ ] **Server:** Scale difficulty with player count.
+- [ ] **Server:** Implement player revival mechanics.
+- [ ] **Client:** Visual feedback for revival.
+
+### 2. Meta-Progression
+- [ ] **Server:** Implement challenge tracking.
+- [ ] **Server:** Implement unlock system for new items/characters.
+- [ ] **Client:** Display challenges and unlocks.
+
+### 3. UI/UX Enhancements
+- [ ] **Client:** Main Menu and Lobby scenes.
+- [ ] **Client:** Pause menu.
+- [ ] **Client:** Visual effects (particles, screen shake).
+- [ ] **Client:** Sound effects and music.
+
+### 4. Client-Side Prediction & Interpolation
+- [ ] **Client:** Implement client-side prediction for player movement.
+- [ ] **Client:** Implement interpolation for remote player/enemy movement.

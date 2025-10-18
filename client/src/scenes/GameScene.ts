@@ -33,10 +33,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.setBaseURL('assets/images');
-        this.load.image('player', 'player.png');
-        this.load.image('enemy', 'enemy.png');
-
         this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
         this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
