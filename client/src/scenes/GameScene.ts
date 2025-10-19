@@ -79,10 +79,10 @@ export class GameScene extends Phaser.Scene {
         // Destroy any existing pickup messages to prevent overlap
         this.cleanupOldPickupMessages(true); // Force cleanup all existing messages
 
-        // Create pickup message at the bottom of the right sidebar to avoid overlap
+        // Create pickup message in the right sidebar area
         const rightSidebarX = this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH + 10;
-        const bottomY = this.UI_CONFIG.VIEWPORT_HEIGHT - 80; // Near bottom of screen
-        const messageText = this.add.text(rightSidebarX, bottomY, message, {
+        const pickupY = 450; // Below inventory, above bottom
+        const messageText = this.add.text(rightSidebarX, pickupY, message, {
             fontSize: '16px',
             color: '#ffff00',
             fontStyle: 'bold',
@@ -375,7 +375,7 @@ export class GameScene extends Phaser.Scene {
 
                                                         // LEFT SIDEBAR - Help Text
                                                         this.helpText = this.add.text(10, 10,
-                                                            `🎮 PRIMAL GENESIS v1.0\n\n` +
+                                                            `🎮 PRIMAL GENESIS v0.1\n\n` +
                                                             `📦 OBJECTIVES:\n` +
                                                             `Find items → Activate beacon →\n` +
                                                             `Survive holdout → Defeat boss\n\n` +
@@ -468,8 +468,8 @@ export class GameScene extends Phaser.Scene {
                                                         this.stageText.setScrollFactor(0);
                                                         this.stageText.setDepth(100);
 
-                                                        // RIGHT SIDEBAR - Objective Information
-                                                        this.objectiveText = this.add.text(rightSidebarX, 140,
+                                                        // RIGHT SIDEBAR - Objective Information (moved up to create more space)
+                                                        this.objectiveText = this.add.text(rightSidebarX, 100,
                                                             `🎯 PRIMARY OBJECTIVE:\n` +
                                                             `Survive and collect items\n\n` +
                                                             `📦 Find: Bio-Resonance Beacon\n` +
@@ -493,8 +493,8 @@ export class GameScene extends Phaser.Scene {
                                                         this.objectiveText.setScrollFactor(0);
                                                         this.objectiveText.setDepth(100);
 
-                                                        // RIGHT SIDEBAR - Inventory
-                                                        this.inventoryText = this.add.text(rightSidebarX, 260,
+                                                        // RIGHT SIDEBAR - Inventory (moved down to create more space for objectives)
+                                                        this.inventoryText = this.add.text(rightSidebarX, 320,
                                                             `🎒 INVENTORY:\nNo items collected\n\n💡 Explore to find alien tech!`,
                                                             {
                                                                 fontSize: '12px',
