@@ -26,6 +26,14 @@ export class GameScene extends Phaser.Scene {
     private keyD!: Phaser.Input.Keyboard.Key;
     private keyH!: Phaser.Input.Keyboard.Key; // Toggle help
     private keyE!: Phaser.Input.Keyboard.Key; // Use equipment
+    private keySpace!: Phaser.Input.Keyboard.Key; // Dash ability
+
+    // Dash ability properties
+    private dashCooldown: number = 0;
+    private isDashing: boolean = false;
+    private readonly DASH_COOLDOWN_TIME = 6000; // 6 seconds in milliseconds
+    private readonly DASH_DURATION = 200; // 0.2 seconds in milliseconds
+    private lastDashTime: number = 0;
 
     private inputPayload = { x: 0, y: 0 };
 
@@ -207,7 +215,19 @@ export class GameScene extends Phaser.Scene {
                 break;
         }
 
-        this.stageText.setText(`${stageName}\n⏱️ Time: ${timeString}\n📊 Difficulty: ${state.difficultyLevel}`);
+        // Get difficulty color and progress
+        const difficultyInfo = this.getDifficultyVisualization(state.difficultyLevel, state.timeElapsed);
+
+        // Check for difficulty level changes and add notification
+        const previousDifficulty = this.stageText.getData('currentDifficulty') || 'Easy';
+        if (previousDifficulty !== state.difficultyLevel) {
+            this.showDifficultyNotification(state.difficultyLevel, difficultyInfo.color);
+            this.stageText.setData('currentDifficulty', state.difficultyLevel);
+        }
+
+        // Enhanced stage text with difficulty visualization
+        this.stageText.setText(`${stageName}\n⏱️ Time: ${timeString}\n${difficultyInfo.text}`);
+        this.stageText.setColor(difficultyInfo.color);
 
         // Update objective text based on beacon state
         let objectiveText = "";
@@ -243,6 +263,151 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.objectiveText.setText(objectiveText);
+    }
+
+    private getDifficultyVisualization(difficultyLevel: string, timeElapsed: number): { text: string, color: string } {
+        // Color mapping for difficulty levels
+        const difficultyColors: { [key: string]: string } = {
+            "Easy": "#00ff00",      // Green
+            "Medium": "#ffff00",    // Yellow
+            "Hard": "#ff9900",      // Orange
+            "Very Hard": "#ff3300", // Red-orange
+            "INSANE": "#ff0000"     // Red
+        };
+
+        const color = difficultyColors[difficultyLevel] || "#ffffff";
+
+        // Create progress bar for difficulty progression (60 seconds per level)
+        const currentLevelProgress = (timeElapsed % 60) / 60; // Progress within current level (0-1)
+        const progressLength = Math.floor(currentLevelProgress * 20); // Max 20 chars
+        const emptyLength = 20 - progressLength;
+        const progressBar = "█".repeat(progressLength) + "░".repeat(emptyLength);
+
+        const text = `📊 Difficulty: ${difficultyLevel}\n   ${progressBar}`;
+
+        return { text, color };
+    }
+
+    private showDifficultyNotification(newDifficulty: string, color: string): void {
+        // Create a dramatic notification for difficulty changes
+        const notification = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 3,
+            `⚠️ DIFFICULTY INCREASED!\n${newDifficulty.toUpperCase()}`,
+            {
+                fontSize: '32px',
+                color: color,
+                backgroundColor: 'rgba(0,0,0,0.9)',
+                padding: { x: 20, y: 15 },
+                stroke: color,
+                strokeThickness: 3,
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: '#000000',
+                    blur: 8,
+                    stroke: true,
+                    fill: true
+                }
+            }
+        );
+
+        notification.setOrigin(0.5);
+        notification.setScrollFactor(0);
+        notification.setDepth(1000);
+        notification.setAlpha(0);
+
+        // Dramatic entrance animation
+        this.tweens.add({
+            targets: notification,
+            alpha: 1,
+            scale: { from: 0.5, to: 1.2 },
+            duration: 400,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                // Hold and pulse
+                this.tweens.add({
+                    targets: notification,
+                    scale: { from: 1.2, to: 1.0 },
+                    duration: 200,
+                    ease: 'Power2.easeOut',
+                    onComplete: () => {
+                        // Screen shake effect
+                        this.cameras.main.shake(300, 0.01);
+
+                        // Fade out after delay
+                        this.time.delayedCall(2000, () => {
+                            this.tweens.add({
+                                targets: notification,
+                                alpha: 0,
+                                scale: 0.8,
+                                duration: 500,
+                                ease: 'Power2.easeIn',
+                                onComplete: () => {
+                                    notification.destroy();
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    private showDamageIndicator(x: number, y: number, damage: number, color: string = '#ff0000'): void {
+        // Check for critical hit (high damage)
+        const isCritical = damage >= 50;
+        const finalColor = isCritical ? '#ffff00' : color; // Yellow for critical hits
+        const fontSize = isCritical ? '28px' : '20px';
+        const damageText = isCritical ? `-${damage}!` : `-${damage}`;
+
+        // Create floating damage number
+        const damageObj = this.add.text(x, y, damageText, {
+            fontSize: fontSize,
+            fontFamily: 'Arial Black',
+            color: finalColor,
+            stroke: '#000000',
+            strokeThickness: 3,
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#000000',
+                blur: 4,
+                stroke: true,
+                fill: true
+            }
+        });
+
+        damageObj.setOrigin(0.5);
+        damageObj.setScrollFactor(0);
+        damageObj.setDepth(500);
+
+        // Enhanced animation for critical hits
+        const animDuration = isCritical ? 1200 : 800;
+        const floatDistance = isCritical ? 60 : 40;
+        const finalScale = isCritical ? 1.5 : 1.2;
+
+        // Floating upward animation with possible critical hit effects
+        this.tweens.add({
+            targets: damageObj,
+            y: y - floatDistance,
+            alpha: { from: 1, to: 0 },
+            scale: { from: 0.5, to: finalScale },
+            duration: animDuration,
+            ease: 'Power2.easeOut',
+            onComplete: () => {
+                damageObj.destroy();
+            }
+        });
+
+        // Add extra effects for critical hits
+        if (isCritical) {
+            // Add a quick flash
+            this.cameras.main.flash(100, 255, 255, 0, false);
+
+            // Add screen shake for critical hits
+            this.cameras.main.shake(150, 0.012);
+        }
     }
 
     private toggleHelp(): void {
@@ -282,6 +447,11 @@ export class GameScene extends Phaser.Scene {
             this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
             this.keyH = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H);
             this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+            this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+            // Initialize dash cooldown tracking
+            this.dashCooldown = 0;
+            this.isDashing = false;
         }
 
         console.log('Joining room...');
@@ -447,8 +617,8 @@ export class GameScene extends Phaser.Scene {
                                                         this.playerHealthText.setScrollFactor(0);
                                                         this.playerHealthText.setDepth(100);
 
-                                                        // RIGHT SIDEBAR - Stage Information
-                                                        this.stageText = this.add.text(rightSidebarX, 60,
+                                                        // TOP LEFT - Stage Information (moved to avoid overlap)
+                                                        this.stageText = this.add.text(10, 10,
                                                             `STAGE 1: ALIEN JUNGLE\n` +
                                                             `⏱️ Time: 0:00\n` +
                                                             `📊 Difficulty: Easy`,
@@ -558,15 +728,60 @@ export class GameScene extends Phaser.Scene {
                                                             const xpForNextLevel = Math.floor(100 * Math.pow(1.2, _player.level));
                                                             this.levelText.setText(`⭐ LEVEL: ${_player.level}\n💎 XP: ${_player.xp}/${xpForNextLevel}`);
 
-                                                            // Visual feedback for damage
+                                                            // Enhanced damage feedback with screen shake and damage indicators
                                                             const previousHealth = entity.getData('previousHealth');
                                                             if (_player.health < previousHealth) {
-                                                                entity.fillColor = 0xff0000; // Red color
+                                                                const damageAmount = previousHealth - _player.health;
+
+                                                                // Screen shake for local player
+                                                                if (sessionId === this.room.sessionId) {
+                                                                    this.cameras.main.shake(200, 0.015);
+
+                                                                    // Red damage flash effect
+                                                                    this.cameras.main.flash(150, 255, 0, 0, false);
+                                                                }
+
+                                                                // Damage color flash on player
+                                                                entity.fillColor = 0xff0000;
                                                                 this.time.delayedCall(100, () => {
                                                                     entity.fillColor = 0xff0000; // Original player color
                                                                 });
+
+                                                                // Show floating damage indicator
+                                                                this.showDamageIndicator(entity.x, entity.y - 20, damageAmount, '#ff0000');
                                                             }
                                                             entity.setData('previousHealth', _player.health);
+
+                                                            // Visual effects for dashing
+                                                            if (_player.isDashing) {
+                                                                // Create cyan dash aura
+                                                                (entity as any).setTint(0x00ffff);
+                                                                entity.setAlpha(0.8);
+
+                                                                // Add dash trail effect
+                                                                if (Math.random() < 0.3) { // 30% chance per frame
+                                                                    const trail = this.add.circle(entity.x, entity.y, 12, 0x00ffff, 0.4);
+                                                                    trail.setScrollFactor(0);
+                                                                    trail.setDepth(3);
+
+                                                                    this.tweens.add({
+                                                                        targets: trail,
+                                                                        alpha: 0,
+                                                                        scale: 0.5,
+                                                                        duration: 200,
+                                                                        ease: 'Power2.easeOut',
+                                                                        onComplete: () => trail.destroy()
+                                                                    });
+                                                                }
+                                                            } else {
+                                                                // Reset visual effects when not dashing
+                                                                if (entity && typeof entity.clearTint === 'function') {
+                                                                    (entity as any).clearTint();
+                                                                }
+                                                                if (entity && typeof entity.setAlpha === 'function') {
+                                                                    entity.setAlpha(1);
+                                                                }
+                                                            }
 
                                                             // Track item pickups for this client's player
                                                             $(_player.items).onAdd((item, _index) => {
@@ -663,6 +878,9 @@ export class GameScene extends Phaser.Scene {
                 healthBar.y = enemy.y - 20;
                 entity.setData('healthBar', healthBar);
 
+                // Initialize previous health for damage indicators
+                entity.setData('previousHealth', enemy.health);
+
                 // Add visual aura for Elite enemies
                 if (isElite) {
                     // Create pulsing aura effect
@@ -703,6 +921,21 @@ export class GameScene extends Phaser.Scene {
                         }
                     }
 
+                    // Check for enemy damage and show indicators
+                    const previousHealth = entity.getData('previousHealth');
+                    if (enemy.health < previousHealth) {
+                        const damageAmount = previousHealth - enemy.health;
+
+                        // Show damage indicator for enemy
+                        this.showDamageIndicator(entity.x, entity.y - 25, damageAmount, '#ff6600');
+
+                        // Screen shake for big hits
+                        if (damageAmount >= 20) {
+                            this.cameras.main.shake(100, 0.008);
+                        }
+                    }
+                    entity.setData('previousHealth', enemy.health);
+
                     // Update health bar position and width
                     const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
                     if (healthBar) {
@@ -737,18 +970,7 @@ export class GameScene extends Phaser.Scene {
                             });
             
                                             $(this.room.state).projectiles.onAdd((projectile, projectileId) => {
-                                                // Enhanced debugging for spitter projectile creation
-                                                if (projectile.projectileType === "spitterProjectile") {
-                                                    console.log(`🟢 CLIENT SPITTER PROJECTILE CREATED:
-                                                        ID: ${projectileId},
-                                                        Initial Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
-                                                        TTL: ${projectile.timeToLive.toFixed(2)},
-                                                        Speed: ${projectile.speed},
-                                                        Owner: ${projectile.ownerId},
-                                                        Rotation: ${projectile.rotation.toFixed(2)}`);
-                                                } else {
-                                                    console.log(`Adding projectile: ${projectileId} of type ${projectile.projectileType} at (${projectile.x}, ${projectile.y})`);
-                                                }
+                                                console.log(`Adding projectile: ${projectileId} of type ${projectile.projectileType} at (${projectile.x}, ${projectile.y})`);
 
                                                 let projectileColor = 0xff0000; // Red for player projectiles
                                                 let projectileSize = 12; // Default size
@@ -770,31 +992,11 @@ export class GameScene extends Phaser.Scene {
                                                                         projectileRect.y = projectile.y;
                                                                         projectileRect.rotation = projectile.rotation;
 
-                                                                        // Enhanced debugging for spitter projectiles
-                                                                        if (projectile.projectileType === "spitterProjectile") {
-                                                                            console.log(`🟢 CLIENT SPITTER PROJECTILE UPDATE:
-                                                                                ID: ${projectileId},
-                                                                                Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
-                                                                                Prev Pos: (${prevX.toFixed(1)}, ${prevY.toFixed(1)}),
-                                                                                TTL: ${projectile.timeToLive.toFixed(2)},
-                                                                                Active: ${projectileRect.active},
-                                                                                Visible: ${projectileRect.visible},
-                                                                                Depth: ${projectileRect.depth}`);
-                                                                        }
-                                                                    });
+                                                                                  });
                             });
             
                             $(this.room.state).projectiles.onRemove((projectile, projectileId) => {
-                                // Enhanced debugging for spitter projectile removal
-                                if (projectile.projectileType === "spitterProjectile") {
-                                    console.log(`🔴 CLIENT SPITTER PROJECTILE REMOVED:
-                                        ID: ${projectileId},
-                                        Final Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
-                                        Final TTL: ${projectile.timeToLive.toFixed(2)},
-                                        Had Entity: ${!!this.projectileEntities[projectileId]}`);
-                                } else {
-                                    console.log(`Removing projectile: ${projectileId}. Final TTL: ${projectile.timeToLive.toFixed(2)}`);
-                                }
+                                console.log(`Removing projectile: ${projectileId}. Final TTL: ${projectile.timeToLive.toFixed(2)}`);
 
                                 const entity = this.projectileEntities[projectileId];
                                 if (entity) {
@@ -918,22 +1120,28 @@ export class GameScene extends Phaser.Scene {
                 $(this.room.state).xpEntities.onAdd((xpEntity, xpId) => {
                     console.log(`Adding XP entity: ${xpId} with value ${xpEntity.xpValue} at (${xpEntity.x}, ${xpEntity.y})`);
 
-                    // Create glowing yellow orb for XP
-                    const xpOrb = this.add.circle(xpEntity.x, xpEntity.y, 8, 0xffff00);
-                    xpOrb.setStrokeStyle(2, 0xffffff);
+                    // Create smaller glowing yellow orb for XP (easier pickup)
+                    const xpOrb = this.add.circle(xpEntity.x, xpEntity.y, 5, 0xffff00);
+                    xpOrb.setStrokeStyle(1, 0xffffff);
                     xpOrb.setDepth(3);
 
-                    // Add pulsing glow effect
-                    xpOrb.setAlpha(0.8);
+                    // Store XP value for size indication
+                    xpOrb.setData('xpValue', xpEntity.xpValue);
+
+                    // Add faster pulsing glow effect
+                    xpOrb.setAlpha(0.7);
                     this.tweens.add({
                         targets: xpOrb,
                         alpha: 1,
-                        scale: 1.2,
-                        duration: 500,
+                        scale: 1.1,
+                        duration: 300,
                         yoyo: true,
                         repeat: -1,
                         ease: 'Sine.easeInOut'
                     });
+
+                    // Note: XP entity position updates are handled by the server's magnet system
+                    // and automatically synced to clients via Schema updates
 
                     this.xpEntities[xpId] = xpOrb;
                 });
@@ -966,6 +1174,17 @@ export class GameScene extends Phaser.Scene {
             this.updateStageInformation();
         }
 
+        // Update dash cooldown
+        if (this.dashCooldown > 0) {
+            this.dashCooldown -= this.game.loop.delta;
+            if (this.dashCooldown < 0) this.dashCooldown = 0;
+        }
+
+        // Update dash state
+        if (this.isDashing && (this.time.now - this.lastDashTime) > this.DASH_DURATION) {
+            this.isDashing = false;
+        }
+
         this.inputPayload.x = 0;
         this.inputPayload.y = 0;
 
@@ -991,6 +1210,11 @@ export class GameScene extends Phaser.Scene {
             this.useEquipment();
         }
 
+        // Dash with spacebar
+        if (Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+            this.performDash();
+        }
+
         this.room.send('input', this.inputPayload);
     }
 
@@ -998,5 +1222,77 @@ export class GameScene extends Phaser.Scene {
         console.log('🛡️ Attempting to use equipment...');
         // Send equipment activation to server
         this.room.send('useEquipment', {});
+    }
+
+    private performDash(): void {
+        const currentTime = this.time.now;
+
+        // Check if dash is on cooldown
+        if (this.dashCooldown > 0) {
+            this.showDashCooldownMessage();
+            return;
+        }
+
+        // Check if player is moving (require movement input for dash)
+        if (this.inputPayload.x === 0 && this.inputPayload.y === 0) {
+            return; // No dash without movement input
+        }
+
+        // Start dash
+        this.isDashing = true;
+        this.lastDashTime = currentTime;
+        this.dashCooldown = this.DASH_COOLDOWN_TIME;
+
+        // Calculate dash direction (normalized movement input)
+        const dashDirection = new Phaser.Math.Vector2(this.inputPayload.x, this.inputPayload.y).normalize();
+
+        // Send dash event to server with direction and duration
+        this.room.send('dash', {
+            directionX: dashDirection.x,
+            directionY: dashDirection.y,
+            duration: this.DASH_DURATION
+        });
+
+        // Visual effects for dash
+        this.createDashEffects();
+
+        console.log(`💨 DASH performed in direction (${dashDirection.x.toFixed(2)}, ${dashDirection.y.toFixed(2)})`);
+    }
+
+    private showDashCooldownMessage(): void {
+        const remainingSeconds = Math.ceil(this.dashCooldown / 1000);
+        this.showPickupMessage(`⏱️ Dash cooldown: ${remainingSeconds}s`);
+    }
+
+    private createDashEffects(): void {
+        // Find local player entity
+        const playerEntity = this.playerEntities[this.room.sessionId];
+        if (!playerEntity) return;
+
+        // Create dash trail effect
+        const trail = this.add.circle(playerEntity.x, playerEntity.y, 15, 0x00ffff, 0.6);
+        trail.setScrollFactor(0);
+        trail.setDepth(4);
+
+        // Animate trail fade
+        this.tweens.add({
+            targets: trail,
+            alpha: 0,
+            scale: 1.5,
+            duration: this.DASH_DURATION,
+            ease: 'Power2.easeOut',
+            onComplete: () => {
+                trail.destroy();
+            }
+        });
+
+        // Screen effect for dash
+        this.cameras.main.flash(100, 0, 255, 255, false); // Cyan flash
+
+        // Brief screen zoom effect
+        this.cameras.main.setZoom(1.1);
+        this.time.delayedCall(100, () => {
+            this.cameras.main.setZoom(1);
+        });
     }
 }
