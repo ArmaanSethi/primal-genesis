@@ -1,0 +1,145 @@
+{
+  "adrenalStimulant": {
+    "id": "adrenalStimulant",
+    "name": "Adrenal Stimulant",
+    "description": "Bio-enhanced combat drug that increases attack speed by 10% <style=cStack>(+10% per stack)</style>.",
+    "icon": "icons/adrenal_stimulant.png",
+    "rarity": "common",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "attackSpeed", "value": 0.10, "type": "percentage" }
+    ]
+  },
+  "exoLegAugmentation": {
+    "id": "exoLegAugmentation",
+    "name": "Exo-Leg Augmentation",
+    "description": "Cybernetic leg implants increase movement speed by 20% <style=cStack>(+20% per stack)</style>.",
+    "icon": "icons/exo_legs.png",
+    "rarity": "common",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "moveSpeed", "value": 0.20, "type": "percentage" }
+    ]
+  },
+  "bioRegenerativeGel": {
+    "id": "bioRegenerativeGel",
+    "name": "Bio-Regenerative Gel",
+    "description": "Alien healing gel instantly restores 20 health when applied.",
+    "icon": "icons/bio_gel.png",
+    "rarity": "common",
+    "stackingType": "none",
+    "effects": [
+      { "stat": "healInstant", "value": 20, "type": "flat" }
+    ]
+  },
+  "crystallineAmplifier": {
+    "id": "crystallineAmplifier",
+    "name": "Crystalline Amplifier",
+    "description": "Alien crystal formation that amplifies weapon damage by 15% <style=cStack>(+15% per stack)</style>.",
+    "icon": "icons/crystal_amplifier.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "damage", "value": 0.15, "type": "percentage" }
+    ]
+  },
+  "cellularReinforcement": {
+    "id": "cellularReinforcement",
+    "name": "Cellular Reinforcement",
+    "description": "Nanite-enhanced tissue increases maximum health by 20 <style=cStack>(+20 per stack)</style>.",
+    "icon": "icons/cellular_reinforcement.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "maxHealth", "value": 20, "type": "flat" }
+    ]
+  },
+  "adaptiveChitin": {
+    "id": "adaptiveChitin",
+    "name": "Adaptive Chitin Plating",
+    "description": "Alien exoskeleton fragments that bond to armor, increasing defense by 2 <style=cStack>(+2 per stack)</style>.",
+    "icon": "icons/chitin_plating.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "armor", "value": 2, "type": "flat" }
+    ]
+  },
+  "plasmaDischargeCoil": {
+    "id": "plasmaDischargeCoil",
+    "name": "Plasma Discharge Coil",
+    "description": "Extracted from energy creatures - zaps nearby foes for 80% damage every 0.5s. Hits 2 <style=cStack>(+1 per stack)</style> additional targets.",
+    "icon": "icons/plasma_coil.png",
+    "rarity": "rare",
+    "stackingType": "special",
+    "effects": [
+      { "trigger": "onTimer", "effect": "spawnChainLightning", "value": 0.8, "interval": 0.5, "targets": 2 }
+    ]
+  },
+  "neuralTargetingSystem": {
+    "id": "neuralTargetingSystem",
+    "name": "Neural Targeting System",
+    "description": "Brain-computer interface that increases critical strike chance by 10% <style=cStack>(+10% per stack)</style>.",
+    "icon": "icons/neural_system.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "critChance", "value": 0.10, "type": "percentage" }
+    ]
+  },
+  "naniteSwarm": {
+    "id": "naniteSwarm",
+    "name": "Nanite Swarm",
+    "description": "Microscopic repair bots increase health regeneration by 2 per second <style=cStack>(+2 per stack)</style>.",
+    "icon": "icons/nanite_swarm.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "healthRegen", "value": 2, "type": "flat" }
+    ]
+  },
+  "bioPlasmaSplitter": {
+    "id": "bioPlasmaSplitter",
+    "name": "Bio-Plasma Splitter",
+    "description": "Genetically engineered projectile system splits shots into 3 <style=cStack>(+1 projectile per stack)</style>.",
+    "icon": "icons/bio_splitter.png",
+    "rarity": "rare",
+    "stackingType": "special",
+    "effects": [
+      { "trigger": "onAttack", "effect": "splitProjectiles", "value": 3 }
+    ]
+  },
+  "parasiticSymbiote": {
+    "id": "parasiticSymbiote",
+    "name": "Parasitic Symbiote",
+    "description": "Bonds to user, healing for 15% of damage dealt to enemies <style=cStack>(+5% per stack)</style>.",
+    "icon": "icons/symbiote.png",
+    "rarity": "rare",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onDamage", "effect": "lifesteal", "value": 0.15, "type": "percentage" }
+    ]
+  },
+  "quantumPhaseShifter": {
+    "id": "quantumPhaseShifter",
+    "name": "Quantum Phase Shifter",
+    "description": "Equipment: Phase through enemies, dealing 50 damage and gaining 0.5s invincibility. Press E to activate.",
+    "icon": "icons/quantum_shifter.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "dashAttack", "damage": 50, "invincibilityTime": 0.5 }
+    ]
+  },
+  "alienSporePod": {
+    "id": "alienSporePod",
+    "name": "Alien Spore Pod",
+    "description": "Equipment: Hurls explosive alien spores dealing 200 damage in a wide area. 10s cooldown. Press E to activate.",
+    "icon": "icons/spore_pod.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "grenade", "damage": 200, "radius": 150, "cooldown": 10 }
+    ]
+  }
+}

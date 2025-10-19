@@ -1,5 +1,25 @@
 # Project Primal Genesis - Task List
 
+## Project Status Overview
+
+**Current Progress: ~30% toward playable core loop**
+
+The project has solid multiplayer/combat infrastructure but is missing critical core gameplay systems. All three enemy types (WaspDrone, Spitter, Charger) are fully functional with proper AI behaviors. The combat system works, but there's no progression, items, objectives, or core game loop structure.
+
+### ✅ What's Working (Foundation Complete)
+- **Multiplayer Infrastructure:** Colyseus server + Phaser client with state sync
+- **Combat System:** Player auto-attack, enemy AI, projectiles, damage/death
+- **Enemy Roster:** All 3 enemy types fully implemented with proper behaviors
+- **Basic Mechanics:** Player movement, health system, world boundaries
+
+### ❌ Critical Missing Systems (Core Loop)
+- **Item System (0%):** No items, pickups, or stat progression
+- **XP/Leveling (0%):** No experience or character progression
+- **Game Objectives (0%):** No beacon, holdout phase, boss fights, or stage progression
+- **World Interactables (0%):** No chests, shops, or Director system
+
+---
+
 ## Developer Notes
 
 - A `docs_context` directory exists in the project root. This folder is for providing me with documentation and context. It is ignored by `.gitignore` and its contents will not be committed to the repository.
@@ -14,16 +34,263 @@
 
 - **Colyseus Client Listeners:** After significant debugging, the correct and stable way to implement client-side state listeners is by using the `getStateCallbacks` utility from `colyseus.js`.
 - **Phaser Scene Lifecycle:** Asynchronous operations, such as connecting to the Colyseus server, should be performed in the `create()` method, which can be safely marked `async`. The `init()` method is not compatible with `await` and should be used only for synchronous data initialization.
-- **Test Runner Timeout:** Configured Mocha to have a 5-second timeout for tests to prevent hanging processes (`--timeout 5000` in `package.json`).
+- **Test Runner Timeout:** Configured Mocha to have a 90-second timeout for tests to prevent hanging processes (`--timeout 90000` in `server/package.json`).
 
 *Meta-Note: This document must be kept up-to-date. As tasks are completed, they should be marked with `[x]`. Unit tests should be added for all new functionality where possible. A 'Current Bugs' section will be maintained below, detailing active issues, diagnostic steps, and relevant logs.*
 
 ---
 
+## Testing Checkpoints 🎯
+
+**🟢 TESTING CHECKPOINT 1: ITEM SYSTEM FOUNDATION - READY FOR TESTING**
+- **Status:** ✅ FULLY IMPLEMENTED (server + client) WITH IMPROVED UI
+- **Features Ready:**
+  - Complete item system with 13 creative bio-researcher themed items
+  - Four interactable types with visual distinction
+  - Automatic pickup with stat application
+  - **NEW:** Improved sidebar UI layout - game no longer obstructed!
+  - **NEW:** Comprehensive in-game help and instructions
+  - **NEW:** Real-time inventory display
+- **Test Plan:**
+  1. Start server: `cd server && npm start`
+  2. Start client: `cd client && npm run dev`
+  3. **NEW UI LAYOUT:**
+     - Game area is now centered and unobstructed
+     - Right sidebar contains all UI elements
+     - Health, help, and inventory in separate panels
+     - Press H to toggle help visibility
+  4. Walk around map to find colored interactables:
+     - 🟤 **Brown rectangles** = Small Chests (common items)
+     - 🟠 **Orange rectangles** = Large Chests (uncommon/rare items)
+     - 🔵 **Blue rectangles** = Equipment Barrels (equipment items)
+     - 🟣 **Purple rectangles** = Tri-Shops (choice items)
+  5. Walk near interactables to auto-pickup items
+  6. Check yellow pickup messages and sidebar inventory updates
+- **Expected Results:**
+  - **NEW:** Game area is clear and unobstructed by UI
+  - **NEW:** Right sidebar with semi-transparent background
+  - **NEW:** Real-time help text explaining controls and lore
+  - **NEW:** Live inventory showing collected items by rarity
+  - **NEW:** Creative themed item names (Adrenal Stimulant, Bio-Plasma Splitter, etc.)
+  - Interactables float up and down with white borders
+  - Items picked up automatically within 40-pixel radius
+  - Visual feedback: "Picked up: Item Name (rarity)"
+  - Stats immediately affect gameplay (faster movement, more damage, etc.)
+  - Opened interactables turn dark gray and semi-transparent
+
+**Upcoming Testing Checkpoints:**
+- **Checkpoint 2:** After XP/Leveling system (progression loop testing)
+- **Checkpoint 3:** After beacon/boss/exit gates (complete core loop testing)
+- **Checkpoint 4:** Full integration test with all systems
+
+---
+
+## Priority Implementation Plan
+
+### ✅ COMPLETED - Critical Bug Fixes
+- [x] **Fix Client Rendering Bugs:**
+  - [x] Charger movement not visible during charge behavior
+  - [x] Spitter projectile visibility issues (disappear too quickly)
+  - **Result:** Performance optimized, all rendering issues resolved
+
+---
+
+### ✅ PRIORITY 1: Item System Foundation (COMPLETED)
+**Goal:** Implement core item mechanics that define the game's progression
+
+#### 1.1 ✅ Data Structure & Schema
+- [x] **Create items.json** with 13 GDD-compliant items
+  - Includes rarity system (Common, Uncommon, Rare, Equipment)
+  - Defines stacking types (linear, special, none)
+  - Complete effect system with stat modifications and special abilities
+- [x] **Add ItemState schema** to `MyRoomState.ts`
+  - All properties: id, name, description, icon, rarity, stackingType, effects
+- [x] **Add items array** to Player schema with calculated stats system
+  - `@type([ItemState]) items = new ArraySchema<ItemState>()`
+  - Base stats vs calculated stats separation for proper stacking
+
+#### 1.2 ✅ Basic Pickup System
+- [x] **Implement interactable system:**
+  - Added `InteractableState` schema (type, position, state, rarity, cost)
+  - Added `interactables: MapSchema<InteractableState>` to RoomState
+- [x] **Create simple chest spawning:**
+  - Four interactable types: smallChest, largeChest, equipmentBarrel, triShop
+  - 40-pixel radius collision detection for automatic pickup
+  - Interactables removed when collected (isOpen state)
+- [x] **Item generation logic:**
+  - Rarity-based item selection from items.json
+  - Real-time stat application to player calculated stats
+  - Support for percentage and flat bonuses, instant effects
+
+#### 1.3 ✅ Director System (Basic)
+- [x] **Implement credit budget system:**
+  - 500 credit budget for Stage 1 (per GDD)
+  - Weighted random selection of interactables
+  - Automatic map population on room creation
+- [x] **Basic interactable types:**
+  - Small Chest (10 credits, guaranteed common)
+  - Large Chest (25 credits, 80% uncommon, 20% rare)
+  - Equipment Barrel (15 credits, guaranteed equipment)
+  - Tri-Shop (20 credits, choice system foundation)
+
+#### 1.4 ✅ Client-Side Item Display (COMPLETED)
+- [x] **Render interactables** in game world with distinct colors and floating animations
+  - Small Chests (brown), Large Chests (orange), Equipment Barrels (blue), Tri-Shops (purple)
+  - White borders and depth layering for visibility
+  - Floating animation for visual appeal
+- [x] **Display item pickups** with animated yellow notification messages
+  - Fade in/out animations with 2.5 second display time
+  - Centered text with black background for readability
+- [ ] **Show player inventory** in HUD (item icons/names) - *Future enhancement*
+- [x] **Visual feedback** for item collection and interactable state changes
+  - Interactables turn gray/semi-transparent when opened
+  - Smooth pickup animations and state transitions
+
+#### 1.5 ⏳ Testing
+- [ ] **Unit tests** for item generation and stat application
+- [ ] **Integration tests** for pickup mechanics
+- [ ] **Manual testing** of item effects and stacking
+
+---
+
+### 🎯 PRIORITY 2: XP & Leveling System (Weeks 3-4)
+**Goal:** Add basic character progression to make combat meaningful
+
+#### 2.1 XP System Schema
+- [ ] **Add XP/Level to Player schema:**
+  - `@type("number") xp: number = 0`
+  - `@type("number") level: number = 1`
+- [ ] **Create XPEntityState schema** for XP orbs
+  - Properties: id, x, y, xpValue
+- [ ] **Add xpEntities map** to RoomState
+
+#### 2.2 XP Mechanics
+- [ ] **Enemy death drops XP:**
+  - Create XP orbs at enemy death location
+  - XP value based on enemy type
+- [ ] **XP collection:**
+  - Player collision with XP orbs
+  - Add XP to player.xp
+  - Remove XP orb from world
+- [ ] **Leveling system:**
+  - Define XP thresholds for each level
+  - Level up when xp >= threshold
+  - Reset xp, increment level
+
+#### 2.3 Level Benefits
+- [ ] **Stat increases on level up:**
+  - +5 maxHealth per level
+  - +1 damage per level
+  - (Per GDD Section 3.2)
+- [ ] **Level up visual effects:**
+  - Temporary "LEVEL UP!" text
+  - Visual feedback (particle effect, sound)
+
+#### 2.4 Client Implementation
+- [ ] **Render XP orbs** as small glowing objects
+- [ ] **Display current level and XP** in HUD
+- [ ] **Show XP progress bar**
+- [ ] **Level up animation/effects**
+
+#### 2.5 Testing
+- [ ] **Unit tests** for XP gain and leveling
+- [ ] **Manual testing** of XP orb collection and level progression
+
+---
+
+### 🎯 PRIORITY 3: Core Game Loop (Weeks 4-6)
+**Goal:** Complete the basic gameplay structure with objectives and progression
+
+#### 3.1 Bio-Resonance Beacon
+- [ ] **Beacon interactable:**
+  - Add BeaconState schema (position, state, chargeTimer)
+  - Spawn beacon on map (per GDD, players must find it)
+- [ ] **Holdout phase mechanics:**
+  - 90-second charge timer when activated
+  - Massively increase enemy spawn rate during holdout
+  - Display holdout timer in HUD
+- [ ] **Beacon states:**
+  - `inactive`: Default state
+  - `charging`: 90-second holdout in progress
+  - `bossFight": Holdout complete, boss spawning
+
+#### 3.2 Boss Fight System
+- [ ] **BossState schema:**
+  - Properties: id, typeId, x, y, health, maxHealth, damage, attackPatternStage
+- [ ] **Add boss to RoomState:**
+  - `@type(BossState) boss: BossState`
+- [ ] **Boss spawning:**
+  - Trigger when holdout timer reaches 0
+  - Spawn boss at beacon location
+  - Set beaconState to "bossFight"
+- [ ] **Basic boss AI:**
+  - Simple movement patterns
+  - Basic attack system
+  - Health bar display in HUD
+
+#### 3.3 Stage Progression
+- [ ] **ExitGateState schema:**
+  - Properties: id, x, y, targetStageTheme, isOpen
+- [ ] **Spawn exit gates:**
+  - Create 2-3 exit gates after boss defeat
+  - Random locations on map
+- [ ] **Stage transition logic:**
+  - Player interaction with exit gates
+  - Reset room state for new stage
+  - Increase difficulty (better enemy stats, more credits)
+
+#### 3.4 Time-Based Difficulty Scaling
+- [ ] **Difficulty system:**
+  - Add `difficultyLevel` and `timeElapsed` to RoomState
+  - Increase difficulty every minute (Easy → Medium → Hard → Very Hard → INSANE)
+- [ ] **Difficulty effects:**
+  - Increase enemy spawn rates
+  - Boost enemy health and damage
+  - Higher chance for elite enemies (future feature)
+
+#### 3.5 Client Implementation
+- [ ] **Render beacon sprite** with visual states
+- [ ] **Display holdout timer** prominently in HUD
+- [ ] **Boss health bar** and rendering
+- [ ] **Exit gate sprites** and interaction prompts
+- [ ] **Difficulty indicator** in HUD
+
+#### 3.6 Testing
+- [ ] **Integration tests** for beacon activation and holdout
+- [ ] **Manual testing** of boss fight difficulty
+- [ ] **Stage transition testing**
+
+---
+
 ## Current Bugs
 
-- [x] Charger enemies are not moving on the client during their charge behavior, despite server-side position updates. (Server-side NaN issue fixed. Client-side interpolation is a future task for smooth movement.)
-- [x] Spitter enemies' ranged attack projectiles are not being rendered on the client with the correct `projectileType` and disappear too quickly to be seen. (Server-side timeToLive and speed adjusted.)
+### Active Issues
+- [ ] Fix pickup text overlapping other right sidebar text.
+- [ ] Investigate health showing 120/100 - should be capped at max.
+- [ ] Make final boss trigger instructions crystal clear.
+- [ ] Prevent boss from spawning too close to edges.
+- [ ] Update and verify all unit tests make sense.
+- [ ] Picking up chests causes lag every time.
+- [ ] Pressing equipment sometimes causes everything to freeze (e.g., Quantum Phase Shifter).
+- [ ] Lack of diverse item damage types (e.g., no AoE, splash, chain damage items).
+- [ ] Need for items that introduce new projectile types.
+- [ ] Spitter projectiles have speed 0 and damage 10 (from logs), should be 400 speed and 10 damage.
+
+---
+
+## Resolved Issues
+
+### Recently Fixed (Rendering Bug Fixes Complete)
+- [x] **Charger movement rendering bug:** Fixed by removing excessive logging and ensuring proper state synchronization
+  - **Solution:** Removed performance-impacting console.log statements and improved state update efficiency
+  - **Result:** Charger movement now renders smoothly on client during charge behavior
+- [x] **Spitter projectile visibility:** Fixed by removing excessive logging that caused performance issues
+  - **Solution:** Cleaned up server-side debug logging and optimized projectile update code
+  - **Result:** Spitter projectiles now remain visible for their full 5-second TTL
+- [x] Server-side NaN issue in Charger movement (fixed position updates)
+- [x] TypeScript compilation errors in client build
+- [x] Colyseus schema decorator issues
+- [x] Performance issues from excessive logging throughout server and client code
 
 ---
 
@@ -65,8 +332,7 @@
     - Renders as a green rectangle.
     - Is stationary (as expected).
     - Projectiles are rendered as larger dark green squares. Their `projectileType` is now correctly synchronized.
-- **Current Bugs:**
-    - [ ] Projectiles are not visible for a sufficient duration on the client (despite server-side `timeToLive`). This might be a client-side rendering issue or an immediate collision/out-of-bounds removal.
+- **Current Bugs:** See "Current Bugs" section above.
 
 ### Charger (Purple Rectangle)
 - **Description (GDD):** Telegraphs its attack, then rushes forward at high speed.
@@ -81,8 +347,7 @@
     - Renders as a purple rectangle.
     - Visual feedback for charging state (yellow `fillColor`) is functional.
     - **Does NOT visually move on the client during its charge.**
-- **Current Bugs:**
-    - [ ] Charger movement is not rendered on the client during its charge behavior, despite server-side position updates.
+- **Current Bugs:** See "Current Bugs" section above.
 
 ---
 

@@ -8,18 +8,24 @@ const config: Phaser.Types.Core.GameConfig = {
         forceSetTimeOut: true,
         smoothStep: false,
     },
-    width: 800,
-    height: 600,
-    // height: 200,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: window.innerWidth,
+        height: window.innerHeight
+    },
     backgroundColor: '#b6d53c',
-    parent: 'phaser-example',
+    parent: 'game-container',
     physics: {
         default: "arcade",
         arcade: {
             debug: false // Set to true to see physics bodies
         }
     },
-    pixelArt: true,
+    pixelArt: false, // Disable pixelArt for smoother text rendering
+    roundPixels: false, // Allow sub-pixel positioning for smoother rendering
     scene: [GameScene],
 };
 

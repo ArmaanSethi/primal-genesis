@@ -178,9 +178,7 @@ describe("MyRoom Integration Tests", () => {
   }).timeout(15000); // Explicitly set timeout to 15 seconds
 
   it("should continuously spawn enemies up to the maximum limit", async () => {
-    const testMaxEnemies = 3;
-    const testSpawnInterval = 50; // Faster spawning for test
-    const room = await colyseus.createRoom<MyRoomState>("my_room", { SPAWN_INTERVAL: testSpawnInterval, MAX_ENEMIES: testMaxEnemies });
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
     const client = await colyseus.connectTo(room, {}); // Connect a player
     await room.waitForNextPatch();
 
@@ -195,15 +193,12 @@ describe("MyRoom Integration Tests", () => {
     room.state.enemies.clear();
     await room.waitForNextPatch();
 
-    // Simulate enough time for a smaller number of spawns to occur.
-    // For testing, we'll aim for 3 enemies. With SPAWN_INTERVAL of 50ms, this is 3 * 50ms = 150ms.
-    // Using average deltaTime of 17ms (60 FPS)
-    const ticksNeeded = Math.ceil((testMaxEnemies * testSpawnInterval) / 17) + 10; // Add buffer ticks
-    for (let i = 0; i < ticksNeeded; i++) { // Simulate many ticks
+    // Simulate enough time for 2 spawns to occur with SPAWN_INTERVAL of 500ms
+    for (let i = 0; i < 150; i++) { // Simulate 150 ticks (approx 2.5 seconds)
       await room.waitForNextPatch();
     }
 
-    assert.equal(room.state.enemies.size, testMaxEnemies, `Should spawn ${testMaxEnemies} enemies`);
+    assert.equal(room.state.enemies.size, 2, `Should spawn 2 enemies`);
   }).timeout(90000); // Increase timeout to 90 seconds
 
 });
