@@ -275,9 +275,10 @@ export class MyRoom extends Room<MyRoomState> {
         beaconX = player.x + Math.cos(angle) * distance;
         beaconY = player.y + Math.sin(angle) * distance;
 
-        // Clamp to world bounds
-        beaconX = Math.max(100, Math.min(this.state.worldWidth - 100, beaconX));
-        beaconY = Math.max(100, Math.min(this.state.worldHeight - 100, beaconY));
+        // Clamp to world bounds with larger safe margins for visibility
+        const beaconSafeMargin = 300; // Keep beacon away from edges
+        beaconX = Math.max(beaconSafeMargin, Math.min(this.state.worldWidth - beaconSafeMargin, beaconX));
+        beaconY = Math.max(beaconSafeMargin, Math.min(this.state.worldHeight - beaconSafeMargin, beaconY));
       }
     }
 
@@ -342,11 +343,40 @@ export class MyRoom extends Room<MyRoomState> {
         boss.projectileSpeed = 400; // Faster projectiles
         boss.projectileType = "bossProjectile";
 
-        // Spawn boss at beacon location
+        // Spawn boss at safe location near beacon (away from edges)
         const beacon = this.state.interactables.get(this.beaconId || "");
         if (beacon) {
-          boss.x = beacon.x;
-          boss.y = beacon.y;
+          // Calculate safe spawn zone to ensure boss is visible
+          const safeMargin = 500; // Boss should be at least 500px from edges
+          const worldBounds = {
+            minX: safeMargin,
+            maxX: this.state.worldWidth - safeMargin,
+            minY: safeMargin,
+            maxY: this.state.worldHeight - safeMargin
+          };
+
+          // Start with beacon position
+          let spawnX = beacon.x;
+          let spawnY = beacon.y;
+
+          // Adjust position if too close to edges
+          if (spawnX < worldBounds.minX) spawnX = worldBounds.minX;
+          if (spawnX > worldBounds.maxX) spawnX = worldBounds.maxX;
+          if (spawnY < worldBounds.minY) spawnY = worldBounds.minY;
+          if (spawnY > worldBounds.maxY) spawnY = worldBounds.maxY;
+
+          // Add some randomization within safe zone to make spawn less predictable
+          spawnX += (Math.random() - 0.5) * 200; // ±100px variation
+          spawnY += (Math.random() - 0.5) * 200; // ±100px variation
+
+          // Ensure final position is still within bounds
+          spawnX = Math.max(worldBounds.minX, Math.min(worldBounds.maxX, spawnX));
+          spawnY = Math.max(worldBounds.minY, Math.min(worldBounds.maxY, spawnY));
+
+          boss.x = spawnX;
+          boss.y = spawnY;
+
+          this.log(`Boss spawned at safe location: (${spawnX.toFixed(0)}, ${spawnY.toFixed(0)})`);
         }
 
         this.state.enemies.set(id, boss);
@@ -539,6 +569,17 @@ export class MyRoom extends Room<MyRoomState> {
       projectile.x += Math.cos(projectile.rotation) * projectile.speed * (deltaTime / 1000);
       // @ts-ignore
       projectile.y += Math.sin(projectile.rotation) * projectile.speed * (deltaTime / 1000);
+
+      // Debug spitter projectiles specifically
+      if (projectile.projectileType === "spitterProjectile") {
+        console.log(`🟢 SPITTER PROJECTILE DEBUG:
+          ID: ${projectile.id},
+          Type: ${projectile.projectileType},
+          Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
+          Speed: ${projectile.speed},
+          TTL: ${projectile.timeToLive.toFixed(2)},
+          Owner: ${projectile.ownerId}`);
+      }
 
       // Check for collision with enemies
       for (const enemy of this.state.enemies.values()) {
@@ -844,7 +885,7 @@ export class MyRoom extends Room<MyRoomState> {
     });
   }
 
-  onJoin(client: Client, options: any) {
+  onJoin(client: Client, _options: any) {
     // this.log(client.sessionId, "joined!");
     const player = new Player();
     player.sessionId = client.sessionId; // Assign sessionId
@@ -874,7 +915,7 @@ export class MyRoom extends Room<MyRoomState> {
     this.state.players.set(client.sessionId, player);
   }
 
-  onLeave(client: Client, consented: boolean) {
+  onLeave(client: Client, _consented: boolean) {
     // this.log("room", this.roomId, client.sessionId, "left!");
     this.state.players.delete(client.sessionId);
   }

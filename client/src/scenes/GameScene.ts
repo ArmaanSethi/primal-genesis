@@ -629,7 +629,19 @@ export class GameScene extends Phaser.Scene {
                             });
             
                                             $(this.room.state).projectiles.onAdd((projectile, projectileId) => {
-                                                console.log(`Adding projectile: ${projectileId} of type ${projectile.projectileType} at (${projectile.x}, ${projectile.y})`);
+                                                // Enhanced debugging for spitter projectile creation
+                                                if (projectile.projectileType === "spitterProjectile") {
+                                                    console.log(`🟢 CLIENT SPITTER PROJECTILE CREATED:
+                                                        ID: ${projectileId},
+                                                        Initial Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
+                                                        TTL: ${projectile.timeToLive.toFixed(2)},
+                                                        Speed: ${projectile.speed},
+                                                        Owner: ${projectile.ownerId},
+                                                        Rotation: ${projectile.rotation.toFixed(2)}`);
+                                                } else {
+                                                    console.log(`Adding projectile: ${projectileId} of type ${projectile.projectileType} at (${projectile.x}, ${projectile.y})`);
+                                                }
+
                                                 let projectileColor = 0xff0000; // Red for player projectiles
                                                 let projectileSize = 12; // Default size
                                                 if (projectile.projectileType === "spitterProjectile") {
@@ -639,19 +651,43 @@ export class GameScene extends Phaser.Scene {
                                                 const projectileRect = this.add.rectangle(projectile.x, projectile.y, projectileSize, projectileSize, projectileColor);
                                                 projectileRect.setStrokeStyle(2, 0xffffff); // White border for visibility
                                                 projectileRect.setDepth(999); // Ensure it's always on top
+
                                                 console.log(`DEBUG Client: Projectile ${projectileId} created. Active: ${projectileRect.active}, Visible: ${projectileRect.visible}, Depth: ${projectileRect.depth}, Pos: (${projectileRect.x}, ${projectileRect.y})`);
                                                                     this.projectileEntities[projectileId] = projectileRect;
                                                 
                                                                     $(projectile).onChange(() => {
+                                                                        const prevX = projectileRect.x;
+                                                                        const prevY = projectileRect.y;
                                                                         projectileRect.x = projectile.x;
                                                                         projectileRect.y = projectile.y;
                                                                         projectileRect.rotation = projectile.rotation;
-                                                                        // Removed excessive logging that was affecting performance
+
+                                                                        // Enhanced debugging for spitter projectiles
+                                                                        if (projectile.projectileType === "spitterProjectile") {
+                                                                            console.log(`🟢 CLIENT SPITTER PROJECTILE UPDATE:
+                                                                                ID: ${projectileId},
+                                                                                Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
+                                                                                Prev Pos: (${prevX.toFixed(1)}, ${prevY.toFixed(1)}),
+                                                                                TTL: ${projectile.timeToLive.toFixed(2)},
+                                                                                Active: ${projectileRect.active},
+                                                                                Visible: ${projectileRect.visible},
+                                                                                Depth: ${projectileRect.depth}`);
+                                                                        }
                                                                     });
                             });
             
                             $(this.room.state).projectiles.onRemove((projectile, projectileId) => {
-                                console.log(`Removing projectile: ${projectileId}. Final TTL: ${projectile.timeToLive.toFixed(2)}`);
+                                // Enhanced debugging for spitter projectile removal
+                                if (projectile.projectileType === "spitterProjectile") {
+                                    console.log(`🔴 CLIENT SPITTER PROJECTILE REMOVED:
+                                        ID: ${projectileId},
+                                        Final Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
+                                        Final TTL: ${projectile.timeToLive.toFixed(2)},
+                                        Had Entity: ${!!this.projectileEntities[projectileId]}`);
+                                } else {
+                                    console.log(`Removing projectile: ${projectileId}. Final TTL: ${projectile.timeToLive.toFixed(2)}`);
+                                }
+
                                 const entity = this.projectileEntities[projectileId];
                                 if (entity) {
                                     entity.destroy();
