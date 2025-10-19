@@ -13,6 +13,10 @@ export class GameScene extends Phaser.Scene {
     private xpEntities: { [xpId: string]: Phaser.GameObjects.Arc } = {};
     private playerHealthText!: Phaser.GameObjects.Text;
     private pickupMessages: Phaser.GameObjects.Text[] = [];
+
+    // Beacon direction indicator
+    private beaconDirectionText: Phaser.GameObjects.Text | null = null;
+    private beaconArrow: Phaser.GameObjects.Triangle | null = null;
     private helpText!: Phaser.GameObjects.Text;
     private inventoryText!: Phaser.GameObjects.Text;
     private levelText!: Phaser.GameObjects.Text;
@@ -1157,10 +1161,98 @@ export class GameScene extends Phaser.Scene {
 
                 // Player items tracking for HUD - this needs to be moved outside the onStateChange
                 // We'll handle this in the existing player.onAdd section
+
+                // Initialize beacon direction indicator
+                this.createBeaconDirectionIndicator();
+
             });
 
         } catch (e) {
             console.error('Join error', e);
+        }
+    }
+
+    private createBeaconDirectionIndicator(): void {
+        const rightSidebarX = this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH + 10;
+        const beaconY = 80; // Position below health text
+
+        // Create text showing distance and direction to beacon
+        this.beaconDirectionText = this.add.text(rightSidebarX, beaconY, '🌟 BEACON: Finding...', {
+            fontSize: '14px',
+            color: '#00ff00',
+            backgroundColor: 'rgba(0,100,0,0.8)',
+            padding: { x: 8, y: 6 },
+            wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+            shadow: {
+                offsetX: 1,
+                offsetY: 1,
+                color: '#000000',
+                blur: 1,
+                stroke: true,
+                fill: true
+            }
+        }).setOrigin(0).setScrollFactor(0).setDepth(100);
+
+        // Create a simple arrow indicator (will be updated in update loop)
+        this.beaconArrow = this.add.triangle(
+            rightSidebarX + 150, beaconY + 15,
+            0, -8,  // Top point
+            -6, 8,  // Bottom left
+            6, 8    // Bottom right
+        ).setFillStyle(0x00ff00).setScrollFactor(0).setDepth(101);
+
+        console.log('🧭 Created beacon direction indicator');
+    }
+
+    private updateBeaconDirection(): void {
+        if (!this.beaconDirectionText || !this.beaconArrow || !this.room) {
+            return;
+        }
+
+        // Get the local player entity
+        const playerEntity = this.playerEntities[this.room.sessionId];
+        if (!playerEntity) {
+            return;
+        }
+
+        // Find the beacon in the interactables
+        let beaconX = 0;
+        let beaconY = 0;
+        let beaconFound = false;
+
+        for (const [, interactable] of this.room.state.interactables) {
+            if (interactable.type === "bioResonanceBeacon") {
+                beaconX = interactable.x;
+                beaconY = interactable.y;
+                beaconFound = true;
+                break;
+            }
+        }
+
+        if (!beaconFound) {
+            this.beaconDirectionText.setText('🌟 BEACON: Searching...');
+            this.beaconArrow.setVisible(false);
+            return;
+        }
+
+        // Calculate distance and direction from player to beacon
+        const dx = beaconX - playerEntity.x;
+        const dy = beaconY - playerEntity.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Update text with distance
+        if (distance < 100) {
+            this.beaconDirectionText.setText('🌟 BEACON: Nearby!');
+            this.beaconArrow.setVisible(false);
+        } else {
+            this.beaconDirectionText.setText(`🌟 BEACON: ${Math.floor(distance)}m`);
+            this.beaconArrow.setVisible(true);
+
+            // Calculate angle and rotate arrow
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90; // +90 to point up
+
+            // Update arrow rotation
+            this.beaconArrow.setRotation(angle * Math.PI / 180);
         }
     }
 
@@ -1173,6 +1265,9 @@ export class GameScene extends Phaser.Scene {
         if (this.time.now % 1000 < 16) { // Update roughly every second
             this.updateStageInformation();
         }
+
+        // Update beacon direction indicator
+        this.updateBeaconDirection();
 
         // Update dash cooldown
         if (this.dashCooldown > 0) {

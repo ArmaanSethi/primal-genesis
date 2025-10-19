@@ -23,10 +23,7 @@ export class MyRoom extends Room<MyRoomState> {
   private readonly DIFFICULTY_INTERVAL: number = 60; // 60 seconds per difficulty level
   private lastDifficultyIncrease: number = 0;
 
-  // Enemy defeat tracking for beacon spawning
-  private enemiesDefeated: number = 0;
-  private readonly BEACON_SPAWN_THRESHOLD: number = 3; // Spawn beacon after 3 enemies defeated (reduced for testing)
-  private beaconSpawned: boolean = false;
+  // Beacon now spawns immediately, no tracking needed
 
   onCreate (options: any) {
     this.SPAWN_INTERVAL = 500; // milliseconds (spawn faster)
@@ -471,9 +468,9 @@ export class MyRoom extends Room<MyRoomState> {
       attempts++;
     }
 
-    // Note: Beacon will now spawn after defeating BEACON_SPAWN_THRESHOLD enemies
-    // instead of spawning immediately at level start
-    console.log(`🎯 Beacon will spawn after defeating ${this.BEACON_SPAWN_THRESHOLD} enemies`);
+    // Spawn the beacon immediately so players can always find it
+    this.spawnBeacon();
+    console.log(`🌟 Beacon spawned immediately at level start - always available for players to find`);
   }
 
   private spawnBeacon(): void {
@@ -510,7 +507,7 @@ export class MyRoom extends Room<MyRoomState> {
     this.state.interactables.set(beacon.id, beacon);
     this.beaconId = beacon.id;
 
-    this.log(`🌟 BEACON SPAWN TRIGGERED! Defeated ${this.enemiesDefeated} enemies`);
+    this.log(`🌟 BEACON SPAWNED! Available immediately for players to find`);
     this.log(`🗿 Bio-Resonance Beacon spawned at (${beaconX.toFixed(0)}, ${beaconY.toFixed(0)})`);
 
     // Spawn Altar of the Apex near the beacon (but further away to avoid confusion)
@@ -1314,18 +1311,7 @@ export class MyRoom extends Room<MyRoomState> {
       const isElite = (enemy as any).isElite || false;
       this.spawnEnemyXP(enemy.x, enemy.y, enemy.typeId, isElite);
 
-      // Track enemy defeats for beacon spawning (skip the boss)
-      if (enemy.typeId !== "stageGuardian") {
-        this.enemiesDefeated++;
-        console.log(`⚔️ Enemy defeated! Total enemies defeated: ${this.enemiesDefeated}/${this.BEACON_SPAWN_THRESHOLD}`);
-
-        // Check if we should spawn the beacon
-        if (!this.beaconSpawned && this.enemiesDefeated >= this.BEACON_SPAWN_THRESHOLD) {
-          console.log(`🌟 BEACON SPAWN TRIGGERED! Defeated ${this.enemiesDefeated} enemies.`);
-          this.spawnBeacon();
-          this.beaconSpawned = true;
-        }
-      }
+      // Beacon spawns immediately at level start, always available for players
 
       // Check if this was the boss (stage guardian)
       if (enemy.typeId === "stageGuardian") {
