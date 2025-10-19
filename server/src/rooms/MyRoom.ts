@@ -23,6 +23,11 @@ export class MyRoom extends Room<MyRoomState> {
   private readonly DIFFICULTY_INTERVAL: number = 60; // 60 seconds per difficulty level
   private lastDifficultyIncrease: number = 0;
 
+  // Enemy defeat tracking for beacon spawning
+  private enemiesDefeated: number = 0;
+  private readonly BEACON_SPAWN_THRESHOLD: number = 3; // Spawn beacon after 3 enemies defeated (reduced for testing)
+  private beaconSpawned: boolean = false;
+
   onCreate (options: any) {
     this.SPAWN_INTERVAL = 500; // milliseconds (spawn faster)
     this.MAX_ENEMIES = 50; // More enemies
@@ -81,10 +86,209 @@ export class MyRoom extends Room<MyRoomState> {
         }
       }
     });
+
+    // Handle player dash ability
+    this.onMessage("dash", (client, data: { directionX: number, directionY: number, duration: number }) => {
+      const player = this.state.players.get(client.sessionId);
+      if (player && !player.isDead) {
+        console.log(`💨 Player ${client.sessionId} performed dash in direction (${data.directionX.toFixed(2)}, ${data.directionY.toFixed(2)})`);
+
+        // Calculate dash distance (fixed distance for balance)
+        const dashDistance = 150; // pixels
+        const targetX = player.x + (data.directionX * dashDistance);
+        const targetY = player.y + (data.directionY * dashDistance);
+
+        // Clamp to world boundaries
+        player.x = Math.max(20, Math.min(this.state.worldWidth - 20, targetX));
+        player.y = Math.max(20, Math.min(this.state.worldHeight - 20, targetY));
+
+        // Make player invincible during dash
+        player.isDashing = true;
+        player.dashEndTime = Date.now() + data.duration;
+
+        console.log(`💨 Dash completed - Player position: (${player.x.toFixed(1)}, ${player.y.toFixed(1)})`);
+      }
+    });
+
+    // Handle player interactions (chests, beacons, altars, totems)
+    this.onMessage("interact", (client, data: { interactableId?: string }) => {
+      const player = this.state.players.get(client.sessionId);
+      if (!player || player.isDead) return;
+
+      console.log(`🎮 Player ${client.sessionId} attempting to interact`);
+
+      // Handle undefined data (some tests call interact without parameters)
+      if (!data) {
+        console.log(`📦 Player ${client.sessionId} interacted without data - attempting item pickup`);
+        this.handleItemPickup(player);
+        return;
+      }
+
+      if (data.interactableId) {
+        // Specific interactable interaction (beacon, chest, altar, totem)
+        const interactable = this.state.interactables.get(data.interactableId);
+        if (interactable) {
+          const distance = Math.hypot(interactable.x - player.x, interactable.y - player.y);
+
+          if (distance < 50) { // Interaction range
+            this.handleInteractableInteraction(player, interactable, data.interactableId);
+          } else {
+            console.log(`📏 Player ${client.sessionId} too far from interactable (${distance.toFixed(1)}px)`);
+          }
+        }
+      } else {
+        // General interaction (pickup nearby items)
+        this.handleItemPickup(player);
+      }
+    });
   }
 
   private noop = (...args: any[]) => {};
   private log = console.log;
+
+  // Interaction Helper Methods
+  private handleInteractableInteraction(player: Player, interactable: InteractableState, interactableId: string): void {
+    console.log(`🎯 Player ${player.sessionId} interacting with ${interactable.type} (${interactableId})`);
+
+    switch (interactable.type) {
+      case "bioResonanceBeacon":
+        this.handleBeaconActivation(player, interactable, interactableId);
+        break;
+
+      case "smallChest":
+      case "largeChest":
+        this.handleChestOpening(player, interactable, interactableId);
+        break;
+
+      case "altarOfTheApex":
+        this.handleAltarInteraction(player, interactable, interactableId);
+        break;
+
+      case "whisperingTotem":
+        this.handleTotemInteraction(player, interactable, interactableId);
+        break;
+
+      default:
+        console.log(`❓ Unknown interactable type: ${interactable.type}`);
+    }
+  }
+
+  private handleItemPickup(player: Player): void {
+    // Find nearby interactables (chests, items on ground)
+    let pickedUpItem = false;
+
+    for (const [interactableId, interactable] of this.state.interactables.entries()) {
+      if (interactable.isOpen) continue; // Skip already opened interactables
+
+      const distance = Math.hypot(interactable.x - player.x, interactable.y - player.y);
+      if (distance < 40) { // Pickup range
+        console.log(`📦 Player ${player.sessionId} picking up ${interactable.type}`);
+
+        switch (interactable.type) {
+          case "smallChest":
+          case "largeChest":
+            this.handleChestOpening(player, interactable, interactableId);
+            pickedUpItem = true;
+            break;
+        }
+
+        if (pickedUpItem) break; // Only pick up one item per interaction
+      }
+    }
+  }
+
+  private handleBeaconActivation(player: Player, beacon: InteractableState, beaconId: string): void {
+    if (beacon.isOpen) {
+      console.log(`🚫 Beacon ${beaconId} already activated`);
+      return;
+    }
+
+    console.log(`🌟 BEACON ACTIVATED by player ${player.sessionId}!`);
+    beacon.isOpen = true;
+    this.state.beaconState = "charging";
+    this.state.holdoutTimer = 30; // 30 second holdout phase
+
+    // Start boss spawn countdown
+    setTimeout(() => {
+      this.spawnBoss();
+      this.state.beaconState = "bossFight";
+    }, 30000); // 30 seconds
+  }
+
+  private handleChestOpening(player: Player, chest: InteractableState, chestId: string): void {
+    if (chest.isOpen) {
+      console.log(`📦 Chest ${chestId} already opened`);
+      return;
+    }
+
+    chest.isOpen = true;
+    console.log(`📦 Player ${player.sessionId} opened ${chest.type}`);
+
+    // Generate items based on chest type
+    const itemCount = chest.type === "largeChest" ? 3 : 1;
+    const rarity = chest.type === "largeChest" ? "rare" : "uncommon";
+
+    for (let i = 0; i < itemCount; i++) {
+      const item = this.generateRandomItem(rarity);
+      if (item) {
+        player.items.push(item);
+        console.log(`💎 Player ${player.sessionId} received item: ${item.name} (${item.rarity})`);
+      }
+    }
+  }
+
+  private handleAltarInteraction(player: Player, altar: InteractableState, altarId: string): void {
+    if (altar.isOpen) {
+      console.log(`🗿 Altar ${altarId} already used`);
+      return;
+    }
+
+    console.log(`🗿 Player ${player.sessionId} activating Altar of the Apex`);
+
+    // Check if player can afford the cost
+    const totalStats = player.calculatedMaxHealth + player.calculatedDamage + player.calculatedMoveSpeed;
+
+    if (totalStats >= 100) {
+      altar.isOpen = true;
+
+      // Give player a random rare or legendary item
+      const item = this.generateRandomItem(Math.random() < 0.7 ? "rare" : "legendary");
+      if (item) {
+        player.items.push(item);
+        console.log(`✨ Altar granted ${item.name} to player ${player.sessionId}`);
+      }
+    } else {
+      console.log(`💔 Player ${player.sessionId} lacks sufficient stats for Altar (${totalStats}/100)`);
+    }
+  }
+
+  private handleTotemInteraction(player: Player, totem: InteractableState, totemId: string): void {
+    if (totem.isOpen) {
+      console.log(`✨ Totem ${totemId} already used`);
+      return;
+    }
+
+    console.log(`✨ Player ${player.sessionId} activating Whispering Totem`);
+
+    // Whispering Totem: Costs 50% health, 10% chance to fail
+    const healthCost = Math.floor(player.calculatedMaxHealth * 0.5);
+    if (player.health > healthCost) {
+      player.health -= healthCost;
+
+      // 10% chance to fail
+      if (Math.random() < 0.1) {
+        console.log(`💀 Whispering Totem failed for player ${player.sessionId}! Lost health for nothing.`);
+      } else {
+        const generatedItem = this.generateRandomItem("rare"); // Guaranteed rare item
+        if (generatedItem) {
+          player.items.push(generatedItem);
+          console.log(`✨ Whispering Totem blessed player ${player.sessionId} with a rare item!`);
+        }
+      }
+    } else {
+      console.log(`💔 Player ${player.sessionId} lacks health to activate Whispering Totem`);
+    }
+  }
 
   // Item System Helper Methods
   private generateRandomItem(rarity?: string): ItemState | null {
@@ -267,8 +471,9 @@ export class MyRoom extends Room<MyRoomState> {
       attempts++;
     }
 
-    // Spawn the Bio-Resonance Beacon
-    this.spawnBeacon();
+    // Note: Beacon will now spawn after defeating BEACON_SPAWN_THRESHOLD enemies
+    // instead of spawning immediately at level start
+    console.log(`🎯 Beacon will spawn after defeating ${this.BEACON_SPAWN_THRESHOLD} enemies`);
   }
 
   private spawnBeacon(): void {
@@ -595,10 +800,28 @@ export class MyRoom extends Room<MyRoomState> {
           player.health + (player.calculatedHealthRegen * deltaTime / 1000));
       }
 
-      // Collect XP entities
-      const pickupRadius = 50; // Pickup radius for XP orbs
+      // Collect XP entities with magnet effect
+      const magnetRadius = 120; // Magnet attraction radius
+      const pickupRadius = 40; // Actual pickup radius (smaller for precision)
       this.state.xpEntities.forEach((xpEntity, xpId) => {
         const distance = Math.hypot(player.x - xpEntity.x, player.y - xpEntity.y);
+
+        // Apply magnet effect when within range
+        if (distance <= magnetRadius && distance > 0) {
+          // Calculate attraction force (stronger when closer)
+          const attractionForce = Math.max(0.1, 1 - (distance / magnetRadius));
+          const moveSpeed = attractionForce * 300 * (deltaTime / 1000);
+
+          // Move XP entity towards player
+          const angle = Math.atan2(player.y - xpEntity.y, player.x - xpEntity.x);
+          const moveX = Math.cos(angle) * moveSpeed;
+          const moveY = Math.sin(angle) * moveSpeed;
+
+          xpEntity.x += moveX;
+          xpEntity.y += moveY;
+        }
+
+        // Collect when close enough
         if (distance <= pickupRadius) {
           // Award XP to player
           player.xp += xpEntity.xpValue;
@@ -628,7 +851,6 @@ export class MyRoom extends Room<MyRoomState> {
         });
 
         if (nearestEnemy) {
-          console.log("Projectile creation logic reached!");
           const targetEnemy = nearestEnemy as Enemy;
           const projectileId = uuidv4();
           const angle = Math.atan2(targetEnemy.y - player.y, targetEnemy.x - player.x);
@@ -670,17 +892,7 @@ export class MyRoom extends Room<MyRoomState> {
       // @ts-ignore
       projectile.y += Math.sin(projectile.rotation) * projectile.speed * (deltaTime / 1000);
 
-      // Debug spitter projectiles specifically
-      if (projectile.projectileType === "spitterProjectile") {
-        console.log(`🟢 SPITTER PROJECTILE DEBUG:
-          ID: ${projectile.id},
-          Type: ${projectile.projectileType},
-          Pos: (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)}),
-          Speed: ${projectile.speed},
-          TTL: ${projectile.timeToLive.toFixed(2)},
-          Owner: ${projectile.ownerId}`);
-      }
-
+  
       // Check for collision with enemies
       for (const enemy of this.state.enemies.values()) {
         const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
@@ -840,11 +1052,18 @@ export class MyRoom extends Room<MyRoomState> {
         const collisionRadius = 24; // Approximate collision radius for enemy and player
 
         if (distance < collisionRadius && enemy.attackCooldown <= 0) {
-          player.health -= enemy.damage;
-          enemy.attackCooldown = 1; // 1 second cooldown for enemy attack
+          // Check if player is dashing (invincible during dash)
+          const isPlayerDashing = player.isDashing && Date.now() < player.dashEndTime;
 
-          if (player.health <= 0) {
-            this.state.players.delete(player.sessionId);
+          if (!isPlayerDashing) {
+            player.health -= enemy.damage;
+            enemy.attackCooldown = 1; // 1 second cooldown for enemy attack
+
+            if (player.health <= 0) {
+              this.state.players.delete(player.sessionId);
+            }
+          } else {
+            console.log(`💨 Player ${player.sessionId} avoided damage through dash invincibility!`);
           }
         }
       });
@@ -857,13 +1076,16 @@ export class MyRoom extends Room<MyRoomState> {
 
     // Player-Interactable Collision and Pickup
     this.state.players.forEach((player) => {
-      this.state.interactables.forEach((interactable) => {
+      this.state.interactables.forEach((interactable, interactableId) => {
         if (interactable.isOpen) return; // Skip already opened interactables
 
         const distance = Math.hypot(player.x - interactable.x, player.y - interactable.y);
         const collisionRadius = 40; // Pickup radius
 
         if (distance < collisionRadius) {
+          // Player collided with interactable - log the pickup attempt
+          console.log(`📦 Player ${player.sessionId} picking up ${interactable.type} at (${interactable.x.toFixed(1)}, ${interactable.y.toFixed(1)})`);
+
           // Player collided with interactable
           let generatedItem: ItemState | null = null;
 
@@ -920,6 +1142,7 @@ export class MyRoom extends Room<MyRoomState> {
           if (generatedItem) {
             // Add item to player inventory
             player.items.push(generatedItem);
+            console.log(`✨ Player ${player.sessionId} received item: ${generatedItem.name} (${generatedItem.rarity})`);
 
             // Apply item effects to player stats
             this.applyItemEffectsToPlayer(player);
@@ -933,7 +1156,7 @@ export class MyRoom extends Room<MyRoomState> {
 
             // Mark interactable as opened
             interactable.isOpen = true;
-            this.state.interactables.set(interactable.id, interactable);
+            this.state.interactables.set(interactableId, interactable);
           }
         }
       });
@@ -1090,6 +1313,19 @@ export class MyRoom extends Room<MyRoomState> {
       const isElite = (enemy as any).isElite || false;
       this.spawnEnemyXP(enemy.x, enemy.y, enemy.typeId, isElite);
 
+      // Track enemy defeats for beacon spawning (skip the boss)
+      if (enemy.typeId !== "stageGuardian") {
+        this.enemiesDefeated++;
+        console.log(`⚔️ Enemy defeated! Total enemies defeated: ${this.enemiesDefeated}/${this.BEACON_SPAWN_THRESHOLD}`);
+
+        // Check if we should spawn the beacon
+        if (!this.beaconSpawned && this.enemiesDefeated >= this.BEACON_SPAWN_THRESHOLD) {
+          console.log(`🌟 BEACON SPAWN TRIGGERED! Defeated ${this.enemiesDefeated} enemies.`);
+          this.spawnBeacon();
+          this.beaconSpawned = true;
+        }
+      }
+
       // Check if this was the boss (stage guardian)
       if (enemy.typeId === "stageGuardian") {
         // Spawn boss rewards
@@ -1228,7 +1464,7 @@ export class MyRoom extends Room<MyRoomState> {
 
     // Update enemy spawn parameters
     this.MAX_ENEMIES = Math.min(50 + (difficultyLevel * 10), 100); // More enemies at higher difficulties
-    this.SPAWN_INTERVAL = Math.max(2000 / (1 + (difficultyLevel * 0.2)), 500); // Faster spawning
+    this.SPAWN_INTERVAL = Math.max(2000 / spawnRateMultiplier, 500); // Faster spawning using multiplier
 
     // Apply scaling to existing enemies (optional - affects new spawns only)
     console.log(`📊 Difficulty ${difficultyLevel} scaling applied:`);

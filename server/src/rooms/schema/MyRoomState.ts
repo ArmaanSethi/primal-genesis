@@ -59,6 +59,11 @@ export class Player extends Schema {
   // Input buffer for server-side processing
   inputX: number = 0;
   inputY: number = 0;
+
+  // Combat and state flags
+  @type("boolean") isDead: boolean = false;
+  @type("boolean") isDashing: boolean = false;
+  @type("number") dashEndTime: number = 0;
 }
 
 export class Enemy extends Schema {
