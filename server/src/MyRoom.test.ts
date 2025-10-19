@@ -101,22 +101,24 @@ describe("MyRoom Integration Tests", () => {
 
   it("should create a projectile when player attacks an enemy", async () => {
     const room = await colyseus.createRoom<MyRoomState>("my_room", {});
-    const client = await colyseus.connectTo(room, {});
+        const client = await colyseus.connectTo(room, {});
+        await room.waitForNextPatch();
+        // Manually create and position an enemy for testing
+    const player = room.state.players.get(client.sessionId);
+    assert.exists(player);
+    player.x = 100;
+    player.y = 100;
 
     // Manually create and position an enemy for testing
     const enemy = new Enemy();
     enemy.id = "testEnemy";
     enemy.typeId = "waspDrone";
-    enemy.x = 110; // Very close to the player
-    enemy.y = 100;
+    enemy.x = player.x + 10; // Very close to the player
+    enemy.y = player.y;
     room.state.enemies.set(enemy.id, enemy);
 
     await room.waitForNextPatch(); // Wait for state to sync
 
-    const player = room.state.players.get(client.sessionId);
-    assert.exists(player);
-    player.x = 100;
-    player.y = 100;
     player.attackCooldown = 0; // Ensure player can attack immediately
     player.attackSpeed = 1; // 1 attack per second
     player.projectileSpeed = 100; // Explicitly set projectile speed
@@ -193,8 +195,8 @@ describe("MyRoom Integration Tests", () => {
     room.state.enemies.clear();
     await room.waitForNextPatch();
 
-    // Simulate enough time for 2 spawns to occur with SPAWN_INTERVAL of 500ms
-    for (let i = 0; i < 150; i++) { // Simulate 150 ticks (approx 2.5 seconds)
+    // Simulate 100 ticks (approx 1.66 seconds for 60FPS, or 1 second for 10ms deltaTime)
+    for (let i = 0; i < 100; i++) {
       await room.waitForNextPatch();
     }
 

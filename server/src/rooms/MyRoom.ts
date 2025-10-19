@@ -292,7 +292,7 @@ export class MyRoom extends Room<MyRoomState> {
     this.state.interactables.set(beacon.id, beacon);
     this.beaconId = beacon.id;
 
-    this.log(`Bio-Resonance Beacon spawned at (${beaconX.toFixed(0)}, ${beaconY.toFixed(0)})`);
+    // this.log(`Bio-Resonance Beacon spawned at (${beaconX.toFixed(0)}, ${beaconY.toFixed(0)})`);
   }
 
   private activateBeacon(player: Player): void {
@@ -302,7 +302,7 @@ export class MyRoom extends Room<MyRoomState> {
 
     this.state.beaconState = "charging";
     this.state.holdoutTimer = this.BEACON_ACTIVATION_TIME;
-    this.log(`Beacon activated by player ${player.sessionId}. Starting ${this.BEACON_ACTIVATION_TIME}s holdout phase`);
+    // this.log(`Beacon activated by player ${player.sessionId}. Starting ${this.BEACON_ACTIVATION_TIME}s holdout phase`);
 
     // Mark beacon as visually activated
     const beacon = this.state.interactables.get(this.beaconId);
@@ -315,7 +315,7 @@ export class MyRoom extends Room<MyRoomState> {
   private spawnBoss(): void {
     if (this.state.beaconState !== "bossFight") {
       this.state.beaconState = "bossFight";
-      this.log(`Stage Guardian spawning!`);
+      // this.log(`Stage Guardian spawning!`);
 
       // For now, we'll spawn a very strong enemy as the "boss"
       // In the future, this could be a proper boss entity
@@ -350,14 +350,14 @@ export class MyRoom extends Room<MyRoomState> {
         }
 
         this.state.enemies.set(id, boss);
-        this.log(`Stage Guardian spawned with ${boss.maxHealth} health and ${boss.damage} damage`);
+        // this.log(`Stage Guardian spawned with ${boss.maxHealth} health and ${boss.damage} damage`);
       }
     }
   }
 
   private completeStage(): void {
     this.state.beaconState = "stageComplete";
-    this.log(`Stage ${this.state.stageLevel} completed! Boss defeated by players.`);
+    // this.log(`Stage ${this.state.stageLevel} completed! Boss defeated by players.`);
 
     // Stop enemy spawning
     this.SPAWN_INTERVAL = 999999;
@@ -365,7 +365,7 @@ export class MyRoom extends Room<MyRoomState> {
     // Clear remaining enemies after a delay
     setTimeout(() => {
       this.state.enemies.clear();
-      this.log("All enemies cleared. Stage complete - ready for progression.");
+      // this.log("All enemies cleared. Stage complete - ready for progression.");
     }, 3000);
 
     // TODO: Add exit gates and path choices here
@@ -376,16 +376,16 @@ export class MyRoom extends Room<MyRoomState> {
     // Removed excessive logging that was causing performance issues
 
     // Enemy spawning logic
-    this.log(`DEBUG Spawning: spawnTimer=${this.spawnTimer}, SPAWN_INTERVAL=${this.SPAWN_INTERVAL}, enemies.size=${this.state.enemies.size}, MAX_ENEMIES=${this.MAX_ENEMIES}`);
+    // this.log(`DEBUG Spawning: spawnTimer=${this.spawnTimer}, SPAWN_INTERVAL=${this.SPAWN_INTERVAL}, enemies.size=${this.state.enemies.size}, MAX_ENEMIES=${this.MAX_ENEMIES}`);
     this.spawnTimer += deltaTime;
     if (this.spawnTimer >= this.SPAWN_INTERVAL && this.state.enemies.size < this.MAX_ENEMIES) {
-      this.log(`DEBUG Spawning: Attempting to spawn new enemy.`);
+      // this.log(`DEBUG Spawning: Attempting to spawn new enemy.`);
       const availableEnemyTypes = ["waspDrone", "spitter", "charger"];
       const randomEnemyTypeId = availableEnemyTypes[Math.floor(Math.random() * availableEnemyTypes.length)];
       const enemyType = enemyData[randomEnemyTypeId as keyof typeof enemyData];
 
       if (enemyType) {
-        this.log(`DEBUG Spawning: Selected enemy type ${randomEnemyTypeId}.`);
+        // this.log(`DEBUG Spawning: Selected enemy type ${randomEnemyTypeId}.`);
         const enemy = new Enemy();
         const stats = enemyType.baseStats;
         const id = uuidv4();
@@ -396,11 +396,11 @@ export class MyRoom extends Room<MyRoomState> {
         // Spawn enemies just off-screen relative to a player's camera
         const playersArray = Array.from(this.state.players.values());
         if (playersArray.length > 0) {
-          this.log(`DEBUG Spawning: Players present. Spawning near player.`);
+          // this.log(`DEBUG Spawning: Players present. Spawning near player.`);
           // Pick a random player to spawn near
           const randomPlayerIndex = Math.floor(Math.random() * playersArray.length);
           const player = playersArray[randomPlayerIndex];
-                      this.log(`Spawning enemy near player ${player.sessionId} at (${player.x}, ${player.y})`); // Debug player position for spawn
+                      // this.log(`Spawning enemy near player ${player.sessionId} at (${player.x}, ${player.y})`); // Debug player position for spawn
 
           const minSpawnDistance = 300; // Minimum distance from player
           const spawnRadius = 600; // Maximum radius around the player to spawn enemies
@@ -422,13 +422,13 @@ export class MyRoom extends Room<MyRoomState> {
 
           enemy.x = spawnX;
           enemy.y = spawnY;
-                      this.log(`Enemy ${enemy.id} (type: ${enemy.typeId}) spawned at (${enemy.x.toFixed(2)}, ${enemy.y.toFixed(2)}) near player ${player.sessionId} at (${player.x.toFixed(2)}, ${player.y.toFixed(2)}). Calculated distance: ${distance.toFixed(2)}`); // Debug enemy spawn position
+                      // this.log(`Enemy ${enemy.id} (type: ${enemy.typeId}) spawned at (${enemy.x.toFixed(2)}, ${enemy.y.toFixed(2)}) near player ${player.sessionId} at (${player.x.toFixed(2)}, ${player.y.toFixed(2)}). Calculated distance: ${distance.toFixed(2)}`); // Debug enemy spawn position
         } else {
-          this.log(`DEBUG Spawning: No players present. Spawning randomly.`);
+          // this.log(`DEBUG Spawning: No players present. Spawning randomly.`);
           // Fallback: if no players, spawn randomly (shouldn't happen in normal gameplay)
           enemy.x = Math.random() * this.state.worldWidth;
           enemy.y = Math.random() * this.state.worldHeight;
-          this.log(`Enemy ${enemy.id} spawned randomly at (${enemy.x}, ${enemy.y}) (no players)`);
+          // this.log(`Enemy ${enemy.id} spawned randomly at (${enemy.x}, ${enemy.y}) (no players)`);
         }
 
         enemy.maxHealth = stats.maxHealth;
@@ -440,7 +440,7 @@ export class MyRoom extends Room<MyRoomState> {
         enemy.projectileType = (enemyType as any).projectileType || "";
 
         this.state.enemies.set(id, enemy);
-        this.log(`DEBUG Spawning: Enemy ${id} added to state. Current enemies size: ${this.state.enemies.size}`);
+        // this.log(`DEBUG Spawning: Enemy ${id} added to state. Current enemies size: ${this.state.enemies.size}`);
       }
       this.spawnTimer = 0;
     }
@@ -484,7 +484,7 @@ export class MyRoom extends Room<MyRoomState> {
 
       // Automatic attack logic (now fires projectiles)
       if (player.attackCooldown <= 0) {
-        this.log(`DEBUG Player ${player.sessionId}: Attack cooldown is ${player.attackCooldown}. Looking for enemy.`);
+        // this.log(`DEBUG Player ${player.sessionId}: Attack cooldown is ${player.attackCooldown}. Looking for enemy.`);
         let nearestEnemy: Enemy | null = null;
         let minDistance = Infinity;
         const attackRange = 300; // Example attack range for projectile firing
@@ -498,7 +498,7 @@ export class MyRoom extends Room<MyRoomState> {
         });
 
         if (nearestEnemy) {
-          this.log(`DEBUG Player ${player.sessionId}: Found nearest enemy ${(nearestEnemy as Enemy).id}. Creating projectile.`);
+          console.log("Projectile creation logic reached!");
           const targetEnemy = nearestEnemy as Enemy;
           const projectileId = uuidv4();
           const angle = Math.atan2(targetEnemy.y - player.y, targetEnemy.x - player.x);
@@ -512,17 +512,17 @@ export class MyRoom extends Room<MyRoomState> {
           projectile.damage = player.damage;
           projectile.ownerId = player.sessionId;
           projectile.timeToLive = 2; // Player projectiles last for 2 seconds
-          this.log(`DEBUG: Player projectile ${projectileId} about to be added to state. TTL: ${projectile.timeToLive.toFixed(2)}`);
+          // this.log(`DEBUG: Player projectile ${projectileId} about to be added to state. TTL: ${projectile.timeToLive.toFixed(2)}`);
 
           this.state.projectiles.set(projectileId, projectile);
-          this.log(`DEBUG Player projectile ${projectileId} created at (${projectile.x.toFixed(2)}, ${projectile.y.toFixed(2)}) with speed ${projectile.speed}, rotation ${projectile.rotation.toFixed(2)})`);
+          // this.log(`DEBUG Player projectile ${projectileId} created at (${projectile.x.toFixed(2)}, ${projectile.y.toFixed(2)}) with speed ${projectile.speed}, rotation ${projectile.rotation.toFixed(2)})`);
           player.attackCooldown = 1 / player.attackSpeed; // Reset cooldown
         } else {
-          this.log(`DEBUG Player ${player.sessionId}: Attack cooldown met, but no enemy in range.`);
+          // this.log(`DEBUG Player ${player.sessionId}: Attack cooldown met, but no enemy in range.`);
         }
       } else {
         player.attackCooldown -= deltaTime / 1000; // Reduce cooldown
-        this.log(`DEBUG Player ${player.sessionId}: Attack cooldown: ${player.attackCooldown.toFixed(2)}`);
+        // this.log(`DEBUG Player ${player.sessionId}: Attack cooldown: ${player.attackCooldown.toFixed(2)}`);
       }
     });
 
@@ -546,17 +546,16 @@ export class MyRoom extends Room<MyRoomState> {
         const collisionRadius = 20; // Increased collision radius for projectile and enemy
 
         if (distance < collisionRadius) {
-          // Collision detected
-          enemy.health -= projectile.damage;
-          if (enemy.health <= 0) {
-            // Check if this was the boss (stage guardian)
-            if (enemy.typeId === "stageGuardian" && this.state.beaconState === "bossFight") {
-              this.completeStage();
-            }
-            this.state.enemies.delete(enemy.id);
-          }
-
           this.state.projectiles.delete(projectile.id); // Remove projectile on hit
+          // Collision detected
+          enemy.health -= projectile.damage; // Apply base projectile damage
+          this.checkEnemyDeath(enemy);
+
+          // Apply item effects from the player who fired the projectile
+          const player = this.state.players.get(projectile.ownerId);
+          if (player) {
+            this.applyProjectileEffects(projectile, enemy, player);
+          }
           break; // Only hit one enemy per projectile
         }
       }
@@ -597,12 +596,12 @@ export class MyRoom extends Room<MyRoomState> {
 
       // Ranged attack logic for stationary enemies (Spitter)
       if (enemyTypeData.behavior === "stationary" && enemyTypeData.attackType === "ranged") {
-        this.log(`Spitter ${enemy.id} check - Cooldown: ${enemy.attackCooldown.toFixed(2)}, Range: ${enemy.attackRange}, Distance: ${minDistance.toFixed(1)}, Can Shoot: ${enemy.attackCooldown <= 0 && minDistance <= enemy.attackRange}`);
+        // this.log(`Spitter ${enemy.id} check - Cooldown: ${enemy.attackCooldown.toFixed(2)}, Range: ${enemy.attackRange}, Distance: ${minDistance.toFixed(1)}, Can Shoot: ${enemy.attackCooldown <= 0 && minDistance <= enemy.attackRange}`);
         if (enemy.attackCooldown <= 0 && minDistance <= enemy.attackRange) {
-          this.log(`Spitter ${enemy.id} firing projectile at player ${closestPlayer.sessionId}! Distance: ${minDistance.toFixed(1)}`);
+          // this.log(`Spitter ${enemy.id} firing projectile at player ${closestPlayer.sessionId}! Distance: ${minDistance.toFixed(1)}`);
           const projectileId = uuidv4();
           const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
-          console.log(`🟢 SPITTER PROJECTILE: Created ${projectileId} with speed ${enemy.projectileSpeed} and damage ${enemy.damage}`);
+          // console.log(`🟢 SPITTER PROJECTILE: Created ${projectileId} with speed ${enemy.projectileSpeed} and damage ${enemy.damage}`);
 
           const projectile = new Projectile();
           projectile.id = projectileId;
@@ -749,7 +748,7 @@ export class MyRoom extends Room<MyRoomState> {
             case "bioResonanceBeacon":
               // Activate the beacon!
               this.activateBeacon(player);
-              this.log(`Player ${player.sessionId} activated the Bio-Resonance Beacon!`);
+              // this.log(`Player ${player.sessionId} activated the Bio-Resonance Beacon!`);
               break;
           }
 
@@ -776,8 +775,77 @@ export class MyRoom extends Room<MyRoomState> {
     });
   } // This brace closes the update = (deltaTime: number) => { method
 
+  // New helper function to apply projectile-triggered item effects
+  private applyProjectileEffects(projectile: Projectile, hitEnemy: Enemy, player: Player): void {
+    player.items.forEach((item: ItemState) => {
+      item.effects.forEach((effect: ItemEffect) => {
+        if (effect.trigger === "onAttack") {
+          switch (effect.effect) {
+            case "areaDamage":
+              // Explosive Rounds: Apply damage in an area around the hit enemy
+              this.state.enemies.forEach((aoeEnemy) => {
+                const distance = Math.hypot(hitEnemy.x - aoeEnemy.x, hitEnemy.y - aoeEnemy.y);
+                if (distance <= effect.radius) {
+                  const aoeDamage = projectile.damage * effect.value;
+                  aoeEnemy.health -= aoeDamage;
+                  // this.log(`💥 Area damage hit enemy ${aoeEnemy.id} for ${aoeDamage.toFixed(2)} damage from ${item.name}`);
+                  this.checkEnemyDeath(aoeEnemy);
+                }
+              });
+              break;
+            case "chainDamage":
+              // Lightning Rod: Chain damage to additional targets
+              if (Math.random() < (effect.chance || 0)) { // Check for chance to proc
+                // this.log(`⚡ Chain damage proc from ${item.name}!`);
+                let chainedTargets: Enemy[] = [hitEnemy];
+                let lastChainedEnemy: Enemy = hitEnemy; // Start with the enemy that was hit
+
+                for (let i = 0; i < effect.targets; i++) {
+                  let nearestUnchainedEnemy: Enemy | null = null;
+                  let minDistance = Infinity;
+
+                  this.state.enemies.forEach((chainCandidate: Enemy) => {
+                    if (!chainedTargets.includes(chainCandidate)) {
+                      const distance = Math.hypot(lastChainedEnemy.x - chainCandidate.x, lastChainedEnemy.y - chainCandidate.y);
+                      if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestUnchainedEnemy = chainCandidate;
+                      }
+                    }
+                  });
+
+                  if (nearestUnchainedEnemy) {
+                    const chainedEnemy = nearestUnchainedEnemy as Enemy; // Explicit type assertion
+                    const chainDamage = projectile.damage * effect.value * (1 - (i * (effect.value || 0))); // Apply reduction per chain
+                    chainedEnemy.health -= chainDamage;
+                    // this.log(`⚡ Chain hit enemy ${chainedEnemy.id} for ${chainDamage.toFixed(2)} damage from ${item.name}`);
+                    this.checkEnemyDeath(chainedEnemy);
+                    chainedTargets.push(chainedEnemy);
+                    lastChainedEnemy = chainedEnemy; // Update the source for the next chain
+                  } else {
+                    break; // No more enemies to chain to
+                  }
+                }
+              }
+              break;
+            case "applyBurn":
+              // Inferno Orb: Apply burn status effect
+              // this.log(`🔥 Applying burn to enemy ${hitEnemy.id} from ${item.name}. (Placeholder: Status effect system needed)`);
+              // TODO: Implement a proper status effect system for enemies
+              break;
+            case "applyChill":
+              // Frost Shard: Apply chill status effect
+              // this.log(`❄️ Applying chill to enemy ${hitEnemy.id} from ${item.name}. (Placeholder: Status effect system needed)`);
+              // TODO: Implement a proper status effect system for enemies
+              break;
+          }
+        }
+      });
+    });
+  }
+
   onJoin(client: Client, options: any) {
-    this.log(client.sessionId, "joined!");
+    // this.log(client.sessionId, "joined!");
     const player = new Player();
     player.sessionId = client.sessionId; // Assign sessionId
     const stats = characterData.bioResearcher.stats;
@@ -807,17 +875,17 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   onLeave(client: Client, consented: boolean) {
-    this.log("room", this.roomId, client.sessionId, "left!");
+    // this.log("room", this.roomId, client.sessionId, "left!");
     this.state.players.delete(client.sessionId);
   }
 
   onDispose() {
-    this.log("room", this.roomId, "disposing...");
+    // this.log("room", this.roomId, "disposing...");
   }
 
   // Equipment ability methods
   private executeDashAttack(player: Player, damage: number): void {
-    console.log(`⚡ Dash attack activated by ${player.sessionId} for ${damage} damage`);
+    // console.log(`⚡ Dash attack activated by ${player.sessionId} for ${damage} damage`);
 
     // Find all enemies near the player and damage them
     const dashRadius = 100;
@@ -828,21 +896,14 @@ export class MyRoom extends Room<MyRoomState> {
 
       if (distance <= dashRadius) {
         enemy.health -= damage;
-        console.log(`⚡ Dash hit enemy ${enemy.id} for ${damage} damage`);
-
-        if (enemy.health <= 0) {
-          // Check if this was the boss
-          if (enemy.typeId === "stageGuardian" && this.state.beaconState === "bossFight") {
-            this.completeStage();
-          }
-          this.state.enemies.delete(enemy.id);
-        }
+        // console.log(`⚡ Dash hit enemy ${enemy.id} for ${damage} damage`);
+        this.checkEnemyDeath(enemy);
       }
     });
   }
 
   private throwGrenade(player: Player, damage: number, radius: number): void {
-    console.log(`💣 Grenade thrown by ${player.sessionId} for ${damage} damage in ${radius} radius`);
+    // console.log(`💣 Grenade thrown by ${player.sessionId} for ${damage} damage in ${radius} radius`);
 
     // Find all enemies in the grenade radius
     this.state.enemies.forEach((enemy) => {
@@ -852,16 +913,19 @@ export class MyRoom extends Room<MyRoomState> {
 
       if (distance <= radius) {
         enemy.health -= damage;
-        console.log(`💣 Grenade hit enemy ${enemy.id} for ${damage} damage`);
-
-        if (enemy.health <= 0) {
-          // Check if this was the boss
-          if (enemy.typeId === "stageGuardian" && this.state.beaconState === "bossFight") {
-            this.completeStage();
-          }
-          this.state.enemies.delete(enemy.id);
-        }
+        // console.log(`💣 Grenade hit enemy ${enemy.id} for ${damage} damage`);
+        this.checkEnemyDeath(enemy);
       }
     });
+  }
+
+  private checkEnemyDeath(enemy: Enemy): void {
+    if (enemy.health <= 0) {
+      // Check if this was the boss (stage guardian)
+      if (enemy.typeId === "stageGuardian" && this.state.beaconState === "bossFight") {
+        this.completeStage();
+      }
+      this.state.enemies.delete(enemy.id);
+    }
   }
 }

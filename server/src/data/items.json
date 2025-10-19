@@ -141,5 +141,49 @@
     "effects": [
       { "trigger": "onActivate", "effect": "grenade", "damage": 200, "radius": 150, "cooldown": 10 }
     ]
+  },
+  "explosiveRounds": {
+    "id": "explosiveRounds",
+    "name": "Explosive Rounds",
+    "description": "Your attacks explode on impact, dealing 50% of your damage in a small area (+25% damage per stack).",
+    "icon": "icons/explosive_rounds.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onAttack", "effect": "areaDamage", "value": 0.5, "type": "percentage", "radius": 50 }
+    ]
+  },
+  "lightningRod": {
+    "id": "lightningRod",
+    "name": "Lightning Rod",
+    "description": "Your attacks have a 25% chance to chain to 2 additional enemies, dealing 75% damage per chain (+1 target per stack).",
+    "icon": "icons/lightning_rod.png",
+    "rarity": "rare",
+    "stackingType": "special",
+    "effects": [
+      { "trigger": "onAttack", "effect": "chainDamage", "value": 0.75, "type": "percentage", "targets": 2, "chance": 0.25 }
+    ]
+  },
+  "infernoOrb": {
+    "id": "infernoOrb",
+    "name": "Inferno Orb",
+    "description": "Your attacks apply a burn that deals 10 fire damage per second for 3 seconds (+5 damage per stack).",
+    "icon": "icons/inferno_orb.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onAttack", "effect": "applyBurn", "value": 10, "type": "flat", "interval": 1, "duration": 3, "damageType": "fire" }
+    ]
+  },
+  "frostShard": {
+    "id": "frostShard",
+    "name": "Frost Shard",
+    "description": "Your attacks apply a chill that slows enemies by 20% for 2 seconds and deals 5 ice damage (+10% slow per stack).",
+    "icon": "icons/frost_shard.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onAttack", "effect": "applyChill", "value": 0.20, "type": "percentage", "duration": 2, "damage": 5, "damageType": "ice" }
+    ]
   }
 }

@@ -10,6 +10,8 @@ export class ItemEffect extends Schema {
   @type("number") targets: number = 0; // for multi-target effects
   @type("number") radius: number = 0; // for area effects
   @type("number") cooldown: number = 0; // for equipment cooldown
+  @type("number") chance: number = 0; // for proc chance effects
+  @type("string") damageType: string = ""; // for elemental damage types (e.g., "fire", "ice")
 }
 
 export class ItemState extends Schema {
