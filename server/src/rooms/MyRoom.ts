@@ -19,6 +19,10 @@ export class MyRoom extends Room<MyRoomState> {
   private readonly BEACON_ACTIVATION_TIME: number = 90; // 90 seconds
   private readonly BOSS_SPAWN_DELAY: number = 2000; // 2 seconds after beacon activation
 
+  // Time-based difficulty system
+  private readonly DIFFICULTY_INTERVAL: number = 60; // 60 seconds per difficulty level
+  private lastDifficultyIncrease: number = 0;
+
   onCreate (options: any) {
     this.SPAWN_INTERVAL = 500; // milliseconds (spawn faster)
     this.MAX_ENEMIES = 50; // More enemies
@@ -505,13 +509,21 @@ export class MyRoom extends Room<MyRoomState> {
           // this.log(`Enemy ${enemy.id} spawned randomly at (${enemy.x}, ${enemy.y}) (no players)`);
         }
 
-        enemy.maxHealth = stats.maxHealth;
-        enemy.health = stats.health;
-        enemy.damage = stats.damage;
-        enemy.moveSpeed = stats.moveSpeed;
+        // Apply difficulty scaling to enemy stats
+        const difficultyLevel = Math.floor(this.state.timeElapsed / this.DIFFICULTY_INTERVAL);
+        const healthMultiplier = 1 + (difficultyLevel * 0.25);
+        const damageMultiplier = 1 + (difficultyLevel * 0.20);
+        const speedMultiplier = 1 + (difficultyLevel * 0.10);
+
+        enemy.maxHealth = Math.floor(stats.maxHealth * healthMultiplier);
+        enemy.health = enemy.maxHealth;
+        enemy.damage = Math.floor(stats.damage * damageMultiplier);
+        enemy.moveSpeed = stats.moveSpeed * speedMultiplier;
         enemy.attackCooldown = 0;
         enemy.attackRange = (enemyType as any).attackRange || 0;
         enemy.projectileType = (enemyType as any).projectileType || "";
+
+        console.log(`👾 Spawned ${enemy.typeId} with scaled stats: HP=${enemy.maxHealth}, DMG=${enemy.damage}, SPD=${enemy.moveSpeed.toFixed(1)}`);
 
         this.state.enemies.set(id, enemy);
         // this.log(`DEBUG Spawning: Enemy ${id} added to state. Current enemies size: ${this.state.enemies.size}`);
@@ -538,6 +550,9 @@ export class MyRoom extends Room<MyRoomState> {
       // Normal spawn rate
       this.SPAWN_INTERVAL = 2000;
     }
+
+    // Update time-based difficulty scaling
+    this.updateDifficultyScaling(deltaTime);
 
     // Player movement and attack
     this.state.players.forEach((player) => {
@@ -1146,5 +1161,53 @@ export class MyRoom extends Room<MyRoomState> {
       console.log(`   +${healthBonus} max health, +${damageBonus} damage`);
       console.log(`   Next level requires ${Math.floor(100 * Math.pow(1.2, player.level))} XP`);
     }
+  }
+
+  private updateDifficultyScaling(deltaTime: number): void {
+    // Update game time
+    this.state.timeElapsed += deltaTime / 1000; // Convert to seconds
+
+    // Calculate current difficulty level based on time elapsed
+    const difficultyLevel = Math.floor(this.state.timeElapsed / this.DIFFICULTY_INTERVAL);
+
+    // Define difficulty levels as per GDD.md
+    const difficultyLevels = ["Easy", "Medium", "Hard", "Very Hard", "INSANE"];
+    const currentDifficulty = difficultyLevels[Math.min(difficultyLevel, difficultyLevels.length - 1)];
+
+    // Update difficulty state if it changed
+    if (this.state.difficultyLevel !== currentDifficulty) {
+      const previousDifficulty = this.state.difficultyLevel;
+      this.state.difficultyLevel = currentDifficulty;
+
+      console.log(`⚠️ DIFFICULTY INCREASED: ${previousDifficulty} → ${currentDifficulty} (${this.state.timeElapsed.toFixed(0)}s)`);
+
+      // Apply difficulty scaling
+      this.applyDifficultyScaling(difficultyLevel);
+    }
+  }
+
+  private applyDifficultyScaling(difficultyLevel: number): void {
+    // Base scaling factors (increases with each difficulty level)
+    const healthMultiplier = 1 + (difficultyLevel * 0.25); // +25% health per level
+    const damageMultiplier = 1 + (difficultyLevel * 0.20); // +20% damage per level
+    const speedMultiplier = 1 + (difficultyLevel * 0.10); // +10% speed per level
+    const spawnRateMultiplier = 1 + (difficultyLevel * 0.15); // +15% spawn rate per level
+
+    // Update enemy spawn parameters
+    this.MAX_ENEMIES = Math.min(50 + (difficultyLevel * 10), 100); // More enemies at higher difficulties
+    this.SPAWN_INTERVAL = Math.max(2000 / (1 + (difficultyLevel * 0.2)), 500); // Faster spawning
+
+    // Apply scaling to existing enemies (optional - affects new spawns only)
+    console.log(`📊 Difficulty ${difficultyLevel} scaling applied:`);
+    console.log(`   Enemy health: x${healthMultiplier.toFixed(2)}`);
+    console.log(`   Enemy damage: x${damageMultiplier.toFixed(2)}`);
+    console.log(`   Enemy speed: x${speedMultiplier.toFixed(2)}`);
+    console.log(`   Max enemies: ${this.MAX_ENEMIES}`);
+    console.log(`   Spawn interval: ${this.SPAWN_INTERVAL}ms`);
+
+    // Increase Elite enemy chance at higher difficulties
+    // (Will be implemented when Elite Enemies are added)
+    const eliteChance = Math.min(difficultyLevel * 0.05, 0.25); // Up to 25% elite chance
+    console.log(`   Elite chance: ${(eliteChance * 100).toFixed(0)}%`);
   }
 }
