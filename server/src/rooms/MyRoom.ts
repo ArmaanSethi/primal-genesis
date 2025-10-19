@@ -200,7 +200,9 @@ export class MyRoom extends Room<MyRoomState> {
       { type: "smallChest", cost: 10, weight: 40 },
       { type: "largeChest", cost: 25, weight: 20 },
       { type: "equipmentBarrel", cost: 15, weight: 30 },
-      { type: "triShop", cost: 20, weight: 10 }
+      { type: "triShop", cost: 20, weight: 10 },
+      { type: "whisperingTotem", cost: 5, weight: 15 }, // Low cost, higher weight than tri-shop
+      { type: "altarOfTheApex", cost: 0, weight: 2 } // Very rare, free but high risk/reward
     ];
 
     let remainingCredits = this.STAGE_CREDITS;
@@ -245,6 +247,12 @@ export class MyRoom extends Room<MyRoomState> {
             interactableState.itemRarity = "uncommon"; // Large chests guarantee uncommon or better
           } else if (selectedInteractable.type === "triShop") {
             interactableState.choiceCount = 3;
+          } else if (selectedInteractable.type === "whisperingTotem") {
+            // Whispering Totem costs 50% of player's max health - will be calculated on interaction
+            interactableState.creditCost = 50; // Will be interpreted as percentage
+          } else if (selectedInteractable.type === "altarOfTheApex") {
+            // Altar should spawn near beacon, will be positioned later when beacon spawns
+            continue; // Skip regular positioning for altar
           }
 
           this.state.interactables.set(interactableState.id, interactableState);
@@ -294,6 +302,31 @@ export class MyRoom extends Room<MyRoomState> {
     this.beaconId = beacon.id;
 
     // this.log(`Bio-Resonance Beacon spawned at (${beaconX.toFixed(0)}, ${beaconY.toFixed(0)})`);
+
+    // Spawn Altar of the Apex near the beacon
+    this.spawnAltarOfTheApex(beaconX, beaconY);
+  }
+
+  private spawnAltarOfTheApex(beaconX: number, beaconY: number): void {
+    // Spawn altar within 100-200 units of the beacon
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 100 + Math.random() * 100; // 100-200 units away
+    const altarX = beaconX + Math.cos(angle) * distance;
+    const altarY = beaconY + Math.sin(angle) * distance;
+
+    // Ensure altar is within world bounds
+    const finalX = Math.max(50, Math.min(this.state.worldWidth - 50, altarX));
+    const finalY = Math.max(50, Math.min(this.state.worldHeight - 50, altarY));
+
+    const altar = new InteractableState();
+    altar.id = uuidv4();
+    altar.type = "altarOfTheApex";
+    altar.x = finalX;
+    altar.y = finalY;
+    altar.isOpen = false;
+
+    this.state.interactables.set(altar.id, altar);
+    console.log(`🗿 Altar of the Apex spawned near beacon at (${finalX.toFixed(0)}, ${finalY.toFixed(0)})`);
   }
 
   private activateBeacon(player: Player): void {
@@ -314,7 +347,8 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private spawnBoss(): void {
-    if (this.state.beaconState !== "bossFight") {
+    if (this.state.beaconState !== "bossFight" && this.state.beaconState !== "apexEmpowered") {
+      const wasApexEmpowered = this.state.beaconState === "apexEmpowered";
       this.state.beaconState = "bossFight";
       // this.log(`Stage Guardian spawning!`);
 
@@ -330,9 +364,19 @@ export class MyRoom extends Room<MyRoomState> {
 
         // Give boss much higher stats than regular enemies - make it truly epic!
         const stats = enemyType.baseStats;
-        boss.maxHealth = stats.maxHealth * 10; // 10x health (was 5x)
+        let healthMultiplier = 10;
+        let damageMultiplier = 3;
+
+        // If Apex Altar was activated, empower the boss (+50% HP, +25% Damage)
+        if (wasApexEmpowered) {
+          healthMultiplier *= 1.5; // 15x health instead of 10x
+          damageMultiplier *= 1.25; // 3.75x damage instead of 3x
+          console.log(`🗿 Apex Empowered Boss spawning! Stats increased by 50% HP and 25% damage!`);
+        }
+
+        boss.maxHealth = stats.maxHealth * healthMultiplier;
         boss.health = boss.maxHealth;
-        boss.damage = stats.damage * 3; // 3x damage (was 2x)
+        boss.damage = stats.damage * damageMultiplier;
         boss.moveSpeed = stats.moveSpeed * 1.2; // Slightly faster (was 1.5x)
         boss.isCharging = false;
         boss.chargeTargetX = 0;
@@ -786,6 +830,30 @@ export class MyRoom extends Room<MyRoomState> {
               // For now, just give one item (can be expanded later for choice UI)
               generatedItem = this.generateRandomItem(rarity);
               break;
+            case "whisperingTotem":
+              // Whispering Totem: Costs 50% health, 10% chance to fail
+              const healthCost = Math.floor(player.calculatedMaxHealth * 0.5);
+              if (player.health > healthCost) {
+                player.health -= healthCost;
+
+                // 10% chance to fail
+                if (Math.random() < 0.1) {
+                  console.log(`💀 Whispering Totem failed for player ${player.sessionId}! Lost health for nothing.`);
+                } else {
+                  generatedItem = this.generateRandomItem("rare"); // Guaranteed rare item
+                  console.log(`✨ Whispering Totem blessed player ${player.sessionId} with a rare item!`);
+                }
+              } else {
+                console.log(`💔 Player ${player.sessionId} lacks health to activate Whispering Totem`);
+              }
+              break;
+            case "altarOfTheApex":
+              // Altar of the Apex: Empowers boss for guaranteed rare drop
+              console.log(`🗿 Player ${player.sessionId} activated the Altar of the Apex! Boss will be empowered...`);
+
+              // Set flag to empower boss on next spawn and guarantee rare drop
+              this.state.beaconState = "apexEmpowered";
+              break;
             case "bioResonanceBeacon":
               // Activate the beacon!
               this.activateBeacon(player);
@@ -963,10 +1031,50 @@ export class MyRoom extends Room<MyRoomState> {
   private checkEnemyDeath(enemy: Enemy): void {
     if (enemy.health <= 0) {
       // Check if this was the boss (stage guardian)
-      if (enemy.typeId === "stageGuardian" && this.state.beaconState === "bossFight") {
+      if (enemy.typeId === "stageGuardian") {
+        // Spawn boss rewards
+        this.spawnBossRewards(enemy.x, enemy.y);
         this.completeStage();
       }
       this.state.enemies.delete(enemy.id);
+    }
+  }
+
+  private spawnBossRewards(bossX: number, bossY: number): void {
+    // Check if Apex Altar was used to empower this boss
+    const wasApexEmpowered = this.state.beaconState === "bossFight" || this.state.beaconState === "stageComplete";
+
+    // Always spawn at least one rare item
+    const rareItem = this.generateRandomItem("rare");
+    if (rareItem) {
+      const xpEntity = new XPEntityState();
+      xpEntity.id = uuidv4();
+      xpEntity.x = bossX;
+      xpEntity.y = bossY;
+      xpEntity.xpValue = 100; // Boss XP value
+
+      this.state.xpEntities.set(xpEntity.id, xpEntity);
+
+      console.log(`🎁 Boss defeated! Spawned rare item: ${rareItem.name} and ${xpEntity.xpValue} XP`);
+    }
+
+    // If Apex Altar was used, guarantee additional rewards
+    if (wasApexEmpowered) {
+      // Spawn a second guaranteed rare item
+      const secondRareItem = this.generateRandomItem("rare");
+
+      // Create additional XP reward
+      const bonusXp = new XPEntityState();
+      bonusXp.id = uuidv4();
+      bonusXp.x = bossX + 30;
+      bonusXp.y = bossY + 30;
+      bonusXp.xpValue = 50;
+
+      this.state.xpEntities.set(bonusXp.id, bonusXp);
+
+      if (secondRareItem) {
+        console.log(`🗿 Apex Boss defeated! Bonus rewards: ${secondRareItem.name} and extra ${bonusXp.xpValue} XP`);
+      }
     }
   }
 }

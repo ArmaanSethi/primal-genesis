@@ -79,9 +79,9 @@ export class GameScene extends Phaser.Scene {
         // Destroy any existing pickup messages to prevent overlap
         this.cleanupOldPickupMessages(true); // Force cleanup all existing messages
 
-        // Create pickup message in the right sidebar area
+        // Create pickup message in the bottom right corner (away from help text)
         const rightSidebarX = this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH + 10;
-        const pickupY = 450; // Below inventory, above bottom
+        const pickupY = this.UI_CONFIG.VIEWPORT_HEIGHT - 100; // Bottom right corner
         const messageText = this.add.text(rightSidebarX, pickupY, message, {
             fontSize: '16px',
             color: '#ffff00',
@@ -99,7 +99,7 @@ export class GameScene extends Phaser.Scene {
             }
         }).setOrigin(0).setScrollFactor(0).setDepth(100);
 
-        console.log(`🎒 Created pickup text in right sidebar at (${rightSidebarX}, 320)`);
+        console.log(`🎒 Created pickup text in bottom right corner at (${rightSidebarX}, ${pickupY})`);
 
         // Simple approach: Show for 1.5 seconds then destroy
         messageText.setAlpha(1); // Start fully visible
@@ -719,6 +719,14 @@ export class GameScene extends Phaser.Scene {
                             color = 0x9370db; // Medium purple
                             size = 28; // Smaller (was 45)
                             break;
+                        case "whisperingTotem":
+                            color = 0x800080; // Dark purple - mystical
+                            size = 30; // Slightly larger - important
+                            break;
+                        case "altarOfTheApex":
+                            color = 0xff4500; // Dark orange-red - dangerous/powerful
+                            size = 32; // Large - very important
+                            break;
                         case "bioResonanceBeacon":
                             color = 0x00ff00; // Bright green for beacon
                             size = 35; // Still important but smaller (was 50)
@@ -734,6 +742,24 @@ export class GameScene extends Phaser.Scene {
                         (itemShape as any).setStrokeStyle(4, 0xffffff); // Thick white border for beacon
                         (itemShape as any).setDepth(5); // Higher depth for important objective
                         console.log(`🌟 Created star beacon at (${interactable.x}, ${interactable.y})`);
+                    } else if (interactable.type === "altarOfTheApex") {
+                        // Create triangle shape for altar - distinctive and mystical
+                        itemShape = this.add.triangle(interactable.x, interactable.y, size, size/2, -size/2, -size/2, color);
+                        (itemShape as any).setStrokeStyle(4, 0xffffff); // Thick white border for altar
+                        (itemShape as any).setDepth(5); // High depth for important interactable
+                        console.log(`🗿 Created triangle altar at (${interactable.x}, ${interactable.y})`);
+                    } else if (interactable.type === "whisperingTotem") {
+                        // Create diamond shape for totem - mystical appearance
+                        const points = [
+                            { x: 0, y: -size/2 },     // Top
+                            { x: size/3, y: 0 },      // Right
+                            { x: 0, y: size/2 },      // Bottom
+                            { x: -size/3, y: 0 }      // Left
+                        ];
+                        itemShape = this.add.polygon(interactable.x, interactable.y, points, color);
+                        (itemShape as any).setStrokeStyle(3, 0xffffff); // White border for totem
+                        (itemShape as any).setDepth(3); // Medium depth
+                        console.log(`✨ Created diamond totem at (${interactable.x}, ${interactable.y})`);
                     } else {
                         // Regular items are circles
                         itemShape = this.add.circle(interactable.x, interactable.y, size/2, color);
