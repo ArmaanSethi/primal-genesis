@@ -515,10 +515,34 @@ export class MyRoom extends Room<MyRoomState> {
         const damageMultiplier = 1 + (difficultyLevel * 0.20);
         const speedMultiplier = 1 + (difficultyLevel * 0.10);
 
-        enemy.maxHealth = Math.floor(stats.maxHealth * healthMultiplier);
+        // Check if this should be an Elite enemy
+        const eliteChance = Math.min(difficultyLevel * 0.05, 0.25); // Up to 25% elite chance
+        const isElite = Math.random() < eliteChance;
+
+        let finalHealthMultiplier = healthMultiplier;
+        let finalDamageMultiplier = damageMultiplier;
+        let eliteModifier = "";
+
+        if (isElite) {
+          // Apply elite bonuses
+          finalHealthMultiplier *= 1.5; // Elite enemies have 50% more health
+          finalDamageMultiplier *= 1.3; // Elite enemies have 30% more damage
+
+          // Randomly assign elite modifier
+          const eliteModifiers = ["glacial", "overloading", "venomous", "swift"];
+          eliteModifier = eliteModifiers[Math.floor(Math.random() * eliteModifiers.length)];
+
+          console.log(`👹 ELITE ENEMY SPAWNED: ${enemy.typeId} with ${eliteModifier} modifier!`);
+        }
+
+        enemy.maxHealth = Math.floor(stats.maxHealth * finalHealthMultiplier);
         enemy.health = enemy.maxHealth;
-        enemy.damage = Math.floor(stats.damage * damageMultiplier);
+        enemy.damage = Math.floor(stats.damage * finalDamageMultiplier);
         enemy.moveSpeed = stats.moveSpeed * speedMultiplier;
+
+        // Store elite information for client rendering
+        (enemy as any).isElite = isElite;
+        (enemy as any).eliteModifier = eliteModifier;
         enemy.attackCooldown = 0;
         enemy.attackRange = (enemyType as any).attackRange || 0;
         enemy.projectileType = (enemyType as any).projectileType || "";
@@ -1063,7 +1087,8 @@ export class MyRoom extends Room<MyRoomState> {
   private checkEnemyDeath(enemy: Enemy): void {
     if (enemy.health <= 0) {
       // Spawn XP for regular enemies
-      this.spawnEnemyXP(enemy.x, enemy.y, enemy.typeId);
+      const isElite = (enemy as any).isElite || false;
+      this.spawnEnemyXP(enemy.x, enemy.y, enemy.typeId, isElite);
 
       // Check if this was the boss (stage guardian)
       if (enemy.typeId === "stageGuardian") {
@@ -1075,27 +1100,35 @@ export class MyRoom extends Room<MyRoomState> {
     }
   }
 
-  private spawnEnemyXP(x: number, y: number, enemyType: string): void {
+  private spawnEnemyXP(x: number, y: number, enemyType: string, isElite: boolean = false): void {
     const xpEntity = new XPEntityState();
     xpEntity.id = uuidv4();
     xpEntity.x = x;
     xpEntity.y = y;
 
-    // XP value based on enemy type
+    let baseXP = 10;
     switch (enemyType) {
       case "waspDrone":
-        xpEntity.xpValue = 10; // Basic enemy
+        baseXP = 10; // Basic enemy
         break;
       case "spitter":
-        xpEntity.xpValue = 15; // Ranged enemy
+        baseXP = 15; // Ranged enemy
         break;
       case "charger":
-        xpEntity.xpValue = 20; // Melee enemy
+        baseXP = 20; // Melee enemy
         break;
       default:
-        xpEntity.xpValue = 10; // Default XP
+        baseXP = 10; // Default XP
         break;
     }
+
+    // Check if this was an elite enemy and award bonus XP
+    if (isElite) {
+      baseXP = Math.floor(baseXP * 2); // Elite enemies give 2x XP
+      console.log(`👹 Elite enemy defeated! Bonus XP awarded.`);
+    }
+
+    xpEntity.xpValue = baseXP;
 
     this.state.xpEntities.set(xpEntity.id, xpEntity);
     console.log(`💀 Enemy defeated! Spawned ${xpEntity.xpValue} XP at (${x.toFixed(0)}, ${y.toFixed(0)})`);

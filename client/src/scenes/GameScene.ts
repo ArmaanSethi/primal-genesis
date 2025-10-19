@@ -592,8 +592,17 @@ export class GameScene extends Phaser.Scene {
                                     
             $(this.room.state).enemies.onAdd((enemy, sessionId) => {
                 console.log(`Adding enemy: ${sessionId} of type ${enemy.typeId} at (${enemy.x}, ${enemy.y})`);
+
+                // Check if this is an Elite enemy
+                const isElite = (enemy as any).isElite;
+                const eliteModifier = (enemy as any).eliteModifier;
+
                 let enemyColor = 0x0000ff; // Default to blue for waspDrone
                 let healthBarColor = 0x00ff00; // Default green health bar
+                let enemySize = 28;
+                let borderWidth = 2;
+                let borderColor = 0xff0000; // Red border for regular enemies
+
                 // let enemyImageKey = 'enemy'; // Default image key
                 if (enemy.typeId === "spitter") {
                     enemyColor = 0x00ff00; // Green for spitter
@@ -604,9 +613,45 @@ export class GameScene extends Phaser.Scene {
                     healthBarColor = 0x00ff00; // Green health bar for charger
                     // If we had a charger.png, we'd use enemyImageKey = 'charger';
                 }
+
+                // Apply Elite enemy visual enhancements
+                if (isElite) {
+                    enemySize = 36; // Larger size for elite enemies
+                    borderWidth = 4; // Thicker border
+
+                    // Set color based on elite modifier
+                    switch (eliteModifier) {
+                        case "glacial":
+                            borderColor = 0x00ffff; // Cyan border for glacial
+                            enemyColor = 0x4169e1; // Ice blue color
+                            console.log(`❄️ Adding GLACIAL elite enemy`);
+                            break;
+                        case "overloading":
+                            borderColor = 0xffff00; // Yellow border for overloading
+                            enemyColor = 0xff8c00; // Orange color
+                            console.log(`⚡ Adding OVERLOADING elite enemy`);
+                            break;
+                        case "venomous":
+                            borderColor = 0x800080; // Purple border for venomous
+                            enemyColor = 0x32cd32; // Lime green color
+                            console.log(`☠️ Adding VENOMOUS elite enemy`);
+                            break;
+                        case "swift":
+                            borderColor = 0xff69b4; // Pink border for swift
+                            enemyColor = 0xffd700; // Gold color
+                            console.log(`💨 Adding SWIFT elite enemy`);
+                            break;
+                        default:
+                            borderColor = 0xffffff; // White border for unknown elite
+                            enemyColor = 0xff0000; // Red color
+                            console.log(`👹 Adding UNKNOWN elite enemy`);
+                            break;
+                    }
+                }
+
                 // Enemies are SQUARES - clear distinction from items
-                const enemySquare = this.add.rectangle(enemy.x, enemy.y, 28, 28, enemyColor);
-                enemySquare.setStrokeStyle(2, 0xff0000); // Red border for enemies
+                const enemySquare = this.add.rectangle(enemy.x, enemy.y, enemySize, enemySize, enemyColor);
+                enemySquare.setStrokeStyle(borderWidth, borderColor);
                 const entity = this.physics.add.existing(enemySquare, false);
                 entity.setDepth(0); // Explicitly set depth
                 this.enemyEntities[sessionId] = entity;
@@ -617,6 +662,32 @@ export class GameScene extends Phaser.Scene {
                 healthBar.x = enemy.x - 16;
                 healthBar.y = enemy.y - 20;
                 entity.setData('healthBar', healthBar);
+
+                // Add visual aura for Elite enemies
+                if (isElite) {
+                    // Create pulsing aura effect
+                    const auraSize = enemySize + 12;
+                    const aura = this.add.circle(enemy.x, enemy.y, auraSize/2, 0xffffff);
+                    aura.setStrokeStyle(3, borderColor);
+                    aura.setAlpha(0.3);
+                    aura.setDepth(-1); // Behind the enemy but above ground
+
+                    // Store aura reference for animation
+                    entity.setData('eliteAura', aura);
+
+                    // Start pulsing animation
+                    this.tweens.add({
+                        targets: aura,
+                        alpha: 0.6,
+                        scale: 1.1,
+                        duration: 800,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+
+                    console.log(`✨ Added ${eliteModifier} elite aura effect`);
+                }
 
                 $(enemy).onChange(() => {
                     // Update position - this fixes the charger movement bug
@@ -641,6 +712,13 @@ export class GameScene extends Phaser.Scene {
                         healthBar.fillStyle(0x00ff00, 1);
                         healthBar.fillRect(0, 0, (enemy.health / enemy.maxHealth) * 32, 4);
                     }
+
+                    // Update Elite enemy aura position
+                    const eliteAura = entity.getData('eliteAura') as Phaser.GameObjects.Arc;
+                    if (eliteAura) {
+                        eliteAura.x = entity.x;
+                        eliteAura.y = entity.y;
+                    }
                 });
             });
 
@@ -649,7 +727,10 @@ export class GameScene extends Phaser.Scene {
                                 const entity = this.enemyEntities[sessionId];
                                 if (entity) {
                                     const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
-                                    healthBar.destroy();
+                                    const eliteAura = entity.getData('eliteAura') as Phaser.GameObjects.Arc;
+
+                                    if (healthBar) healthBar.destroy();
+                                    if (eliteAura) eliteAura.destroy(); // Clean up Elite aura
                                     entity.destroy();
                                     delete this.enemyEntities[sessionId];
                                 }
