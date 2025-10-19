@@ -2,20 +2,21 @@
 
 ## Project Status Overview
 
-**Current Progress: ~80% toward playable core loop**
+**Current Progress: ~85% toward playable core loop**
 
 The project has a solid foundation with complete item system, equipment mechanics, beacon objectives, and boss fights. The core gameplay loop is functional with proper UI, health systems, and visual distinctions between game elements. All systems are working together to provide a complete roguelite experience.
 
 ### ✅ What's Working (Core Systems Complete)
 - **Complete Item System:** 18 items with 4 rarity tiers and proper stacking mechanics
 - **Equipment System:** E-activated equipment with cooldowns and special effects
-- **Beacon & Boss System:** Green star beacon with holdout phase and boss spawning
+- **Beacon & Boss System:** Fixed green star beacon (60px size) with clear visibility and holdout phase
 - **Multiplayer Infrastructure:** Colyseus server + Phaser client with state sync
 - **Combat System:** Player auto-attack, enemy AI, projectiles, damage/death
 - **Full UI System:** Dual sidebar layout with help, inventory, objectives
-- **Visual Distinction:** Enemies (red squares), Items (white circles), Beacon (green star)
+- **Visual Distinction:** Enemies (red squares), Items (white circles), Beacon (large green star)
 - **Health & Stats:** Calculated stats system with item effects
 - **All Enemy Types:** WaspDrone (seeker), Spitter (ranged), Charger (charge)
+- **Beacon Visibility:** Beacon now spawns as large green star (60px) with white border, altar spawns 300-500px away
 
 ### ✅ Recently Completed Features
 - **Right Sidebar Layout:** Fixed text overlapping with proper spacing
@@ -24,11 +25,12 @@ The project has a solid foundation with complete item system, equipment mechanic
 - **Equipment Functionality:** Dash attack and grenade mechanics working
 - **Pickup Text:** Non-overlapping messages in dedicated area
 - **Version Update:** Accurate v0.1 representation
+- **🌟 BEACON VISIBILITY FIX:** Fixed beacon spawning issue - beacon now clearly visible as large green star, altar moved further away to avoid confusion
 
 ### ❌ Current Issues Being Addressed
 - **Spitter Projectiles:** Green projectiles not visible to players (debugging needed)
 - **Testing:** Need expanded unit tests for equipment and beacon systems
-- **Documentation:** Continue updating TODO.md to reflect completion status
+- **Documentation:** TODO.md now fully up-to-date with current project state
 
 ---
 

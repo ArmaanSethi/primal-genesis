@@ -510,16 +510,17 @@ export class MyRoom extends Room<MyRoomState> {
     this.state.interactables.set(beacon.id, beacon);
     this.beaconId = beacon.id;
 
-    // this.log(`Bio-Resonance Beacon spawned at (${beaconX.toFixed(0)}, ${beaconY.toFixed(0)})`);
+    this.log(`🌟 BEACON SPAWN TRIGGERED! Defeated ${this.enemiesDefeated} enemies`);
+    this.log(`🗿 Bio-Resonance Beacon spawned at (${beaconX.toFixed(0)}, ${beaconY.toFixed(0)})`);
 
-    // Spawn Altar of the Apex near the beacon
+    // Spawn Altar of the Apex near the beacon (but further away to avoid confusion)
     this.spawnAltarOfTheApex(beaconX, beaconY);
   }
 
   private spawnAltarOfTheApex(beaconX: number, beaconY: number): void {
-    // Spawn altar within 100-200 units of the beacon
+    // Spawn altar further away from beacon to avoid visual confusion
     const angle = Math.random() * Math.PI * 2;
-    const distance = 100 + Math.random() * 100; // 100-200 units away
+    const distance = 300 + Math.random() * 200; // 300-500 units away (much further)
     const altarX = beaconX + Math.cos(angle) * distance;
     const altarY = beaconY + Math.sin(angle) * distance;
 

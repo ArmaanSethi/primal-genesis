@@ -1039,7 +1039,7 @@ export class GameScene extends Phaser.Scene {
                             break;
                         case "bioResonanceBeacon":
                             color = 0x00ff00; // Bright green for beacon
-                            size = 35; // Still important but smaller (was 50)
+                            size = 60; // Make beacon much larger and more visible than altar
                             break;
                     }
 
