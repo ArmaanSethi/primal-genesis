@@ -556,6 +556,23 @@ export class MyRoom extends Room<MyRoomState> {
           player.health + (player.calculatedHealthRegen * deltaTime / 1000));
       }
 
+      // Collect XP entities
+      const pickupRadius = 50; // Pickup radius for XP orbs
+      this.state.xpEntities.forEach((xpEntity, xpId) => {
+        const distance = Math.hypot(player.x - xpEntity.x, player.y - xpEntity.y);
+        if (distance <= pickupRadius) {
+          // Award XP to player
+          player.xp += xpEntity.xpValue;
+          console.log(`✨ Player ${player.sessionId} collected ${xpEntity.xpValue} XP! Total XP: ${player.xp}`);
+
+          // Check for level up
+          this.checkPlayerLevelUp(player);
+
+          // Remove XP entity
+          this.state.xpEntities.delete(xpId);
+        }
+      });
+
       // Automatic attack logic (now fires projectiles)
       if (player.attackCooldown <= 0) {
         // this.log(`DEBUG Player ${player.sessionId}: Attack cooldown is ${player.attackCooldown}. Looking for enemy.`);
@@ -1030,6 +1047,9 @@ export class MyRoom extends Room<MyRoomState> {
 
   private checkEnemyDeath(enemy: Enemy): void {
     if (enemy.health <= 0) {
+      // Spawn XP for regular enemies
+      this.spawnEnemyXP(enemy.x, enemy.y, enemy.typeId);
+
       // Check if this was the boss (stage guardian)
       if (enemy.typeId === "stageGuardian") {
         // Spawn boss rewards
@@ -1038,6 +1058,32 @@ export class MyRoom extends Room<MyRoomState> {
       }
       this.state.enemies.delete(enemy.id);
     }
+  }
+
+  private spawnEnemyXP(x: number, y: number, enemyType: string): void {
+    const xpEntity = new XPEntityState();
+    xpEntity.id = uuidv4();
+    xpEntity.x = x;
+    xpEntity.y = y;
+
+    // XP value based on enemy type
+    switch (enemyType) {
+      case "waspDrone":
+        xpEntity.xpValue = 10; // Basic enemy
+        break;
+      case "spitter":
+        xpEntity.xpValue = 15; // Ranged enemy
+        break;
+      case "charger":
+        xpEntity.xpValue = 20; // Melee enemy
+        break;
+      default:
+        xpEntity.xpValue = 10; // Default XP
+        break;
+    }
+
+    this.state.xpEntities.set(xpEntity.id, xpEntity);
+    console.log(`💀 Enemy defeated! Spawned ${xpEntity.xpValue} XP at (${x.toFixed(0)}, ${y.toFixed(0)})`);
   }
 
   private spawnBossRewards(bossX: number, bossY: number): void {
@@ -1075,6 +1121,30 @@ export class MyRoom extends Room<MyRoomState> {
       if (secondRareItem) {
         console.log(`🗿 Apex Boss defeated! Bonus rewards: ${secondRareItem.name} and extra ${bonusXp.xpValue} XP`);
       }
+    }
+  }
+
+  private checkPlayerLevelUp(player: Player): void {
+    // Calculate XP needed for next level (exponential scaling)
+    const xpForNextLevel = Math.floor(100 * Math.pow(1.2, player.level));
+
+    if (player.xp >= xpForNextLevel) {
+      player.level++;
+      player.xp -= xpForNextLevel; // Carry over excess XP
+
+      // Apply level-up bonuses (small stat increases as per GDD.md)
+      const healthBonus = 5; // Small health increase
+      const damageBonus = 1; // Small damage increase
+
+      player.maxHealth += healthBonus;
+      player.calculatedMaxHealth += healthBonus;
+      player.health += healthBonus; // Heal on level up
+      player.damage += damageBonus;
+      player.calculatedDamage += damageBonus;
+
+      console.log(`🎉 Player ${player.sessionId} reached level ${player.level}!`);
+      console.log(`   +${healthBonus} max health, +${damageBonus} damage`);
+      console.log(`   Next level requires ${Math.floor(100 * Math.pow(1.2, player.level))} XP`);
     }
   }
 }

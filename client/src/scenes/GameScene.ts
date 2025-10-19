@@ -10,10 +10,12 @@ export class GameScene extends Phaser.Scene {
     private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
     private projectileEntities: { [projectileId: string]: Phaser.GameObjects.Rectangle } = {};
     private interactableEntities: { [interactableId: string]: Phaser.GameObjects.GameObject } = {};
+    private xpEntities: { [xpId: string]: Phaser.GameObjects.Arc } = {};
     private playerHealthText!: Phaser.GameObjects.Text;
     private pickupMessages: Phaser.GameObjects.Text[] = [];
     private helpText!: Phaser.GameObjects.Text;
     private inventoryText!: Phaser.GameObjects.Text;
+    private levelText!: Phaser.GameObjects.Text;
     private stageText!: Phaser.GameObjects.Text;
     private objectiveText!: Phaser.GameObjects.Text;
 
@@ -514,6 +516,27 @@ export class GameScene extends Phaser.Scene {
                                                         this.inventoryText.setScrollFactor(0);
                                                         this.inventoryText.setDepth(100);
 
+                                                        // Level and XP display
+                                                        this.levelText = this.add.text(rightSidebarX, 280,
+                                                            `⭐ LEVEL: ${_player.level}\n💎 XP: ${_player.xp}/${Math.floor(100 * Math.pow(1.2, _player.level))}`,
+                                                            {
+                                                                fontSize: '14px',
+                                                                color: '#ffff00',
+                                                                backgroundColor: 'rgba(0,0,0,0.7)',
+                                                                padding: { x: 6, y: 6 },
+                                                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+                                                                shadow: {
+                                                                    offsetX: 1,
+                                                                    offsetY: 1,
+                                                                    color: '#000000',
+                                                                    blur: 1,
+                                                                    stroke: true,
+                                                                    fill: true
+                                                                }
+                                                            });
+                                                        this.levelText.setScrollFactor(0);
+                                                        this.levelText.setDepth(100);
+
                                                         // Initialize previous health for damage feedback
                                                         entity.setData('previousHealth', _player.health);
                                                     }
@@ -530,6 +553,10 @@ export class GameScene extends Phaser.Scene {
 
                                                         if (sessionId === this.room.sessionId) {
                                                             this.playerHealthText.setText(`Health: ${Math.round(_player.health)}/${Math.round(_player.calculatedMaxHealth)}`);
+
+                                                            // Update level and XP display
+                                                            const xpForNextLevel = Math.floor(100 * Math.pow(1.2, _player.level));
+                                                            this.levelText.setText(`⭐ LEVEL: ${_player.level}\n💎 XP: ${_player.xp}/${xpForNextLevel}`);
 
                                                             // Visual feedback for damage
                                                             const previousHealth = entity.getData('previousHealth');
@@ -803,6 +830,39 @@ export class GameScene extends Phaser.Scene {
                     if (entity) {
                         entity.destroy();
                         delete this.interactableEntities[interactableId];
+                    }
+                });
+
+                // XP Entities rendering
+                $(this.room.state).xpEntities.onAdd((xpEntity, xpId) => {
+                    console.log(`Adding XP entity: ${xpId} with value ${xpEntity.xpValue} at (${xpEntity.x}, ${xpEntity.y})`);
+
+                    // Create glowing yellow orb for XP
+                    const xpOrb = this.add.circle(xpEntity.x, xpEntity.y, 8, 0xffff00);
+                    xpOrb.setStrokeStyle(2, 0xffffff);
+                    xpOrb.setDepth(3);
+
+                    // Add pulsing glow effect
+                    xpOrb.setAlpha(0.8);
+                    this.tweens.add({
+                        targets: xpOrb,
+                        alpha: 1,
+                        scale: 1.2,
+                        duration: 500,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+
+                    this.xpEntities[xpId] = xpOrb;
+                });
+
+                $(this.room.state).xpEntities.onRemove((_xpEntity, xpId) => {
+                    console.log(`Removing XP entity: ${xpId}`);
+                    const entity = this.xpEntities[xpId];
+                    if (entity) {
+                        entity.destroy();
+                        delete this.xpEntities[xpId];
                     }
                 });
 
