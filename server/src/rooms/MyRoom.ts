@@ -49,19 +49,28 @@ export class MyRoom extends Room<MyRoomState> {
     this.onMessage("useEquipment", (client) => {
       const player = this.state.players.get(client.sessionId);
       if (player) {
-        console.log(`🛡️ Player ${client.sessionId} attempting to use equipment`);
+        // Optimized equipment lookup (avoid filter operation)
+        let equipment = null;
+        const items = player.items;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].rarity === "equipment") {
+            equipment = items[i];
+            break;
+          }
+        }
 
-        // Check if player has equipment items
-        const equipmentItems = player.items.filter(item => item.rarity === "equipment");
-        if (equipmentItems.length > 0) {
-          const equipment = equipmentItems[0]; // Use first equipment item
-
+        if (equipment) {
           // Check for equipment cooldown
           if (player.attackCooldown <= 0) {
-            console.log(`🛡️ Activating equipment: ${equipment.name}`);
+            // Only log equipment activation occasionally to reduce console spam
+            if (Math.random() < 0.1) { // 10% chance to log
+              console.log(`🛡️ Activating equipment: ${equipment.name}`);
+            }
 
-            // Apply equipment effects based on type
-            equipment.effects.forEach(effect => {
+            // Optimized effect processing (use for loop instead of forEach)
+            const effects = equipment.effects;
+            for (let i = 0; i < effects.length; i++) {
+              const effect = effects[i];
               if (effect.trigger === "onActivate") {
                 if (effect.effect === "dashAttack") {
                   // Quantum Phase Shifter - Dash attack
@@ -71,15 +80,11 @@ export class MyRoom extends Room<MyRoomState> {
                   this.throwGrenade(player, (effect as any).damage || 200, (effect as any).radius || 150);
                 }
               }
-            });
+            }
 
             // Set equipment cooldown
             player.attackCooldown = (equipment as any).cooldown || 3; // 3 second default cooldown
-          } else {
-            console.log(`🛡️ Equipment on cooldown: ${player.attackCooldown.toFixed(1)}s`);
           }
-        } else {
-          console.log(`🛡️ Player has no equipment to use`);
         }
       }
     });
@@ -1062,7 +1067,7 @@ export class MyRoom extends Room<MyRoomState> {
         // Skip further processing if enemy is about to be removed
         if (shouldRemoveEnemy) {
           this.state.enemies.delete(enemy.id);
-          continue; // Skip to next enemy
+          return; // Skip further processing for this enemy
         }
       } else if (enemyTypeData.behavior === "seekPlayer" && enemy.typeId === "swarm") { // Swarm behavior
         const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
@@ -1388,6 +1393,10 @@ export class MyRoom extends Room<MyRoomState> {
 
     // Find all enemies near the player and damage them
     const dashRadius = 100;
+    const enemiesToRemove: string[] = [];
+    const xpToSpawn: Array<{x: number, y: number, enemyType: string, isElite: boolean}> = [];
+
+    // First pass: Calculate damage and identify enemies to remove
     this.state.enemies.forEach((enemy) => {
       const distance = Math.sqrt(
         Math.pow(enemy.x - player.x, 2) + Math.pow(enemy.y - player.y, 2)
@@ -1396,15 +1405,37 @@ export class MyRoom extends Room<MyRoomState> {
       if (distance <= dashRadius) {
         enemy.health -= damage;
         // console.log(`⚡ Dash hit enemy ${enemy.id} for ${damage} damage`);
-        this.checkEnemyDeath(enemy);
+
+        if (enemy.health <= 0) {
+          enemiesToRemove.push(enemy.id);
+          const isElite = (enemy as any).isElite || false;
+          xpToSpawn.push({x: enemy.x, y: enemy.y, enemyType: enemy.typeId, isElite});
+        }
       }
     });
+
+    // Batch operations: Remove dead enemies and spawn XP
+    enemiesToRemove.forEach(enemyId => {
+      this.state.enemies.delete(enemyId);
+    });
+
+    xpToSpawn.forEach(xpInfo => {
+      this.spawnEnemyXP(xpInfo.x, xpInfo.y, xpInfo.enemyType, xpInfo.isElite);
+    });
+
+    if (enemiesToRemove.length > 0) {
+      console.log(`⚡ Dash attack eliminated ${enemiesToRemove.length} enemies`);
+    }
   }
 
   private throwGrenade(player: Player, damage: number, radius: number): void {
     // console.log(`💣 Grenade thrown by ${player.sessionId} for ${damage} damage in ${radius} radius`);
 
     // Find all enemies in the grenade radius
+    const enemiesToRemove: string[] = [];
+    const xpToSpawn: Array<{x: number, y: number, enemyType: string, isElite: boolean}> = [];
+
+    // First pass: Calculate damage and identify enemies to remove
     this.state.enemies.forEach((enemy) => {
       const distance = Math.sqrt(
         Math.pow(enemy.x - player.x, 2) + Math.pow(enemy.y - player.y, 2)
@@ -1413,9 +1444,27 @@ export class MyRoom extends Room<MyRoomState> {
       if (distance <= radius) {
         enemy.health -= damage;
         // console.log(`💣 Grenade hit enemy ${enemy.id} for ${damage} damage`);
-        this.checkEnemyDeath(enemy);
+
+        if (enemy.health <= 0) {
+          enemiesToRemove.push(enemy.id);
+          const isElite = (enemy as any).isElite || false;
+          xpToSpawn.push({x: enemy.x, y: enemy.y, enemyType: enemy.typeId, isElite});
+        }
       }
     });
+
+    // Batch operations: Remove dead enemies and spawn XP
+    enemiesToRemove.forEach(enemyId => {
+      this.state.enemies.delete(enemyId);
+    });
+
+    xpToSpawn.forEach(xpInfo => {
+      this.spawnEnemyXP(xpInfo.x, xpInfo.y, xpInfo.enemyType, xpInfo.isElite);
+    });
+
+    if (enemiesToRemove.length > 0) {
+      console.log(`💣 Grenade eliminated ${enemiesToRemove.length} enemies`);
+    }
   }
 
   private checkEnemyDeath(enemy: Enemy): void {
@@ -1442,32 +1491,32 @@ export class MyRoom extends Room<MyRoomState> {
     xpEntity.x = x;
     xpEntity.y = y;
 
-    let baseXP = 10;
-    switch (enemyType) {
-      case "waspDrone":
-        baseXP = 10; // Basic enemy
-        break;
-      case "spitter":
-        baseXP = 15; // Ranged enemy
-        break;
-      case "charger":
-        baseXP = 20; // Melee enemy
-        break;
-      default:
-        baseXP = 10; // Default XP
-        break;
-    }
+    // Use object lookup for better performance than switch statement
+    const xpValues: {[key: string]: number} = {
+      "waspDrone": 10,    // Basic enemy
+      "spitter": 15,      // Ranged enemy
+      "charger": 20,      // Melee enemy
+      "exploder": 25,     // High threat, explosive
+      "swarm": 8,         // Weaker individually
+      "shield": 30,       // Tanky enemy
+      "stageGuardian": 100 // Boss enemy
+    };
+
+    let baseXP = xpValues[enemyType] || 10; // Default XP if not found
 
     // Check if this was an elite enemy and award bonus XP
     if (isElite) {
       baseXP = Math.floor(baseXP * 2); // Elite enemies give 2x XP
-      console.log(`👹 Elite enemy defeated! Bonus XP awarded.`);
     }
 
     xpEntity.xpValue = baseXP;
 
     this.state.xpEntities.set(xpEntity.id, xpEntity);
-    console.log(`💀 Enemy defeated! Spawned ${xpEntity.xpValue} XP at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+
+    // Only log for debugging or significant kills
+    if (isElite || baseXP >= 20) {
+      console.log(`💀 ${isElite ? 'Elite ' : ''}${enemyType} defeated! Spawned ${xpEntity.xpValue} XP`);
+    }
   }
 
   private spawnBossRewards(bossX: number, bossY: number): void {
