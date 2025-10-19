@@ -726,7 +726,9 @@ export class GameScene extends Phaser.Scene {
                                                         }
 
                                                         if (sessionId === this.room.sessionId) {
-                                                            this.playerHealthText.setText(`Health: ${Math.round(_player.health)}/${Math.round(_player.calculatedMaxHealth)}`);
+                                                            // Cap health display at maximum to prevent showing over max (e.g., 120/100)
+                                                            const currentHealth = Math.min(Math.round(_player.health), Math.round(_player.calculatedMaxHealth));
+                                                            this.playerHealthText.setText(`Health: ${currentHealth}/${Math.round(_player.calculatedMaxHealth)}`);
 
                                                             // Update level and XP display
                                                             const xpForNextLevel = Math.floor(100 * Math.pow(1.2, _player.level));
@@ -831,6 +833,19 @@ export class GameScene extends Phaser.Scene {
                     enemyColor = 0x800080; // Purple for charger
                     healthBarColor = 0x00ff00; // Green health bar for charger
                     // If we had a charger.png, we'd use enemyImageKey = 'charger';
+                } else if (enemy.typeId === "exploder") {
+                    enemyColor = 0xff4500; // Orange-red for exploder
+                    healthBarColor = 0xff6600; // Orange health bar for exploder
+                    enemySize = 32; // Slightly larger to show threat
+                } else if (enemy.typeId === "swarm") {
+                    enemyColor = 0x9932cc; // Dark orchid for swarm
+                    healthBarColor = 0xda70d6; // Orchid health bar for swarm
+                    enemySize = 20; // Smaller size to show they're weaker
+                } else if (enemy.typeId === "shield") {
+                    enemyColor = 0x4169e1; // Royal blue for shield
+                    healthBarColor = 0x1e90ff; // Dodger blue health bar for shield
+                    enemySize = 34; // Larger to show they're tanky
+                    borderWidth = 4; // Thicker border to indicate armor
                 }
 
                 // Apply Elite enemy visual enhancements
@@ -925,6 +940,35 @@ export class GameScene extends Phaser.Scene {
                         }
                     }
 
+                    // Visual feedback for exploder's explosion state
+                    if (enemy.typeId === "exploder") {
+                        if (enemy.isExploding) {
+                            entity.fillColor = 0xffffff; // White when about to explode
+                            entity.setScale(1.5); // Pulsing effect
+                            // Add rapid pulsing
+                            this.tweens.add({
+                                targets: entity,
+                                scaleX: 1.8,
+                                scaleY: 1.8,
+                                duration: 100,
+                                yoyo: true,
+                                repeat: -1
+                            });
+                        } else {
+                            entity.fillColor = 0xff4500; // Original exploder color
+                            entity.setScale(1);
+                        }
+                    }
+
+                    // Visual feedback for shield state
+                    if (enemy.typeId === "shield") {
+                        if (enemy.shieldActive) {
+                            entity.setStrokeStyle(6, 0x00ffff); // Cyan border when shield is active
+                        } else {
+                            entity.setStrokeStyle(4, 0xff0000); // Red border when shield is down
+                        }
+                    }
+
                     // Check for enemy damage and show indicators
                     const previousHealth = entity.getData('previousHealth');
                     if (enemy.health < previousHealth) {
@@ -979,12 +1023,25 @@ export class GameScene extends Phaser.Scene {
                                                 let projectileColor = 0xff0000; // Red for player projectiles
                                                 let projectileSize = 12; // Default size
                                                 if (projectile.projectileType === "spitterProjectile") {
-                                                    projectileColor = 0x00ff00; // Bright green for spitter projectiles
-                                                    projectileSize = 20; // Larger size for spitter projectiles
+                                                    projectileColor = 0x00ff88; // More vibrant cyan-green for spitter projectiles
+                                                    projectileSize = 28; // Much larger size for better visibility
                                                 }
                                                 const projectileRect = this.add.rectangle(projectile.x, projectile.y, projectileSize, projectileSize, projectileColor);
-                                                projectileRect.setStrokeStyle(2, 0xffffff); // White border for visibility
+                                                projectileRect.setStrokeStyle(4, 0xffffff); // Thicker white border for better visibility
                                                 projectileRect.setDepth(999); // Ensure it's always on top
+
+                                                // Add pulsing glow effect for spitter projectiles
+                                                if (projectile.projectileType === "spitterProjectile") {
+                                                    this.tweens.add({
+                                                        targets: projectileRect,
+                                                        scaleX: 1.2,
+                                                        scaleY: 1.2,
+                                                        duration: 500,
+                                                        yoyo: true,
+                                                        repeat: -1,
+                                                        ease: 'Sine.easeInOut'
+                                                    });
+                                                }
 
                                                 console.log(`DEBUG Client: Projectile ${projectileId} created. Active: ${projectileRect.active}, Visible: ${projectileRect.visible}, Depth: ${projectileRect.depth}, Pos: (${projectileRect.x}, ${projectileRect.y})`);
                                                                     this.projectileEntities[projectileId] = projectileRect;

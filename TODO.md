@@ -9,7 +9,7 @@ The game is feature-complete with all major systems implemented and working. Pla
 ### ✅ Fully Implemented Systems (Complete & Working)
 
 #### **Core Gameplay Loop**
-- **Complete Combat System:** Player auto-attack, 3 enemy types (WaspDrone, Spitter, Charger), projectiles, damage/death
+- **Complete Combat System:** Player auto-attack, 6 enemy types (WaspDrone, Spitter, Charger, Exploder, Swarm, Shield), projectiles, damage/death
 - **Full Progression System:** XP orbs, leveling, stat increases (+5 health, +1 damage per level)
 - **Beacon & Boss System:** Green star beacon spawns after 3 enemies defeated, 90s holdout phase, boss fight, stage completion
 - **Stage Progression:** Complete core loop from start → beacon → holdout → boss → stage clear
@@ -73,6 +73,9 @@ The game is feature-complete with all major systems implemented and working. Pla
 - **🟦 Blue Squares:** WaspDrone enemies (melee seekers)
 - **🟩 Green Squares:** Spitter enemies (ranged attackers)
 - **🟪 Purple Squares:** Charger enemies (telegraph + charge attack)
+- **🟧 Orange-Red Squares:** Exploder enemies (rush + explode, larger size)
+- **🟪 Dark Orchid Squares:** Swarm enemies (weaker, gain damage bonus in groups)
+- **🟦 Royal Blue Squares:** Shield enemies (tanky, can regenerate health)
 - **⭐ Large Green Star:** Bio-Resonance Beacon (main objective)
 - **🔺 Orange Triangle:** Altar of the Apex (secondary interactable)
 - **⚪ White Circles:** Items (walk over to collect)
@@ -181,7 +184,7 @@ The game is feature-complete with all major systems implemented and working. Pla
 - **Server:** ~3,000 lines of TypeScript with complete game logic
 - **Client:** ~1,300 lines of TypeScript with rendering and UI
 - **Items:** 18 unique items with 4 rarity tiers
-- **Enemies:** 3 distinct enemy types with unique behaviors
+- **Enemies:** 6 distinct enemy types with unique behaviors
 - **Interactables:** 4 types (chests, barrels, shops) with spawning logic
 
 ### Test Coverage

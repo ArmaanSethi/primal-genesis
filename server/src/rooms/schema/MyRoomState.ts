@@ -86,6 +86,13 @@ export class Enemy extends Schema {
   @type("number") chargeTargetX: number = 0;
   @type("number") chargeTargetY: number = 0;
   @type("number") telegraphTimer: number = 0; // Timer for the telegraph phase of Charger
+
+  // New enemy type specific fields
+  @type("boolean") isExploding: boolean = false; // For Exploder enemies
+  @type("number") explosionTimer: number = 0; // Timer for explosion delay
+  @type("boolean") shieldActive: boolean = true; // For Shield enemies
+  @type("number") shieldCooldownTimer: number = 0; // Cooldown for shield regeneration
+  @type("number") swarmCount: number = 1; // For Swarm enemy grouping logic
 }
 
 export class Projectile extends Schema {

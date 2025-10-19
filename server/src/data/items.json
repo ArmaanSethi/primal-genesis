@@ -185,5 +185,195 @@
     "effects": [
       { "trigger": "onAttack", "effect": "applyChill", "value": 0.20, "type": "percentage", "duration": 2, "damage": 5, "damageType": "ice" }
     ]
+  },
+  "plasmaRicochetCore": {
+    "id": "plasmaRicochetCore",
+    "name": "Plasma Ricochet Core",
+    "description": "Your projectiles have a 25% chance to ricochet to nearby enemies for 50% damage (+10% chance per stack).",
+    "icon": "icons/plasma_core.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onAttack", "effect": "ricochet", "value": 0.25, "type": "percentage" }
+    ]
+  },
+  "viralNanites": {
+    "id": "viralNanites",
+    "name": "Viral Nanites",
+    "description": "Dealing damage spreads a viral infection to nearby enemies for 30% of damage over 3 seconds (+10% spread per stack).",
+    "icon": "icons/nanites.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onDamage", "effect": "viralSpread", "value": 0.30, "type": "percentage", "duration": 3 }
+    ]
+  },
+  "chronoAccelerator": {
+    "id": "chronoAccelerator",
+    "name": "Chrono Accelerator",
+    "description": "Reduces all cooldowns by 15% and increases attack speed by 8% (+5% cooldown reduction per stack).",
+    "icon": "icons/chrono_accelerator.png",
+    "rarity": "rare",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onTimer", "effect": "reduceCooldowns", "value": 0.15, "type": "percentage" },
+      { "stat": "attackSpeed", "value": 0.08, "type": "percentage" }
+    ]
+  },
+  "gravitonWell": {
+    "id": "gravitonWell",
+    "name": "Graviton Well",
+    "description": "Creates a gravity well that pulls enemies toward your projectiles by 30% range (+5% pull strength per stack).",
+    "icon": "icons/graviton_well.png",
+    "rarity": "rare",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onAttack", "effect": "gravitonPull", "value": 0.30, "type": "percentage" }
+    ]
+  },
+  "phasingCrystal": {
+    "id": "phasingCrystal",
+    "name": "Phasing Crystal",
+    "description": "Your projectiles penetrate through enemies and gain 20% damage per target hit (+10% damage per penetration).",
+    "icon": "icons/phasing_crystal.png",
+    "rarity": "rare",
+    "stackingType": "special",
+    "effects": [
+      { "trigger": "onAttack", "effect": "projectilePenetration", "value": 1, "type": "flat" }
+    ]
+  },
+  "adaptiveCamouflage": {
+    "id": "adaptiveCamouflage",
+    "name": "Adaptive Camouflage",
+    "description": "Reduces enemy detection range by 25% and increases critical chance by 8% (+3% crit chance per stack).",
+    "icon": "icons/camouflage.png",
+    "rarity": "uncommon",
+    "stackingType": "linear",
+    "effects": [
+      { "stat": "critChance", "value": 0.08, "type": "percentage" },
+      { "trigger": "onTimer", "effect": "reduceThreat", "value": 0.25, "type": "percentage" }
+    ]
+  },
+  "bioelectricField": {
+    "id": "bioelectricField",
+    "name": "Bio-Electric Field",
+    "description": "Every 3 seconds, chain lightning hits 3 nearby enemies for 25 damage (+8 damage per stack).",
+    "icon": "icons/bio_field.png",
+    "rarity": "rare",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onTimer", "effect": "chainLightning", "value": 25, "type": "flat", "targets": 3, "interval": 3 }
+    ]
+  },
+  "mutationSpores": {
+    "id": "mutationSpores",
+    "name": "Mutation Spores",
+    "description": "Enemies hit by your attacks have a 15% chance to mutate and fight for you for 5 seconds (+5% chance per stack).",
+    "icon": "icons/mutation_spores.png",
+    "rarity": "rare",
+    "stackingType": "linear",
+    "effects": [
+      { "trigger": "onAttack", "effect": "mindControl", "value": 0.15, "type": "percentage", "duration": 5 }
+    ]
+  },
+  "stasisGrenade": {
+    "id": "stasisGrenade",
+    "name": "Stasis Grenade",
+    "description": "Equipment: Press E to freeze time in a 200px radius for 3 seconds. 45s cooldown.",
+    "icon": "icons/stasis_grenade.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "timeFreeze", "value": 3, "type": "flat", "radius": 200, "cooldown": 45 }
+    ]
+  },
+  "phaseShifterBelt": {
+    "id": "phaseShifterBelt",
+    "name": "Phase Shifter Belt",
+    "description": "Equipment: Press E to teleport 300px in movement direction, gaining 2s invincibility. 20s cooldown.",
+    "icon": "icons/phase_shifter.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "teleport", "value": 300, "type": "flat", "cooldown": 20, "invincibility": 2 }
+    ]
+  },
+  "sonicResonator": {
+    "id": "sonicResonator",
+    "name": "Sonic Resonator",
+    "description": "Equipment: Press E to emit a 400px sonic wave dealing 80 damage and stunning enemies 2s. 30s cooldown.",
+    "icon": "icons/sonic_resonator.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "sonicWave", "value": 80, "type": "flat", "radius": 400, "cooldown": 30, "stun": 2 }
+    ]
+  },
+  "holographicDecoy": {
+    "id": "holographicDecoy",
+    "name": "Holographic Decoy",
+    "description": "Equipment: Press E to spawn a decoy that attracts enemies for 8 seconds. 35s cooldown.",
+    "icon": "icons/hologram_decoy.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "spawnDecoy", "value": 1, "type": "flat", "duration": 8, "cooldown": 35 }
+    ]
+  },
+  "energyShield": {
+    "id": "energyShield",
+    "name": "Energy Shield",
+    "description": "Equipment: Press E to create a shield blocking next 3 projectiles. 25s cooldown.",
+    "icon": "icons/energy_shield.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "projectileShield", "value": 3, "type": "flat", "cooldown": 25 }
+    ]
+  },
+  "rageInducer": {
+    "id": "rageInducer",
+    "name": "Rage Inducer",
+    "description": "Equipment: Press E to double damage for 8 seconds but take 50% increased damage. 40s cooldown.",
+    "icon": "icons/rage_inducer.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "rageMode", "value": 2.0, "type": "percentage", "duration": 8, "vulnerability": 1.5, "cooldown": 40 }
+    ]
+  },
+  "healingNanobots": {
+    "id": "healingNanobots",
+    "name": "Healing Nanobots",
+    "description": "Equipment: Press E to instantly heal 50 health and regenerate 10 health/second for 5 seconds. 60s cooldown.",
+    "icon": "icons/healing_nanobots.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "burstHeal", "value": 50, "type": "flat", "cooldown": 60 },
+      { "trigger": "onActivate", "effect": "regeneration", "value": 10, "type": "flat", "duration": 5 }
+    ]
+  },
+  "shadowCloak": {
+    "id": "shadowCloak",
+    "name": "Shadow Cloak",
+    "description": "Equipment: Press E to become invisible for 4 seconds, next attack deals 3x damage. 50s cooldown.",
+    "icon": "icons/shadow_cloak.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "invisibility", "value": 1, "type": "flat", "duration": 4, "cooldown": 50, "nextAttackCrit": 3.0 }
+    ]
+  },
+  "timeDuplicator": {
+    "id": "timeDuplicator",
+    "name": "Time Duplicator",
+    "description": "Equipment: Press E to create time clone of yourself that mimics attacks for 6 seconds. 90s cooldown.",
+    "icon": "icons/time_duplicator.png",
+    "rarity": "equipment",
+    "stackingType": "none",
+    "effects": [
+      { "trigger": "onActivate", "effect": "timeClone", "value": 1, "type": "flat", "duration": 6, "cooldown": 90 }
+    ]
   }
 }

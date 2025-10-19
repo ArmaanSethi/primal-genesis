@@ -48,5 +48,54 @@
     "attackType": "melee",
     "chargeSpeed": 20,
     "chargeDuration": 1000
+  },
+  "exploder": {
+    "name": "Exploder",
+    "sprite": "exploder.png",
+    "baseStats": {
+      "maxHealth": 40,
+      "health": 40,
+      "damage": 60,
+      "moveSpeed": 16,
+      "attackSpeed": 1,
+      "armor": 0
+    },
+    "behavior": "seekAndExplode",
+    "attackType": "melee",
+    "explosionRadius": 120,
+    "explosionDamage": 60
+  },
+  "swarm": {
+    "name": "Swarm",
+    "sprite": "swarm.png",
+    "baseStats": {
+      "maxHealth": 15,
+      "health": 15,
+      "damage": 4,
+      "moveSpeed": 18,
+      "attackSpeed": 0.3,
+      "armor": 0
+    },
+    "behavior": "seekPlayer",
+    "attackType": "melee",
+    "swarmBonus": true,
+    "swarmDamage": 2
+  },
+  "shield": {
+    "name": "Shield",
+    "sprite": "shield.png",
+    "baseStats": {
+      "maxHealth": 100,
+      "health": 100,
+      "damage": 8,
+      "moveSpeed": 6,
+      "attackSpeed": 1.2,
+      "armor": 20
+    },
+    "behavior": "seekPlayer",
+    "attackType": "melee",
+    "shieldRegen": true,
+    "shieldRegenRate": 5,
+    "shieldCooldown": 3000
   }
 }

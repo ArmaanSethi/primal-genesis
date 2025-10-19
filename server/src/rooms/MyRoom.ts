@@ -661,7 +661,7 @@ export class MyRoom extends Room<MyRoomState> {
     this.spawnTimer += deltaTime;
     if (this.spawnTimer >= this.SPAWN_INTERVAL && this.state.enemies.size < this.MAX_ENEMIES) {
       // this.log(`DEBUG Spawning: Attempting to spawn new enemy.`);
-      const availableEnemyTypes = ["waspDrone", "spitter", "charger"];
+      const availableEnemyTypes = ["waspDrone", "spitter", "charger", "exploder", "swarm", "shield"];
       const randomEnemyTypeId = availableEnemyTypes[Math.floor(Math.random() * availableEnemyTypes.length)];
       const enemyType = enemyData[randomEnemyTypeId as keyof typeof enemyData];
 
@@ -1015,6 +1015,101 @@ export class MyRoom extends Room<MyRoomState> {
         enemy.y = Math.max(0, Math.min(this.state.worldHeight, enemy.y));
       }
 
+      // New enemy type behaviors
+      if (enemyTypeData.behavior === "seekAndExplode") { // Exploder behavior
+        const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
+        const moveX = Math.cos(angle) * enemy.moveSpeed * (deltaTime / 1000);
+        const moveY = Math.sin(angle) * enemy.moveSpeed * (deltaTime / 1000);
+
+        enemy.x += moveX;
+        enemy.y += moveY;
+
+        // Check for proximity to explode
+        const explosionDistance = 50; // Distance to trigger explosion
+        if (minDistance < explosionDistance && !enemy.isExploding) {
+          enemy.isExploding = true;
+          enemy.explosionTimer = 500; // 500ms delay before explosion
+        }
+
+        // Handle explosion countdown
+        let shouldRemoveEnemy = false;
+        if (enemy.isExploding && enemy.explosionTimer > 0) {
+          enemy.explosionTimer -= deltaTime;
+          if (enemy.explosionTimer <= 0) {
+            // Deal area damage
+            const explosionRadius = (enemyTypeData as any).explosionRadius || 120;
+            const explosionDamage = (enemyTypeData as any).explosionDamage || 60;
+
+            this.state.players.forEach((player) => {
+              if (!player.isDead) {
+                const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+                if (distance < explosionRadius) {
+                  player.health -= explosionDamage;
+                  if (player.health <= 0) {
+                    player.health = 0;
+                    player.isDead = true;
+                  }
+                  this.state.players.set(player.sessionId, player);
+                }
+              }
+            });
+
+            // Mark enemy for removal
+            shouldRemoveEnemy = true;
+          }
+        }
+
+        // Skip further processing if enemy is about to be removed
+        if (shouldRemoveEnemy) {
+          this.state.enemies.delete(enemy.id);
+          continue; // Skip to next enemy
+        }
+      } else if (enemyTypeData.behavior === "seekPlayer" && enemy.typeId === "swarm") { // Swarm behavior
+        const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
+        const moveX = Math.cos(angle) * enemy.moveSpeed * (deltaTime / 1000);
+        const moveY = Math.sin(angle) * enemy.moveSpeed * (deltaTime / 1000);
+
+        enemy.x += moveX;
+        enemy.y += moveY;
+
+        // Swarm bonus: Count nearby swarm enemies and apply damage boost
+        let nearbySwarmCount = 0;
+        this.state.enemies.forEach((otherEnemy) => {
+          if (otherEnemy.id !== enemy.id && otherEnemy.typeId === "swarm") {
+            const distance = Math.hypot(otherEnemy.x - enemy.x, otherEnemy.y - enemy.y);
+            if (distance < 150) { // Swarm radius
+              nearbySwarmCount++;
+            }
+          }
+        });
+
+        enemy.swarmCount = nearbySwarmCount + 1;
+
+        // Clamp enemy position to world boundaries
+        enemy.x = Math.max(0, Math.min(this.state.worldWidth, enemy.x));
+        enemy.y = Math.max(0, Math.min(this.state.worldHeight, enemy.y));
+      } else if (enemyTypeData.behavior === "seekPlayer" && enemy.typeId === "shield") { // Shield behavior
+        const angle = Math.atan2(closestPlayer.y - enemy.y, closestPlayer.x - enemy.x);
+        const moveX = Math.cos(angle) * enemy.moveSpeed * (deltaTime / 1000);
+        const moveY = Math.sin(angle) * enemy.moveSpeed * (deltaTime / 1000);
+
+        enemy.x += moveX;
+        enemy.y += moveY;
+
+        // Shield regeneration logic
+        if (enemy.shieldCooldownTimer > 0) {
+          enemy.shieldCooldownTimer -= deltaTime;
+        } else if (enemy.health < enemy.maxHealth && enemy.shieldActive) {
+          const regenRate = (enemyTypeData as any).shieldRegenRate || 5;
+          enemy.health = Math.min(enemy.maxHealth, enemy.health + regenRate * (deltaTime / 1000));
+          this.state.enemies.set(enemy.id, enemy);
+        }
+
+        // Clamp enemy position to world boundaries
+        enemy.x = Math.max(0, Math.min(this.state.worldWidth, enemy.x));
+        enemy.y = Math.max(0, Math.min(this.state.worldHeight, enemy.y));
+      }
+
       // Special behavior for Stage Guardian (boss)
       if (enemy.typeId === "stageGuardian") {
         // Boss gets rage mode as health decreases
@@ -1045,6 +1140,9 @@ export class MyRoom extends Room<MyRoomState> {
 
     // Enemy-Player Collision and Damage
     this.state.enemies.forEach((enemy) => {
+      // Get enemy data for this context
+      const enemyDataForCombat = enemyData[enemy.typeId as keyof typeof enemyData];
+
       this.state.players.forEach((player) => {
         const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
         const collisionRadius = 24; // Approximate collision radius for enemy and player
@@ -1054,7 +1152,22 @@ export class MyRoom extends Room<MyRoomState> {
           const isPlayerDashing = player.isDashing && Date.now() < player.dashEndTime;
 
           if (!isPlayerDashing) {
-            player.health -= enemy.damage;
+            let damage = enemy.damage;
+
+            // Apply swarm damage bonus
+            if (enemy.typeId === "swarm" && enemy.swarmCount > 1) {
+              const swarmBonus = (enemyDataForCombat as any).swarmDamage || 2;
+              damage += (enemy.swarmCount - 1) * swarmBonus;
+            }
+
+            // Apply shield damage reduction
+            if (enemy.typeId === "shield" && enemy.shieldActive) {
+              damage = Math.max(1, damage - 5); // Shield reduces 5 damage, minimum 1
+              enemy.shieldActive = false;
+              enemy.shieldCooldownTimer = (enemyDataForCombat as any).shieldCooldown || 3000;
+            }
+
+            player.health -= damage;
             enemy.attackCooldown = 1; // 1 second cooldown for enemy attack
 
             if (player.health <= 0) {
