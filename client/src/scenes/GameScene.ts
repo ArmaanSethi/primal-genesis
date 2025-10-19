@@ -5,17 +5,17 @@ import { Client, Room, getStateCallbacks } from 'colyseus.js';
 import type { MyRoomState } from '../../../server/src/rooms/schema/MyRoomState';
 
 export class GameScene extends Phaser.Scene {
-    private room: Room<MyRoomState>;
-    private playerEntities: { [sessionId: string]: Phaser.GameObjects.Image } = {};
-    private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Image } = {};
-    private projectileEntities: { [projectileId: string]: Phaser.GameObjects.Image } = {};
-    private playerHealthText: Phaser.GameObjects.Text;
+    private room!: Room<MyRoomState>;
+    private playerEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
+    private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
+    private projectileEntities: { [projectileId: string]: Phaser.GameObjects.Rectangle } = {};
+    private playerHealthText!: Phaser.GameObjects.Text;
 
     // Input keys
-    private keyW: Phaser.Input.Keyboard.Key;
-    private keyA: Phaser.Input.Keyboard.Key;
-    private keyS: Phaser.Input.Keyboard.Key;
-    private keyD: Phaser.Input.Keyboard.Key;
+    private keyW!: Phaser.Input.Keyboard.Key;
+    private keyA!: Phaser.Input.Keyboard.Key;
+    private keyS!: Phaser.Input.Keyboard.Key;
+    private keyD!: Phaser.Input.Keyboard.Key;
 
     private inputPayload = { x: 0, y: 0 };
 
@@ -36,14 +36,17 @@ export class GameScene extends Phaser.Scene {
 
     preload() {
         // Removed this.load.image('projectile', 'assets/projectile.png');
-
-        this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     }
 
     async create() {
+        // Initialize input keys here
+        if (this.input.keyboard) {
+            this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+            this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+            this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+            this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        }
+
         console.log('Joining room...');
 
         try {
@@ -80,7 +83,7 @@ export class GameScene extends Phaser.Scene {
                 $(this.room.state).players.onAdd((player, sessionId) => {
                 console.log(`Adding player: ${sessionId} at (${player.x}, ${player.y})`);
                 const rect = this.add.rectangle(player.x, player.y, 32, 32, 0xff0000);
-                const entity = this.physics.add.existing(rect, false) as Phaser.Physics.Arcade.Sprite;
+                const entity = this.physics.add.existing(rect, false);
                 entity.setDepth(0); // Explicitly set depth
                 this.playerEntities[sessionId] = entity;                                                    // Make camera follow this client's player
                                                     if (sessionId === this.room.sessionId) {
@@ -93,7 +96,7 @@ export class GameScene extends Phaser.Scene {
                                                         this.playerHealthText.setDepth(100); // Ensure it's always on top
 
                                                         // Initialize previous health for damage feedback
-                                                        player.previousHealth = player.health;
+                                                        entity.setData('previousHealth', player.health);
                                                     }
                                     
                                                     $(player).onChange(() => {
@@ -105,13 +108,14 @@ export class GameScene extends Phaser.Scene {
                                                             this.playerHealthText.setText(`Health: ${player.health}/${player.maxHealth}`);
 
                                                             // Visual feedback for damage
-                                                            if (player.health < player.previousHealth) {
-                                                                (entity as Phaser.GameObjects.Rectangle).fillColor = 0xff0000; // Red color
+                                                            const previousHealth = entity.getData('previousHealth');
+                                                            if (player.health < previousHealth) {
+                                                                entity.fillColor = 0xff0000; // Red color
                                                                 this.time.delayedCall(100, () => {
-                                                                    (entity as Phaser.GameObjects.Rectangle).fillColor = 0xff0000; // Original player color
+                                                                    entity.fillColor = 0xff0000; // Original player color
                                                                 });
                                                             }
-                                                            player.previousHealth = player.health;
+                                                            entity.setData('previousHealth', player.health);
                                                         }
                                                     });
                                                 });
@@ -143,9 +147,7 @@ export class GameScene extends Phaser.Scene {
                     // If we had a charger.png, we'd use enemyImageKey = 'charger';
                 }
                 const rect = this.add.rectangle(enemy.x, enemy.y, 32, 32, enemyColor);
-                // image.setDisplaySize(32, 32); // Set size
-                // image.setTint(enemyColor); // Apply color as tint
-                const entity = this.physics.add.existing(rect, false) as Phaser.Physics.Arcade.Sprite;
+                const entity = this.physics.add.existing(rect, false);
                 entity.setDepth(0); // Explicitly set depth
                 this.enemyEntities[sessionId] = entity;
 
@@ -165,9 +167,9 @@ export class GameScene extends Phaser.Scene {
                     if (enemy.typeId === "charger") {
                         console.log(`Charger ${sessionId} client-received update: (${enemy.x}, ${enemy.y}). isCharging: ${enemy.isCharging}`);
                         if (enemy.isCharging) {
-                            (entity as Phaser.GameObjects.Rectangle).fillColor = 0xffff00; // Yellow color
+                            entity.fillColor = 0xffff00; // Yellow color
                         } else {
-                            (entity as Phaser.GameObjects.Rectangle).fillColor = 0x800080; // Original charger color (purple)
+                            entity.fillColor = 0x800080; // Original charger color (purple)
                         }
                     }
 

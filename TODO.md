@@ -27,6 +27,16 @@
 
 ---
 
+## Client-Side Build Issues (Resolved)
+
+- [x] `sh: tsc: command not found` error during client build. (Fixed by adding `typescript` to `devDependencies` and running `npm install`.)
+- [x] TypeScript errors related to uninitialized properties (`room`, `playerHealthText`, `keyW`, `keyA`, `keyS`, `keyD`). (Fixed by marking properties as definitely assigned and moving key initialization to `create()`.)
+- [x] TypeScript errors related to type mismatches (`Rectangle` vs `Sprite`/`Image`). (Fixed by consistently using `Phaser.GameObjects.Rectangle` and removing incorrect casts.)
+- [x] TypeScript errors related to `@type` decorators in `MyRoomState.ts` when building client. (Fixed by adding `emitDecoratorMetadata` and `experimentalDecorators` to `client/tsconfig.json`.)
+- [x] TypeScript errors related to unused variables (`player`, `enemy`). (These are warnings and do not prevent compilation or execution. They will be addressed in a future refactoring phase if necessary.)
+
+---
+
 ## Enemy Roster Overview
 
 ### WaspDrone (Blue Rectangle)
