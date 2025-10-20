@@ -93,6 +93,27 @@ export class Enemy extends Schema {
   @type("boolean") shieldActive: boolean = true; // For Shield enemies
   @type("number") shieldCooldownTimer: number = 0; // Cooldown for shield regeneration
   @type("number") swarmCount: number = 1; // For Swarm enemy grouping logic
+
+  // Status Effects System
+  @type("boolean") isPoisoned: boolean = false; // Poison status effect
+  @type("number") poisonDamage: number = 0; // Poison damage per second
+  @type("number") poisonDuration: number = 0; // Poison remaining duration
+  @type("number") poisonStacks: number = 0; // Number of poison stacks
+
+  @type("boolean") isBurning: boolean = false; // Fire status effect
+  @type("number") burnDamage: number = 0; // Burn damage per second
+  @type("number") burnDuration: number = 0; // Burn remaining duration
+
+  @type("boolean") isChilled: boolean = false; // Chill status effect
+  @type("number") chillSlowdown: number = 0; // Movement speed reduction
+  @type("number") chillDuration: number = 0; // Chill remaining duration
+
+  @type("boolean") isVulnerable: boolean = false; // Vulnerability status effect
+  @type("number") vulnerabilityMultiplier: number = 1; // Damage taken multiplier
+  @type("number") vulnerabilityDuration: number = 0; // Vulnerability remaining duration
+
+  @type("boolean") isElite: boolean = false; // Elite enemy flag
+  @type("string") eliteColor: string = ""; // Elite enemy color
 }
 
 export class Projectile extends Schema {

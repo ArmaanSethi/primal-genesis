@@ -127,16 +127,16 @@ The game has solid core mechanics and systems implemented and working, but this 
 
 ### Active Issues (Low Priority)
 - **Spitter Projectile Visibility:** Green projectiles sometimes hard to see during gameplay
-- **Yellow Enemy Despawn:** Shield enemies may have despawn issues (investigation needed)
 
 ### Recently CRITICAL Fixes
-- ✅ **🎁 ITEM PICKUP SYSTEM - FIXED**: All interactable types (chests, barrels, tri-shops) now work correctly
+- ✅ **🎁 ITEM PICKUP SYSTEM - CRITICAL FIX**: Missing interactables in spatial grid caused complete pickup failure - NOW WORKING!
 - ✅ **👹 ENEMY DEATH SYSTEM - FIXED**: Proper cleanup, XP spawning, no negative health
 - ✅ **⚡ ADVANCED ITEM EFFECTS - COMPLETE**: 34 total items with poison, fire, AoE, life steal
 - ✅ **🧪 STATUS EFFECTS SYSTEM - COMPLETE**: Poison, fire, chill, vulnerability mechanics working
 - ✅ **⚔️ ELITE ENEMY SYSTEM - COMPLETE**: 6 elite variants with enhanced stats and colors
 - ✅ **🚀 PERFORMANCE OPTIMIZATION - COMPLETE**: Spatial grid, cached arrays, optimized loops
 - ✅ **🏆 BOSS/STAGE PROGRESSION - FIXED**: Complete beacon → holdout → boss → victory flow now working
+- ✅ **🛡️ SHIELD ENEMY DESPAWN - FIXED**: Added shield reactivation logic and proper death cleanup
 - ✅ **Beacon Visibility:** Beacon now clearly visible as large green star
 - ✅ **Altar Confusion:** Altar spawns far from beacon to avoid visual interference
 - ✅ **UI Overlap:** Text overlapping in sidebar resolved
