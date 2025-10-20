@@ -153,8 +153,8 @@ export class MyRoomState extends Schema {
   @type({ map: InteractableState }) interactables = new MapSchema<InteractableState>();
   @type({ map: XPEntityState }) xpEntities = new MapSchema<XPEntityState>();
 
-  @type("number") worldWidth: number = 5000;
-  @type("number") worldHeight: number = 3000;
+  @type("number") worldWidth: number = 8000;
+  @type("number") worldHeight: number = 6000;
 
   // Game state
   @type("number") timeElapsed: number = 0;

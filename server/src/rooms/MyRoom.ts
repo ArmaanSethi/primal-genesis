@@ -23,7 +23,7 @@ export class MyRoom extends Room<MyRoomState> {
   private readonly DIFFICULTY_INTERVAL: number = 60; // 60 seconds per difficulty level
   private lastDifficultyIncrease: number = 0;
 
-  // Beacon now spawns immediately, no tracking needed
+  // Beacon now spawns immediately when first player joins
 
   // Performance optimization: Spatial partitioning for collision detection
   private GRID_SIZE = 100; // 100px grid cells
@@ -412,7 +412,22 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private applyItemEffectsToPlayer(player: Player): void {
-    // OPTIMIZED: Reset calculated stats to base values
+    // PERFORMANCE OPTIMIZATION: Only recalculate if player has items
+    if (player.items.length === 0) {
+      // Reset to base stats if no items
+      player.calculatedMaxHealth = player.maxHealth;
+      player.calculatedHealthRegen = player.healthRegen;
+      player.calculatedDamage = player.damage;
+      player.calculatedAttackSpeed = player.attackSpeed;
+      player.calculatedProjectileSpeed = player.projectileSpeed;
+      player.calculatedMoveSpeed = player.moveSpeed;
+      player.calculatedArmor = player.armor;
+      player.calculatedCritChance = player.critChance;
+      return;
+    }
+
+    // PERFORMANCE OPTIMIZATION: Use cached calculation with early returns for common cases
+    // Reset calculated stats to base values
     player.calculatedMaxHealth = player.maxHealth;
     player.calculatedHealthRegen = player.healthRegen;
     player.calculatedDamage = player.damage;
@@ -422,7 +437,11 @@ export class MyRoom extends Room<MyRoomState> {
     player.calculatedArmor = player.armor;
     player.calculatedCritChance = player.critChance;
 
-    // OPTIMIZED: Apply item effects using for loops instead of forEach
+    // PERFORMANCE OPTIMIZATION: Batch calculations and minimize property access
+    let maxHealthBonus = 0, healthRegenBonus = 0, damageBonus = 0, attackSpeedBonus = 0;
+    let projectileSpeedBonus = 0, moveSpeedBonus = 0, armorBonus = 0, critChanceBonus = 0;
+
+    // Apply item effects using optimized loops
     const itemsCount = player.items.length;
     for (let itemIndex = 0; itemIndex < itemsCount; itemIndex++) {
       const item = player.items[itemIndex];
@@ -436,32 +455,42 @@ export class MyRoom extends Room<MyRoomState> {
 
         switch (effect.stat) {
           case "maxHealth":
-            player.calculatedMaxHealth += isPercentage ? player.maxHealth * effectValue : effectValue;
+            maxHealthBonus += isPercentage ? player.maxHealth * effectValue : effectValue;
             break;
           case "healthRegen":
-            player.calculatedHealthRegen += isPercentage ? player.healthRegen * effectValue : effectValue;
+            healthRegenBonus += isPercentage ? player.healthRegen * effectValue : effectValue;
             break;
           case "damage":
-            player.calculatedDamage += isPercentage ? player.damage * effectValue : effectValue;
+            damageBonus += isPercentage ? player.damage * effectValue : effectValue;
             break;
           case "attackSpeed":
-            player.calculatedAttackSpeed += isPercentage ? player.attackSpeed * effectValue : effectValue;
+            attackSpeedBonus += isPercentage ? player.attackSpeed * effectValue : effectValue;
             break;
           case "projectileSpeed":
-            player.calculatedProjectileSpeed += isPercentage ? player.projectileSpeed * effectValue : effectValue;
+            projectileSpeedBonus += isPercentage ? player.projectileSpeed * effectValue : effectValue;
             break;
           case "moveSpeed":
-            player.calculatedMoveSpeed += isPercentage ? player.moveSpeed * effectValue : effectValue;
+            moveSpeedBonus += isPercentage ? player.moveSpeed * effectValue : effectValue;
             break;
           case "armor":
-            player.calculatedArmor += isPercentage ? player.armor * effectValue : effectValue;
+            armorBonus += isPercentage ? player.armor * effectValue : effectValue;
             break;
           case "critChance":
-            player.calculatedCritChance += isPercentage ? player.critChance * effectValue : effectValue;
+            critChanceBonus += isPercentage ? player.critChance * effectValue : effectValue;
             break;
         }
       }
     }
+
+    // Apply batched bonuses in single operations
+    player.calculatedMaxHealth += maxHealthBonus;
+    player.calculatedHealthRegen += healthRegenBonus;
+    player.calculatedDamage += damageBonus;
+    player.calculatedAttackSpeed += attackSpeedBonus;
+    player.calculatedProjectileSpeed += projectileSpeedBonus;
+    player.calculatedMoveSpeed += moveSpeedBonus;
+    player.calculatedArmor += armorBonus;
+    player.calculatedCritChance += critChanceBonus;
 
     // Apply soft limits with diminishing returns for extreme stacking
     // This allows natural item synergy while preventing completely broken values
@@ -484,6 +513,7 @@ export class MyRoom extends Room<MyRoomState> {
     }
   }
 
+  
   private populateMap(): void {
     const availableInteractables = [
       { type: "smallChest", cost: 10, weight: 40 },
@@ -552,16 +582,20 @@ export class MyRoom extends Room<MyRoomState> {
       attempts++;
     }
 
-    // Spawn the beacon immediately so players can always find it
-    this.spawnBeacon();
-    console.log(`🌟 Beacon spawned immediately at level start - always available for players to find`);
+    // NOTE: Beacon will spawn when first player joins in onJoin method
+    console.log(`🌟 Beacon will spawn when first player joins`);
   }
 
   private spawnBeacon(): void {
+    console.log(`🎯 BEACON SPAWN: Starting beacon spawn process`);
+
     // OPTIMIZED: Find a good location for the beacon near players (not too far)
     // Use first player as reference point for better positioning
     const playersArray = Array.from(this.state.players.values());
-    if (playersArray.length === 0) return;
+    if (playersArray.length === 0) {
+      console.log(`❌ BEACON SPAWN: No players found, cannot spawn beacon`);
+      return;
+    }
 
     const referencePlayer = playersArray[0];
 
@@ -1668,6 +1702,17 @@ export class MyRoom extends Room<MyRoomState> {
     player.calculatedCritChance = stats.critChance;
 
     this.state.players.set(client.sessionId, player);
+
+    // Spawn beacon when first player joins (if not already spawned)
+    console.log(`🔍 DEBUG: Player joined. Players count: ${this.state.players.size}, Beacon ID: ${this.beaconId}`);
+    if (this.state.players.size === 1 && !this.beaconId) {
+      console.log(`🚀 SPAWNING BEACON: First player ${client.sessionId} joined, no beacon exists yet`);
+      this.spawnBeacon();
+      console.log(`✅ Beacon spawned for first player ${client.sessionId} - immediately available for interaction`);
+      console.log(`📍 DEBUG: After spawn, Beacon ID is: ${this.beaconId}`);
+    } else {
+      console.log(`ℹ️ DEBUG: Not spawning beacon. Players: ${this.state.players.size}, Beacon exists: ${!!this.beaconId}`);
+    }
   }
 
   onLeave(client: Client, _consented: boolean) {
