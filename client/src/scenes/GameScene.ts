@@ -41,14 +41,17 @@ export class GameScene extends Phaser.Scene {
 
     private inputPayload = { x: 0, y: 0 };
 
+    // Game progress tracking
+    private enemiesDefeatedCount: number = 0;
+
     constructor() {
         super({ key: 'GameScene' });
     }
 
     // UI Layout Configuration
     private readonly UI_CONFIG = {
-        GAME_WIDTH: 3200,  // Game world size
-        GAME_HEIGHT: 2400, // Game world size
+        GAME_WIDTH: 8000,  // Game world size - MATCHES SERVER worldWidth
+        GAME_HEIGHT: 6000, // Game world size - MATCHES SERVER worldHeight
         VIEWPORT_WIDTH: window.innerWidth,  // Full browser width
         VIEWPORT_HEIGHT: window.innerHeight, // Full browser height
         LEFT_SIDEBAR_WIDTH: 200,  // Left sidebar for help
@@ -1014,6 +1017,10 @@ export class GameScene extends Phaser.Scene {
                                     if (eliteAura) eliteAura.destroy(); // Clean up Elite aura
                                     entity.destroy();
                                     delete this.enemyEntities[sessionId];
+
+                                    // Increment enemy defeat counter for beacon progress tracking
+                                    this.enemiesDefeatedCount++;
+                                    console.log(`🎯 Enemies defeated: ${this.enemiesDefeatedCount}/3 (Beacon spawns at 3)`);
                                 }
                             });
             
@@ -1287,8 +1294,17 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (!beaconFound) {
-            this.beaconDirectionText.setText('🌟 BEACON: Searching...');
-            this.beaconArrow.setVisible(false);
+            // Check if server should have spawned beacon already
+            const enemiesDefeated = this.getEnemiesDefeatedCount();
+            const enemiesNeeded = 3; // Server spawns beacon after 3 enemies defeated
+
+            if (enemiesDefeated >= enemiesNeeded) {
+                this.beaconDirectionText.setText('🌟 BEACON: Looking for beacon...');
+                this.beaconArrow.setVisible(false);
+            } else {
+                this.beaconDirectionText.setText(`⚔️ DEFEAT ENEMIES: ${enemiesDefeated}/${enemiesNeeded} to spawn beacon`);
+                this.beaconArrow.setVisible(false);
+            }
             return;
         }
 
@@ -1311,6 +1327,10 @@ export class GameScene extends Phaser.Scene {
             // Update arrow rotation
             this.beaconArrow.setRotation(angle * Math.PI / 180);
         }
+    }
+
+    private getEnemiesDefeatedCount(): number {
+        return this.enemiesDefeatedCount;
     }
 
     update() {
