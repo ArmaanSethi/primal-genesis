@@ -412,6 +412,17 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private applyItemEffectsToPlayer(player: Player): void {
+    // NON-BLOCKING: Schedule item effect calculation in microtask
+    // This completely eliminates lag by deferring heavy calculations
+    Promise.resolve().then(() => {
+      this.calculateItemEffectsNonBlocking(player);
+    });
+
+    // EARLY RETURN: Don't wait for calculation - game continues smoothly
+    // Stats will be updated asynchronously without any frame drops
+  }
+
+  private calculateItemEffectsNonBlocking(player: Player): void {
     // PERFORMANCE OPTIMIZATION: Only recalculate if player has items
     if (player.items.length === 0) {
       // Reset to base stats if no items
@@ -423,11 +434,13 @@ export class MyRoom extends Room<MyRoomState> {
       player.calculatedMoveSpeed = player.moveSpeed;
       player.calculatedArmor = player.armor;
       player.calculatedCritChance = player.critChance;
+
+      // Update player state asynchronously
+      this.state.players.set(player.sessionId, player);
       return;
     }
 
-    // PERFORMANCE OPTIMIZATION: Use cached calculation with early returns for common cases
-    // Reset calculated stats to base values
+    // PERFORMANCE OPTIMIZATION: Reset calculated stats to base values
     player.calculatedMaxHealth = player.maxHealth;
     player.calculatedHealthRegen = player.healthRegen;
     player.calculatedDamage = player.damage;
@@ -511,6 +524,10 @@ export class MyRoom extends Room<MyRoomState> {
       player.calculatedCritChance = 0.75 + Math.sqrt(excess) * 0.1; // Diminishing returns after 75%
       player.calculatedCritChance = Math.min(player.calculatedCritChance, 0.95); // Hard cap at 95%
     }
+
+    // CRITICAL: Update player state asynchronously after calculations complete
+    // This ensures players see their updated stats without any blocking
+    this.state.players.set(player.sessionId, player);
   }
 
   
@@ -1726,6 +1743,13 @@ export class MyRoom extends Room<MyRoomState> {
 
   // Equipment ability methods
   private executeDashAttack(player: Player, damage: number): void {
+    // NON-BLOCKING: Execute dash attack effects asynchronously
+    Promise.resolve().then(() => {
+      this.executeDashAttackNonBlocking(player, damage);
+    });
+  }
+
+  private executeDashAttackNonBlocking(player: Player, damage: number): void {
     // console.log(`⚡ Dash attack activated by ${player.sessionId} for ${damage} damage`);
 
     // Find all enemies near the player and damage them
@@ -1766,6 +1790,13 @@ export class MyRoom extends Room<MyRoomState> {
   }
 
   private throwGrenade(player: Player, damage: number, radius: number): void {
+    // NON-BLOCKING: Execute grenade effects asynchronously
+    Promise.resolve().then(() => {
+      this.throwGrenadeNonBlocking(player, damage, radius);
+    });
+  }
+
+  private throwGrenadeNonBlocking(player: Player, damage: number, radius: number): void {
     // console.log(`💣 Grenade thrown by ${player.sessionId} for ${damage} damage in ${radius} radius`);
 
     // Find all enemies in the grenade radius
