@@ -1,0 +1,1 @@
+{"root":["../src/beaconsystem.test.ts","../src/equipmentsystem.test.ts","../src/myroom.test.ts","../src/app.config.ts","../src/index.ts","../src/rooms/interactablesystem.test.ts","../src/rooms/itemmath.test.ts","../src/rooms/myroom.ts","../src/rooms/schema/myroomstate.ts","../src/workers/statcalculator.worker.ts"],"errors":true,"version":"5.9.3"}

@@ -784,8 +784,8 @@ export class GameScene extends Phaser.Scene {
                                                                 }
                                                             } else {
                                                                 // Reset visual effects when not dashing
-                                                                if (entity && typeof entity.clearTint === 'function') {
-                                                                    (entity as any).clearTint();
+                                                                if (entity) {
+                                                                    (entity as any).clearTint?.();
                                                                 }
                                                                 if (entity && typeof entity.setAlpha === 'function') {
                                                                     entity.setAlpha(1);
@@ -1054,8 +1054,6 @@ export class GameScene extends Phaser.Scene {
                                                                     this.projectileEntities[projectileId] = projectileRect;
                                                 
                                                                     $(projectile).onChange(() => {
-                                                                        const prevX = projectileRect.x;
-                                                                        const prevY = projectileRect.y;
                                                                         projectileRect.x = projectile.x;
                                                                         projectileRect.y = projectile.y;
                                                                         projectileRect.rotation = projectile.rotation;

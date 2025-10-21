@@ -1,0 +1,548 @@
+{
+    "adrenalStimulant": {
+        "id": "adrenalStimulant",
+        "name": "Adrenal Stimulant",
+        "description": "Bio-enhanced combat drug that increases attack speed by 10% <style=cStack>(+10% per stack)</style>.",
+        "icon": "icons/adrenal_stimulant.png",
+        "rarity": "common",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "attackSpeed", "value": 0.10, "type": "percentage" }
+        ]
+    },
+    "exoLegAugmentation": {
+        "id": "exoLegAugmentation",
+        "name": "Exo-Leg Augmentation",
+        "description": "Cybernetic leg implants increase movement speed by 20% <style=cStack>(+20% per stack)</style>.",
+        "icon": "icons/exo_legs.png",
+        "rarity": "common",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "moveSpeed", "value": 0.20, "type": "percentage" }
+        ]
+    },
+    "bioRegenerativeGel": {
+        "id": "bioRegenerativeGel",
+        "name": "Bio-Regenerative Gel",
+        "description": "Alien healing gel instantly restores 20 health when applied.",
+        "icon": "icons/bio_gel.png",
+        "rarity": "common",
+        "stackingType": "none",
+        "effects": [
+            { "stat": "healInstant", "value": 20, "type": "flat" }
+        ]
+    },
+    "crystallineAmplifier": {
+        "id": "crystallineAmplifier",
+        "name": "Crystalline Amplifier",
+        "description": "Alien crystal formation that amplifies weapon damage by 15% <style=cStack>(+15% per stack)</style>.",
+        "icon": "icons/crystal_amplifier.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "damage", "value": 0.15, "type": "percentage" }
+        ]
+    },
+    "cellularReinforcement": {
+        "id": "cellularReinforcement",
+        "name": "Cellular Reinforcement",
+        "description": "Nanite-enhanced tissue increases maximum health by 20 <style=cStack>(+20 per stack)</style>.",
+        "icon": "icons/cellular_reinforcement.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "maxHealth", "value": 20, "type": "flat" }
+        ]
+    },
+    "adaptiveChitin": {
+        "id": "adaptiveChitin",
+        "name": "Adaptive Chitin Plating",
+        "description": "Alien exoskeleton fragments that bond to armor, increasing defense by 2 <style=cStack>(+2 per stack)</style>.",
+        "icon": "icons/chitin_plating.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "armor", "value": 2, "type": "flat" }
+        ]
+    },
+    "plasmaDischargeCoil": {
+        "id": "plasmaDischargeCoil",
+        "name": "Plasma Discharge Coil",
+        "description": "Extracted from energy creatures - zaps nearby foes for 80% damage every 0.5s. Hits 2 <style=cStack>(+1 per stack)</style> additional targets.",
+        "icon": "icons/plasma_coil.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onTimer", "effect": "spawnChainLightning", "value": 0.8, "interval": 0.5, "targets": 2 }
+        ]
+    },
+    "neuralTargetingSystem": {
+        "id": "neuralTargetingSystem",
+        "name": "Neural Targeting System",
+        "description": "Brain-computer interface that increases critical strike chance by 10% <style=cStack>(+10% per stack)</style>.",
+        "icon": "icons/neural_system.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "critChance", "value": 0.10, "type": "percentage" }
+        ]
+    },
+    "naniteSwarm": {
+        "id": "naniteSwarm",
+        "name": "Nanite Swarm",
+        "description": "Microscopic repair bots increase health regeneration by 2 per second <style=cStack>(+2 per stack)</style>.",
+        "icon": "icons/nanite_swarm.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "healthRegen", "value": 2, "type": "flat" }
+        ]
+    },
+    "bioPlasmaSplitter": {
+        "id": "bioPlasmaSplitter",
+        "name": "Bio-Plasma Splitter",
+        "description": "Genetically engineered projectile system splits shots into 3 <style=cStack>(+1 projectile per stack)</style>.",
+        "icon": "icons/bio_splitter.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onAttack", "effect": "splitProjectiles", "value": 3 }
+        ]
+    },
+    "parasiticSymbiote": {
+        "id": "parasiticSymbiote",
+        "name": "Parasitic Symbiote",
+        "description": "Bonds to user, healing for 15% of damage dealt to enemies <style=cStack>(+5% per stack)</style>.",
+        "icon": "icons/symbiote.png",
+        "rarity": "rare",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onDamage", "effect": "lifesteal", "value": 0.15, "type": "percentage" }
+        ]
+    },
+    "quantumPhaseShifter": {
+        "id": "quantumPhaseShifter",
+        "name": "Quantum Phase Shifter",
+        "description": "Equipment: Phase through enemies, dealing 50 damage and gaining 0.5s invincibility. Press E to activate.",
+        "icon": "icons/quantum_shifter.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "dashAttack", "damage": 50, "invincibilityTime": 0.5 }
+        ]
+    },
+    "alienSporePod": {
+        "id": "alienSporePod",
+        "name": "Alien Spore Pod",
+        "description": "Equipment: Hurls explosive alien spores dealing 200 damage in a wide area. 10s cooldown. Press E to activate.",
+        "icon": "icons/spore_pod.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "grenade", "damage": 200, "radius": 150, "cooldown": 10 }
+        ]
+    },
+    "explosiveRounds": {
+        "id": "explosiveRounds",
+        "name": "Explosive Rounds",
+        "description": "Your attacks explode on impact, dealing 50% of your damage in a small area (+25% damage per stack).",
+        "icon": "icons/explosive_rounds.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onAttack", "effect": "areaDamage", "value": 0.5, "type": "percentage", "radius": 50 }
+        ]
+    },
+    "lightningRod": {
+        "id": "lightningRod",
+        "name": "Lightning Rod",
+        "description": "Your attacks have a 25% chance to chain to 2 additional enemies, dealing 75% damage per chain (+1 target per stack).",
+        "icon": "icons/lightning_rod.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onAttack", "effect": "chainDamage", "value": 0.75, "type": "percentage", "targets": 2, "chance": 0.25 }
+        ]
+    },
+    "infernoOrb": {
+        "id": "infernoOrb",
+        "name": "Inferno Orb",
+        "description": "Your attacks apply a burn that deals 10 fire damage per second for 3 seconds (+5 damage per stack).",
+        "icon": "icons/inferno_orb.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onAttack", "effect": "applyBurn", "value": 10, "type": "flat", "interval": 1, "duration": 3, "damageType": "fire" }
+        ]
+    },
+    "frostShard": {
+        "id": "frostShard",
+        "name": "Frost Shard",
+        "description": "Your attacks apply a chill that slows enemies by 20% for 2 seconds and deals 5 ice damage (+10% slow per stack).",
+        "icon": "icons/frost_shard.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onAttack", "effect": "applyChill", "value": 0.20, "type": "percentage", "duration": 2, "damage": 5, "damageType": "ice" }
+        ]
+    },
+    "plasmaRicochetCore": {
+        "id": "plasmaRicochetCore",
+        "name": "Plasma Ricochet Core",
+        "description": "Your projectiles have a 25% chance to ricochet to nearby enemies for 50% damage (+10% chance per stack).",
+        "icon": "icons/plasma_core.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onAttack", "effect": "ricochet", "value": 0.25, "type": "percentage" }
+        ]
+    },
+    "viralNanites": {
+        "id": "viralNanites",
+        "name": "Viral Nanites",
+        "description": "Dealing damage spreads a viral infection to nearby enemies for 30% of damage over 3 seconds (+10% spread per stack).",
+        "icon": "icons/nanites.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onDamage", "effect": "viralSpread", "value": 0.30, "type": "percentage", "duration": 3 }
+        ]
+    },
+    "chronoAccelerator": {
+        "id": "chronoAccelerator",
+        "name": "Chrono Accelerator",
+        "description": "Reduces all cooldowns by 15% and increases attack speed by 8% (+5% cooldown reduction per stack).",
+        "icon": "icons/chrono_accelerator.png",
+        "rarity": "rare",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onTimer", "effect": "reduceCooldowns", "value": 0.15, "type": "percentage" },
+            { "stat": "attackSpeed", "value": 0.08, "type": "percentage" }
+        ]
+    },
+    "gravitonWell": {
+        "id": "gravitonWell",
+        "name": "Graviton Well",
+        "description": "Creates a gravity well that pulls enemies toward your projectiles by 30% range (+5% pull strength per stack).",
+        "icon": "icons/graviton_well.png",
+        "rarity": "rare",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onAttack", "effect": "gravitonPull", "value": 0.30, "type": "percentage" }
+        ]
+    },
+    "phasingCrystal": {
+        "id": "phasingCrystal",
+        "name": "Phasing Crystal",
+        "description": "Your projectiles penetrate through enemies and gain 20% damage per target hit (+10% damage per penetration).",
+        "icon": "icons/phasing_crystal.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onAttack", "effect": "projectilePenetration", "value": 1, "type": "flat" }
+        ]
+    },
+    "adaptiveCamouflage": {
+        "id": "adaptiveCamouflage",
+        "name": "Adaptive Camouflage",
+        "description": "Reduces enemy detection range by 25% and increases critical chance by 8% (+3% crit chance per stack).",
+        "icon": "icons/camouflage.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "stat": "critChance", "value": 0.08, "type": "percentage" },
+            { "trigger": "onTimer", "effect": "reduceThreat", "value": 0.25, "type": "percentage" }
+        ]
+    },
+    "bioelectricField": {
+        "id": "bioelectricField",
+        "name": "Bio-Electric Field",
+        "description": "Every 3 seconds, chain lightning hits 3 nearby enemies for 25 damage (+8 damage per stack).",
+        "icon": "icons/bio_field.png",
+        "rarity": "rare",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onTimer", "effect": "chainLightning", "value": 25, "type": "flat", "targets": 3, "interval": 3 }
+        ]
+    },
+    "mutationSpores": {
+        "id": "mutationSpores",
+        "name": "Mutation Spores",
+        "description": "Enemies hit by your attacks have a 15% chance to mutate and fight for you for 5 seconds (+5% chance per stack).",
+        "icon": "icons/mutation_spores.png",
+        "rarity": "rare",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onAttack", "effect": "mindControl", "value": 0.15, "type": "percentage", "duration": 5 }
+        ]
+    },
+    "stasisGrenade": {
+        "id": "stasisGrenade",
+        "name": "Stasis Grenade",
+        "description": "Equipment: Press E to freeze time in a 200px radius for 3 seconds. 45s cooldown.",
+        "icon": "icons/stasis_grenade.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "timeFreeze", "value": 3, "type": "flat", "radius": 200, "cooldown": 45 }
+        ]
+    },
+    "phaseShifterBelt": {
+        "id": "phaseShifterBelt",
+        "name": "Phase Shifter Belt",
+        "description": "Equipment: Press E to teleport 300px in movement direction, gaining 2s invincibility. 20s cooldown.",
+        "icon": "icons/phase_shifter.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "teleport", "value": 300, "type": "flat", "cooldown": 20, "invincibility": 2 }
+        ]
+    },
+    "sonicResonator": {
+        "id": "sonicResonator",
+        "name": "Sonic Resonator",
+        "description": "Equipment: Press E to emit a 400px sonic wave dealing 80 damage and stunning enemies 2s. 30s cooldown.",
+        "icon": "icons/sonic_resonator.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "sonicWave", "value": 80, "type": "flat", "radius": 400, "cooldown": 30, "stun": 2 }
+        ]
+    },
+    "holographicDecoy": {
+        "id": "holographicDecoy",
+        "name": "Holographic Decoy",
+        "description": "Equipment: Press E to spawn a decoy that attracts enemies for 8 seconds. 35s cooldown.",
+        "icon": "icons/hologram_decoy.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "spawnDecoy", "value": 1, "type": "flat", "duration": 8, "cooldown": 35 }
+        ]
+    },
+    "energyShield": {
+        "id": "energyShield",
+        "name": "Energy Shield",
+        "description": "Equipment: Press E to create a shield blocking next 3 projectiles. 25s cooldown.",
+        "icon": "icons/energy_shield.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "projectileShield", "value": 3, "type": "flat", "cooldown": 25 }
+        ]
+    },
+    "rageInducer": {
+        "id": "rageInducer",
+        "name": "Rage Inducer",
+        "description": "Equipment: Press E to double damage for 8 seconds but take 50% increased damage. 40s cooldown.",
+        "icon": "icons/rage_inducer.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "rageMode", "value": 2.0, "type": "percentage", "duration": 8, "vulnerability": 1.5, "cooldown": 40 }
+        ]
+    },
+    "healingNanobots": {
+        "id": "healingNanobots",
+        "name": "Healing Nanobots",
+        "description": "Equipment: Press E to instantly heal 50 health and regenerate 10 health/second for 5 seconds. 60s cooldown.",
+        "icon": "icons/healing_nanobots.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "burstHeal", "value": 50, "type": "flat", "cooldown": 60 },
+            { "trigger": "onActivate", "effect": "regeneration", "value": 10, "type": "flat", "duration": 5 }
+        ]
+    },
+    "shadowCloak": {
+        "id": "shadowCloak",
+        "name": "Shadow Cloak",
+        "description": "Equipment: Press E to become invisible for 4 seconds, next attack deals 3x damage. 50s cooldown.",
+        "icon": "icons/shadow_cloak.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "invisibility", "value": 1, "type": "flat", "duration": 4, "cooldown": 50, "nextAttackCrit": 3.0 }
+        ]
+    },
+    "timeDuplicator": {
+        "id": "timeDuplicator",
+        "name": "Time Duplicator",
+        "description": "Equipment: Press E to create time clone of yourself that mimics attacks for 6 seconds. 90s cooldown.",
+        "icon": "icons/time_duplicator.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "timeClone", "value": 1, "type": "flat", "duration": 6, "cooldown": 90 }
+        ]
+    },
+    "venomGlands": {
+        "id": "venomGlands",
+        "name": "Venom Glands",
+        "description": "Bio-engineered poison glands. Hits apply poison dealing 5 damage per second for 8 seconds <style=cStack>(Poison stacks)</style>.",
+        "icon": "icons/venom_glands.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onHit", "effect": "applyPoison", "value": 5, "type": "flat", "duration": 8, "damageType": "poison" }
+        ]
+    },
+    "napalmCanister": {
+        "id": "napalmCanister",
+        "name": "Napalm Canister",
+        "description": "Incendiary weapon. Hits apply fire dealing 8 damage per second for 6 seconds <style=cStack>(Fire stacks)</style>.",
+        "icon": "icons/napalm_canister.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onHit", "effect": "applyBurn", "value": 8, "type": "flat", "duration": 6, "damageType": "fire" }
+        ]
+    },
+    "plasmaExplosives": {
+        "id": "plasmaExplosives",
+        "name": "Plasma Explosives",
+        "description": "Explosive plasma rounds. Critical hits cause AoE explosion for 60 damage in 120px radius.",
+        "icon": "icons/plasma_explosives.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onCrit", "effect": "areaDamage", "value": 60, "type": "flat", "radius": 120, "damageType": "plasma" }
+        ]
+    },
+    "soulHarvester": {
+        "id": "soulHarvester",
+        "name": "Soul Harvester",
+        "description": "Dark energy weapon. Killing enemies restores 15 health and increases damage by 5% for 10 seconds <style=cStack>(Stacks duration)</style>.",
+        "icon": "icons/soul_harvester.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onKill", "effect": "healInstant", "value": 15, "type": "flat" },
+            { "trigger": "onKill", "effect": "damageBoost", "value": 0.05, "type": "percentage", "duration": 10 }
+        ]
+    },
+    "chainLightningCore": {
+        "id": "chainLightningCore",
+        "name": "Chain Lightning Core",
+        "description": "Advanced energy core. Hits have 25% chance to chain to 3 additional enemies for 40% damage.",
+        "icon": "icons/chain_lightning.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onHit", "effect": "chainDamage", "value": 0.4, "type": "percentage", "chance": 0.25, "targets": 3, "radius": 200 }
+        ]
+    },
+    "corrosiveAcid": {
+        "id": "corrosiveAcid",
+        "name": "Corrosive Acid",
+        "description": "Powerful acid that melts armor. Hits reduce enemy armor by 5 for 10 seconds <style=cStack>(Stacks)</style>.",
+        "icon": "icons/corrosive_acid.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onHit", "effect": "reduceArmor", "value": 5, "type": "flat", "duration": 10 }
+        ]
+    },
+    "berserkerSerum": {
+        "id": "berserkerSerum",
+        "name": "Berserker Serum",
+        "description": "Combat stimulant. Killing enemies grants 20% attack speed and 30% move speed for 5 seconds <style=cStack>(Stacks duration)</style>.",
+        "icon": "icons/berserker_serum.png",
+        "rarity": "rare",
+        "stackingType": "special",
+        "effects": [
+            { "trigger": "onKill", "effect": "attackSpeedBoost", "value": 0.2, "type": "percentage", "duration": 5 },
+            { "trigger": "onKill", "effect": "moveSpeedBoost", "value": 0.3, "type": "percentage", "duration": 5 }
+        ]
+    },
+    "deathMark": {
+        "id": "deathMark",
+        "name": "Death Mark",
+        "description": "Cursed marking ability. Hits mark enemies for death - they take 50% increased damage from all sources for 8 seconds.",
+        "icon": "icons/death_mark.png",
+        "rarity": "rare",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onHit", "effect": "vulnerability", "value": 0.5, "type": "percentage", "duration": 8 }
+        ]
+    },
+    "vampireFangs": {
+        "id": "vampireFangs",
+        "name": "Vampire Fangs",
+        "description": "Bio-enhanced fangs. Hits heal for 25% of damage dealt <style=cStack>(+5% healing per stack)</style>.",
+        "icon": "icons/vampire_fangs.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onHit", "effect": "lifeSteal", "value": 0.25, "type": "percentage" }
+        ]
+    },
+    "frostShard": {
+        "id": "frostShard",
+        "name": "Frost Shard",
+        "description": "Cryo weapon that slows enemies by 30% and deals 3 damage per second for 5 seconds.",
+        "icon": "icons/frost_shard.png",
+        "rarity": "uncommon",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onHit", "effect": "applyChill", "value": 0.3, "type": "percentage", "duration": 5 },
+            { "trigger": "onHit", "effect": "frostDamage", "value": 3, "type": "flat", "duration": 5 }
+        ]
+    },
+    "mutationEngine": {
+        "id": "mutationEngine",
+        "name": "Mutation Engine",
+        "description": "Experimental device. Kills have 10% chance to spawn allied mutations that fight for you for 15 seconds.",
+        "icon": "icons/mutation_engine.png",
+        "rarity": "rare",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onKill", "effect": "spawnAlly", "value": 1, "type": "flat", "chance": 0.1, "duration": 15 }
+        ]
+    },
+    "doomsdayDevice": {
+        "id": "doomsdayDevice",
+        "name": "Doomsday Device",
+        "description": "Equipment: Press E to detonate massive explosion dealing 500 damage in 300px radius. 120s cooldown.",
+        "icon": "icons/doomsday_device.png",
+        "rarity": "equipment",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onActivate", "effect": "massiveExplosion", "value": 500, "type": "flat", "radius": 300, "cooldown": 120 }
+        ]
+    },
+    "phoenixFeather": {
+        "id": "phoenixFeather",
+        "name": "Phoenix Feather",
+        "description": "Legendary artifact. When health drops below 25%, instantly revive to full health and gain 100% damage for 10 seconds. 180s cooldown.",
+        "icon": "icons/phoenix_feather.png",
+        "rarity": "rare",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "onLowHealth", "effect": "phoenixRevive", "value": 1.0, "type": "percentage", "cooldown": 180 }
+        ]
+    },
+    "hivemindCoordinator": {
+        "id": "hivemindCoordinator",
+        "name": "Hivemind Coordinator",
+        "description": "Psionic amplifier. Killing enemies causes all other enemies within 200px to take 30 damage.",
+        "icon": "icons/hivemind_coordinator.png",
+        "rarity": "rare",
+        "stackingType": "linear",
+        "effects": [
+            { "trigger": "onKill", "effect": "psychicScream", "value": 30, "type": "flat", "radius": 200 }
+        ]
+    },
+    "darkMatterCondenser": {
+        "id": "darkMatterCondenser",
+        "name": "Dark Matter Condenser",
+        "description": "Exotic physics device. Every 5th hit deals 5x damage and creates a gravity well pulling enemies for 3 seconds.",
+        "icon": "icons/dark_matter.png",
+        "rarity": "rare",
+        "stackingType": "none",
+        "effects": [
+            { "trigger": "fifthHit", "effect": "massiveDamage", "value": 5, "type": "multiplier" },
+            { "trigger": "fifthHit", "effect": "gravityWell", "value": 200, "type": "flat", "duration": 3 }
+        ]
+    }
+}

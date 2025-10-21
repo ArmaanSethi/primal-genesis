@@ -1,0 +1,215 @@
+{
+    "waspDrone": {
+        "name": "Wasp Drone",
+        "sprite": "wasp_drone.png",
+        "baseStats": {
+            "maxHealth": 30,
+            "health": 30,
+            "damage": 8,
+            "moveSpeed": 12,
+            "attackSpeed": 1,
+            "armor": 0,
+            "projectileSpeed": 0,
+            "chargeSpeed": 0
+        },
+        "behavior": "seekPlayer",
+        "attackType": "melee"
+    },
+    "spitter": {
+        "name": "Spitter",
+        "sprite": "spitter.png",
+        "baseStats": {
+            "maxHealth": 50,
+            "health": 50,
+            "damage": 10,
+            "moveSpeed": 0,
+            "attackSpeed": 0.5,
+            "armor": 5,
+            "projectileSpeed": 400,
+            "chargeSpeed": 0
+        },
+        "behavior": "stationary",
+        "attackType": "ranged",
+        "attackRange": 500,
+        "projectileType": "spitterProjectile"
+    },
+    "charger": {
+        "name": "Charger",
+        "sprite": "charger.png",
+        "baseStats": {
+            "maxHealth": 70,
+            "health": 70,
+            "damage": 15,
+            "moveSpeed": 8,
+            "attackSpeed": 0.7,
+            "armor": 10
+        },
+        "behavior": "charge",
+        "attackType": "melee",
+        "chargeSpeed": 20,
+        "chargeDuration": 1000
+    },
+    "exploder": {
+        "name": "Exploder",
+        "sprite": "exploder.png",
+        "baseStats": {
+            "maxHealth": 40,
+            "health": 40,
+            "damage": 60,
+            "moveSpeed": 16,
+            "attackSpeed": 1,
+            "armor": 0
+        },
+        "behavior": "seekAndExplode",
+        "attackType": "melee",
+        "explosionRadius": 120,
+        "explosionDamage": 60
+    },
+    "swarm": {
+        "name": "Swarm",
+        "sprite": "swarm.png",
+        "baseStats": {
+            "maxHealth": 15,
+            "health": 15,
+            "damage": 4,
+            "moveSpeed": 18,
+            "attackSpeed": 0.3,
+            "armor": 0
+        },
+        "behavior": "seekPlayer",
+        "attackType": "melee",
+        "swarmBonus": true,
+        "swarmDamage": 2
+    },
+    "shield": {
+        "name": "Shield",
+        "sprite": "shield.png",
+        "baseStats": {
+            "maxHealth": 100,
+            "health": 100,
+            "damage": 8,
+            "moveSpeed": 6,
+            "attackSpeed": 1.2,
+            "armor": 20
+        },
+        "behavior": "seekPlayer",
+        "attackType": "melee",
+        "shieldRegen": true,
+        "shieldRegenRate": 5,
+        "shieldCooldown": 3000
+    },
+    "eliteWaspDrone": {
+        "name": "Elite Wasp Drone",
+        "sprite": "elite_wasp_drone.png",
+        "baseStats": {
+            "maxHealth": 75,
+            "health": 75,
+            "damage": 20,
+            "moveSpeed": 16,
+            "attackSpeed": 1.5,
+            "armor": 5
+        },
+        "behavior": "seekPlayer",
+        "attackType": "melee",
+        "elite": true,
+        "specialEffects": ["lightningAura", "speedBurst"],
+        "eliteColor": "#FFD700"
+    },
+    "eliteSpitter": {
+        "name": "Elite Spitter",
+        "sprite": "elite_spitter.png",
+        "baseStats": {
+            "maxHealth": 125,
+            "health": 125,
+            "damage": 25,
+            "moveSpeed": 0,
+            "attackSpeed": 0.8,
+            "armor": 15,
+            "projectileSpeed": 600
+        },
+        "behavior": "stationary",
+        "attackType": "ranged",
+        "attackRange": 700,
+        "projectileType": "eliteSpitterProjectile",
+        "elite": true,
+        "specialEffects": ["poisonSpit", "multiShot"],
+        "eliteColor": "#32CD32"
+    },
+    "eliteCharger": {
+        "name": "Elite Charger",
+        "sprite": "elite_charger.png",
+        "baseStats": {
+            "maxHealth": 175,
+            "health": 175,
+            "damage": 35,
+            "moveSpeed": 10,
+            "attackSpeed": 0.6,
+            "armor": 25
+        },
+        "behavior": "charge",
+        "attackType": "melee",
+        "chargeSpeed": 28,
+        "chargeDuration": 1500,
+        "elite": true,
+        "specialEffects": ["fireTrail", "armorBreak"],
+        "eliteColor": "#FF4500"
+    },
+    "eliteExploder": {
+        "name": "Elite Exploder",
+        "sprite": "elite_exploder.png",
+        "baseStats": {
+            "maxHealth": 100,
+            "health": 100,
+            "damage": 120,
+            "moveSpeed": 20,
+            "attackSpeed": 1.2,
+            "armor": 10
+        },
+        "behavior": "seekAndExplode",
+        "attackType": "melee",
+        "explosionRadius": 180,
+        "explosionDamage": 120,
+        "elite": true,
+        "specialEffects": ["chainExplosion", "toxicCloud"],
+        "eliteColor": "#FF1493"
+    },
+    "eliteSwarm": {
+        "name": "Alpha Swarm",
+        "sprite": "elite_swarm.png",
+        "baseStats": {
+            "maxHealth": 40,
+            "health": 40,
+            "damage": 12,
+            "moveSpeed": 22,
+            "attackSpeed": 0.4,
+            "armor": 5
+        },
+        "behavior": "seekPlayer",
+        "attackType": "melee",
+        "swarmBonus": true,
+        "swarmDamage": 4,
+        "elite": true,
+        "specialEffects": ["summonMinions", "damageAmplification"],
+        "eliteColor": "#9370DB"
+    },
+    "eliteShield": {
+        "name": "Juggernaut Shield",
+        "sprite": "elite_shield.png",
+        "baseStats": {
+            "maxHealth": 250,
+            "health": 250,
+            "damage": 20,
+            "moveSpeed": 8,
+            "attackSpeed": 1.0,
+            "armor": 40
+        },
+        "behavior": "seekPlayer",
+        "attackType": "melee",
+        "shieldRegen": true,
+        "shieldRegenRate": 10,
+        "shieldCooldown": 2000,
+        "elite": true,
+        "specialEffects": ["reflectDamage", "rageMode"],
+        "eliteColor": "#4169E1"
+    }
+}
