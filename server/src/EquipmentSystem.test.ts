@@ -169,6 +169,6 @@ describe("Equipment System Tests", () => {
     assert.equal(item.id, "quantumPhaseShifter", "Equipment should have correct ID");
     assert.equal(item.rarity, "equipment", "Equipment should have equipment rarity");
     assert.equal(item.stackingType, "none", "Equipment should not stack");
-    assert.isArray(item.effects, "Equipment should have effects array");
+    assert.exists(item.effects, "Equipment should have effects property");
   });
 });

@@ -4,6 +4,7 @@ import characterData from "../data/characters.json";
 import enemyData from "../data/enemies.json";
 import itemData from "../data/items.json";
 import { v4 as uuidv4 } from 'uuid';
+import Logger from "../utils/Logger";
 
 export class MyRoom extends Room<MyRoomState> {
   private spawnTimer: number = 0;
@@ -1412,7 +1413,6 @@ export class MyRoom extends Room<MyRoomState> {
 
       // Use spatial grid to find nearby interactables
       const nearbyInteractableIds = this.getNearbyEntities(player.x, player.y, 60);
-      console.log(`🔍 Player ${player.sessionId} checking ${nearbyInteractableIds.length} nearby entities for interactables`);
 
       for (const interactableId of nearbyInteractableIds) {
         const interactablePos = this.entityPositions.get(interactableId);
@@ -1721,14 +1721,14 @@ export class MyRoom extends Room<MyRoomState> {
     this.state.players.set(client.sessionId, player);
 
     // Spawn beacon when first player joins (if not already spawned)
-    console.log(`🔍 DEBUG: Player joined. Players count: ${this.state.players.size}, Beacon ID: ${this.beaconId}`);
+    Logger.debug(`Player joined. Players count: ${this.state.players.size}, Beacon ID: ${this.beaconId}`);
     if (this.state.players.size === 1 && !this.beaconId) {
       console.log(`🚀 SPAWNING BEACON: First player ${client.sessionId} joined, no beacon exists yet`);
       this.spawnBeacon();
       console.log(`✅ Beacon spawned for first player ${client.sessionId} - immediately available for interaction`);
-      console.log(`📍 DEBUG: After spawn, Beacon ID is: ${this.beaconId}`);
+      Logger.debug(`After spawn, Beacon ID is: ${this.beaconId}`);
     } else {
-      console.log(`ℹ️ DEBUG: Not spawning beacon. Players: ${this.state.players.size}, Beacon exists: ${!!this.beaconId}`);
+      Logger.debug(`Not spawning beacon. Players: ${this.state.players.size}, Beacon exists: ${!!this.beaconId}`);
     }
   }
 
@@ -2133,9 +2133,7 @@ export class MyRoom extends Room<MyRoomState> {
       });
     });
 
-    // Log interactable tracking for debugging
-    console.log(`🎯 Tracking ${this.state.interactables.size} interactables for collision detection`);
-  }
+    }
 
   // Clear distance cache periodically to prevent memory leaks
   private clearDistanceCache(): void {

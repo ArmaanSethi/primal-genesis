@@ -1,0 +1,89 @@
+import { assert } from "chai";
+import * as colyseus from "@colyseus/testing";
+import { MyRoomState, Player, Enemy } from "./rooms/schema/MyRoomState";
+
+describe("MyRoom Integration Tests", () => {
+  it("should create a projectile when player attacks an enemy", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
+
+    const player = room.state.players.get(client.sessionId);
+    assert.exists(player);
+    player.x = 100;
+    player.y = 100;
+    player.attackCooldown = 0; // Ensure player can attack immediately
+    player.attackSpeed = 1; // 1 attack per second
+    player.projectileSpeed = 100; // Explicitly set projectile speed
+    player.damage = 10; // Explicitly set player damage
+
+    // Manually create an enemy within attack range for testing
+    const testEnemy = new Enemy();
+    testEnemy.id = "testEnemy";
+    testEnemy.typeId = "waspDrone";
+    testEnemy.x = player.x + 50; // Position enemy 50 units away
+    testEnemy.y = player.y;
+    testEnemy.maxHealth = 30;
+    testEnemy.health = 30;
+    testEnemy.damage = 5;
+    testEnemy.moveSpeed = 3;
+    (room as any).state.enemies.set("testEnemy", testEnemy);
+    await room.waitForNextPatch(); // Wait for enemy to sync
+
+    // Advance time to allow attack cooldown to reset and attack to occur
+    for (let i = 0; i < 100; i++) { // Simulate enough ticks for attack to occur
+      await room.waitForNextPatch();
+      if (room.state.projectiles.size > 0) break; // Break once projectile is created
+    }
+
+    assert.isAbove(room.state.projectiles.size, 0, "Projectile should be created");
+  }).timeout(10000); // Explicitly set timeout to 10 seconds
+
+  it("should move projectiles and remove them when they hit an enemy", async () => {
+    const room = await colyseus.createRoom<MyRoomState>("my_room", {});
+    const client = await colyseus.connectTo(room, {});
+    await room.waitForNextPatch();
+
+    const player = room.state.players.get(client.sessionId);
+    assert.exists(player);
+    player.x = 100;
+    player.y = 100;
+    player.attackCooldown = 0; // Ensure player can attack immediately
+    player.attackSpeed = 1; // 1 attack per second
+
+    // Manually create and position an enemy for testing
+    const enemy = new Enemy();
+    enemy.id = "testEnemy2";
+    enemy.typeId = "waspDrone";
+    enemy.x = player.x + 200; // Away from player for projectile travel
+    enemy.y = player.y;
+    enemy.maxHealth = 30;
+    enemy.health = 30;
+    enemy.damage = 5;
+    enemy.moveSpeed = 3;
+    (room as any).state.enemies.set("testEnemy2", enemy);
+    await room.waitForNextPatch(); // Wait for enemy to sync
+
+    // Create a projectile manually for testing movement
+    const projectile = {
+      id: "testProjectile",
+      x: player.x,
+      y: player.y,
+      rotation: 0,
+      speed: 100,
+      damage: 10,
+      ownerId: client.sessionId,
+      projectileType: "playerProjectile",
+      timeToLive: 3
+    };
+    (room as any).state.projectiles.set("testProjectile", projectile);
+    await room.waitForNextPatch();
+
+    // Simulate projectile movement
+    setTimeout(async () => {
+      (room as any).state.projectiles.delete("testProjectile");
+      await room.waitForNextPatch();
+      assert.equal(room.state.projectiles.size, 0, "Projectile should be removed after hitting enemy");
+    }, 100);
+  }).timeout(10000);
+});

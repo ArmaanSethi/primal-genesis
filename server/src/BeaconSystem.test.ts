@@ -32,7 +32,7 @@ describe("Beacon System Tests", () => {
     for (let i = 0; i < 200; i++) { // Wait up to 200 ticks
       await room.waitForNextPatch();
       for (const interactable of room.state.interactables.values()) {
-        if (interactable.type === "beacon") {
+        if (interactable.type === "bioResonanceBeacon") {
           beaconFound = true;
           break;
         }
@@ -56,7 +56,7 @@ describe("Beacon System Tests", () => {
     for (let i = 0; i < 200; i++) {
       await room.waitForNextPatch();
       for (const interactable of room.state.interactables.values()) {
-        if (interactable.type === "beacon") {
+        if (interactable.type === "bioResonanceBeacon") {
           beacon = interactable;
           break;
         }
@@ -65,7 +65,7 @@ describe("Beacon System Tests", () => {
     }
 
     assert.exists(beacon, "Beacon should exist");
-    assert.equal(beacon.type, "beacon", "Beacon should have correct type");
+    assert.equal(beacon.type, "bioResonanceBeacon", "Beacon should have correct type");
     assert.isFalse(beacon.isOpen, "Beacon should initially be closed");
     assert.isNumber(beacon.x, "Beacon should have X coordinate");
     assert.isNumber(beacon.y, "Beacon should have Y coordinate");
@@ -84,7 +84,7 @@ describe("Beacon System Tests", () => {
     for (let i = 0; i < 200; i++) {
       await room.waitForNextPatch();
       for (const [id, interactable] of room.state.interactables.entries()) {
-        if (interactable.type === "beacon") {
+        if (interactable.type === "bioResonanceBeacon") {
           beaconId = id;
           break;
         }
@@ -123,7 +123,7 @@ describe("Beacon System Tests", () => {
     for (let i = 0; i < 200; i++) {
       await room.waitForNextPatch();
       for (const [id, interactable] of room.state.interactables.entries()) {
-        if (interactable.type === "beacon") {
+        if (interactable.type === "bioResonanceBeacon") {
           beaconId = id;
           break;
         }
@@ -226,7 +226,7 @@ describe("Beacon System Tests", () => {
     for (let i = 0; i < 200; i++) {
       await room.waitForNextPatch();
       for (const interactable of room.state.interactables.values()) {
-        if (interactable.type === "beacon") {
+        if (interactable.type === "bioResonanceBeacon") {
           beacon = interactable;
           break;
         }

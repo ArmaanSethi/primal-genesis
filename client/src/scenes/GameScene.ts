@@ -6,10 +6,10 @@ import type { MyRoomState } from '../../../server/src/rooms/schema/MyRoomState';
 
 export class GameScene extends Phaser.Scene {
     private room!: Room<MyRoomState>;
-    private playerEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
-    private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Rectangle } = {};
-    private projectileEntities: { [projectileId: string]: Phaser.GameObjects.Rectangle } = {};
-    private interactableEntities: { [interactableId: string]: Phaser.GameObjects.GameObject } = {};
+    private playerEntities: { [sessionId: string]: Phaser.GameObjects.Sprite } = {};
+    private enemyEntities: { [sessionId: string]: Phaser.GameObjects.Sprite } = {};
+    private projectileEntities: { [projectileId: string]: Phaser.GameObjects.Sprite } = {};
+    private interactableEntities: { [interactableId: string]: Phaser.GameObjects.Sprite } = {};
     private xpEntities: { [xpId: string]: Phaser.GameObjects.Arc } = {};
     private playerHealthText!: Phaser.GameObjects.Text;
     private pickupMessages: Phaser.GameObjects.Text[] = [];
@@ -85,8 +85,13 @@ export class GameScene extends Phaser.Scene {
 
     private createHealthBar(width: number, height: number, color: number): Phaser.GameObjects.Graphics {
         const healthBar = this.add.graphics();
+        healthBar.fillStyle(0x000000, 0.8);
+        healthBar.fillRect(-2, -2, width + 4, height + 4); // Border
         healthBar.fillStyle(color, 1);
         healthBar.fillRect(0, 0, width, height);
+        // Shine effect
+        healthBar.fillStyle(0xffffff, 0.2);
+        healthBar.fillRect(0, 0, width, height / 2);
         return healthBar;
     }
 
@@ -100,17 +105,20 @@ export class GameScene extends Phaser.Scene {
         const rightSidebarX = this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH + 10;
         const pickupY = this.UI_CONFIG.VIEWPORT_HEIGHT - 100; // Bottom right corner
         const messageText = this.add.text(rightSidebarX, pickupY, message, {
-            fontSize: '16px',
+            fontSize: '18px',
+            fontFamily: '"Segoe UI", Roboto, Helvetica, Arial, sans-serif',
             color: '#ffff00',
             fontStyle: 'bold',
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            padding: { x: 8, y: 6 },
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            padding: { x: 12, y: 8 },
             wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+            stroke: '#000000',
+            strokeThickness: 2,
             shadow: {
-                offsetX: 1,
-                offsetY: 1,
+                offsetX: 2,
+                offsetY: 2,
                 color: '#000000',
-                blur: 1,
+                blur: 4,
                 stroke: true,
                 fill: true
             }
@@ -164,7 +172,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private updateInventoryDisplay(player: any): void {
-        let inventoryText = `🎒 INVENTORY (${player.items.length} items):\n`;
+        let inventoryText = `🎒 INVENTORY (${player.items.length})\n─────────────────\n`;
 
         if (player.items.length === 0) {
             inventoryText += `No items collected yet\n\n💡 HINT: Walk near colored chests to collect items!`;
@@ -233,39 +241,43 @@ export class GameScene extends Phaser.Scene {
         }
 
         // Enhanced stage text with difficulty visualization
-        this.stageText.setText(`${stageName}\n⏱️ Time: ${timeString}\n${difficultyInfo.text}`);
+        this.stageText.setText(`${stageName}\n⏱️ ${timeString}\n${difficultyInfo.text}`);
         this.stageText.setColor(difficultyInfo.color);
+        this.stageText.setFontFamily('"Segoe UI", Roboto, Helvetica, Arial, sans-serif');
+        this.stageText.setFontSize('20px');
+        this.stageText.setStroke('#000000', 4);
+        this.stageText.setShadow(2, 2, '#000000', 4, true, true);
 
         // Update objective text based on beacon state
         let objectiveText = "";
         switch (state.beaconState) {
             case "inactive":
                 objectiveText = `🎯 PRIMARY OBJECTIVE:\n` +
-                                `Explore and collect items\n\n` +
-                                `🌟 Find the GREEN STAR BEACON!\n` +
-                                `   Walk over the GREEN STAR to activate\n` +
-                                `⚡ This calls extraction BUT spawns BOSS\n` +
-                                `🛡️ Prepare for the final battle!`;
+                    `Explore and collect items\n\n` +
+                    `🌟 Find the GREEN STAR BEACON!\n` +
+                    `   Walk over the GREEN STAR to activate\n` +
+                    `⚡ This calls extraction BUT spawns BOSS\n` +
+                    `🛡️ Prepare for the final battle!`;
                 break;
             case "charging":
                 objectiveText = `🎯 HOLDOUT PHASE ACTIVE!\n\n` +
-                                `⚠️ BEACON IS CHARGING\n` +
-                                `⏱️ Holdout Time: ${Math.ceil(state.holdoutTimer)}s\n` +
-                                `🔥 Enemy waves incoming!\n` +
-                                `🛡️ SURVIVE THE ASSAULT!`;
+                    `⚠️ BEACON IS CHARGING\n` +
+                    `⏱️ Holdout Time: ${Math.ceil(state.holdoutTimer)}s\n` +
+                    `🔥 Enemy waves incoming!\n` +
+                    `🛡️ SURVIVE THE ASSAULT!`;
                 break;
             case "bossFight":
                 objectiveText = `🎯 BOSS FIGHT IN PROGRESS!\n\n` +
-                                `⚡ BEACON CHARGED SUCCESSFULLY\n` +
-                                `👹 STAGE GUARDIAN AWAKENED\n` +
-                                `💀 DEFEAT THE BOSS TO PROCEED\n` +
-                                `🎁 GUARANTEED RARE REWARD!`;
+                    `⚡ BEACON CHARGED SUCCESSFULLY\n` +
+                    `👹 STAGE GUARDIAN AWAKENED\n` +
+                    `💀 DEFEAT THE BOSS TO PROCEED\n` +
+                    `🎁 GUARANTEED RARE REWARD!`;
                 break;
             case "stageComplete":
                 objectiveText = `🎯 STAGE COMPLETE!\n\n` +
-                                `✅ STAGE ${state.stageLevel} CLEARED\n` +
-                                `🚪 Choose your next path:\n` +
-                                `⏳ Exit gates spawning soon...`;
+                    `✅ STAGE ${state.stageLevel} CLEARED\n` +
+                    `🚪 Choose your next path:\n` +
+                    `⏳ Exit gates spawning soon...`;
                 break;
         }
 
@@ -302,20 +314,22 @@ export class GameScene extends Phaser.Scene {
             this.cameras.main.height / 3,
             `⚠️ DIFFICULTY INCREASED!\n${newDifficulty.toUpperCase()}`,
             {
-                fontSize: '32px',
+                fontSize: '48px',
+                fontFamily: '"Arial Black", "Segoe UI Black", sans-serif',
                 color: color,
                 backgroundColor: 'rgba(0,0,0,0.9)',
-                padding: { x: 20, y: 15 },
-                stroke: color,
-                strokeThickness: 3,
+                padding: { x: 40, y: 20 },
+                stroke: '#ffffff',
+                strokeThickness: 4,
                 shadow: {
-                    offsetX: 2,
-                    offsetY: 2,
+                    offsetX: 4,
+                    offsetY: 4,
                     color: '#000000',
-                    blur: 8,
+                    blur: 10,
                     stroke: true,
                     fill: true
-                }
+                },
+                align: 'center'
             }
         );
 
@@ -371,15 +385,15 @@ export class GameScene extends Phaser.Scene {
         // Create floating damage number
         const damageObj = this.add.text(x, y, damageText, {
             fontSize: fontSize,
-            fontFamily: 'Arial Black',
+            fontFamily: '"Arial Black", "Segoe UI Black", sans-serif',
             color: finalColor,
             stroke: '#000000',
-            strokeThickness: 3,
+            strokeThickness: 4,
             shadow: {
                 offsetX: 2,
                 offsetY: 2,
                 color: '#000000',
-                blur: 4,
+                blur: 2,
                 stroke: true,
                 fill: true
             }
@@ -430,10 +444,491 @@ export class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // Removed this.load.image('projectile', 'assets/projectile.png');
+        // Assets are now generated procedurally in create() to ensure transparency and correct sizing
+        // This bypasses the issue with the non-transparent generated PNGs
+    }
+
+    private createProceduralTextures() {
+        // Helper to create a texture from a graphics object
+        const generate = (key: string, width: number, height: number, drawFn: (g: Phaser.GameObjects.Graphics) => void) => {
+            const g = this.make.graphics({ x: 0, y: 0 });
+            drawFn(g);
+            g.generateTexture(key, width, height);
+            g.destroy();
+        };
+
+        // 1. Ground Tile (Sci-fi Hex Grid)
+        generate('ground_tile', 128, 128, (g) => {
+            g.fillStyle(0x0d1117, 1); // Deep space/ground color
+            g.fillRect(0, 0, 128, 128);
+
+            // Subtle hex grid pattern
+            g.lineStyle(1, 0x21262d, 0.5);
+            // Draw some random tech details
+            for (let i = 0; i < 5; i++) {
+                const x = Math.random() * 128;
+                const y = Math.random() * 128;
+                const size = Math.random() * 10 + 5;
+                g.fillStyle(0x30363d, 0.3);
+                g.fillRect(x, y, size, size);
+            }
+
+            g.lineStyle(2, 0x1f2428, 0.8);
+            g.strokeRect(0, 0, 128, 128);
+        });
+
+        // 2. Player (Researcher Lemur) - Detailed
+        generate('researcher_lemur', 64, 64, (g) => {
+            // Shadow
+            g.fillStyle(0x000000, 0.5);
+            g.fillCircle(32, 56, 16);
+
+            // Body (Suit)
+            g.fillStyle(0xffaa00, 1); // Orange Hazmat Suit
+            g.fillCircle(32, 32, 22);
+            g.lineStyle(2, 0xffffff, 0.5);
+            g.strokeCircle(32, 32, 22);
+
+            // Backpack
+            g.fillStyle(0x444444, 1);
+            g.fillRect(10, 20, 10, 24);
+            g.fillRect(44, 20, 10, 24);
+
+            // Head/Helmet
+            g.fillStyle(0xffcc00, 1);
+            g.fillCircle(32, 24, 16);
+
+            // Visor (Glass reflection)
+            g.fillStyle(0x00ffff, 0.9);
+            g.beginPath();
+            g.arc(32, 24, 12, 0.1, Math.PI - 0.1, false);
+            g.fillPath();
+
+            // Visor Glare
+            g.fillStyle(0xffffff, 0.8);
+            g.fillCircle(36, 18, 4);
+        });
+
+        // 3. Enemies - Enhanced
+
+        // Wasp (Drone)
+        generate('enemy_wasp', 48, 48, (g) => {
+            // Shadow
+            g.fillStyle(0x000000, 0.5);
+            g.fillEllipse(24, 40, 16, 8);
+
+            // Body
+            g.fillStyle(0xcc0000, 1);
+            g.fillTriangle(8, 8, 40, 8, 24, 40);
+
+            // Engine Glow
+            g.fillStyle(0xffaa00, 1);
+            g.fillCircle(24, 12, 6);
+
+            // Wings (Rotor blades)
+            g.fillStyle(0xffffff, 0.6);
+            g.fillEllipse(10, 10, 12, 4);
+            g.fillEllipse(38, 10, 12, 4);
+
+            // Detail
+            g.lineStyle(2, 0x660000, 1);
+            g.strokeTriangle(8, 8, 40, 8, 24, 40);
+        });
+
+        // Spitter (Bio-Turret)
+        generate('enemy_spitter', 48, 48, (g) => {
+            // Base
+            g.fillStyle(0x006600, 1);
+            g.fillCircle(24, 36, 16);
+
+            // Stem
+            g.fillStyle(0x00aa00, 1);
+            g.fillRect(20, 20, 8, 16);
+
+            // Head (Bulb)
+            g.fillStyle(0x00ff00, 1);
+            g.fillCircle(24, 16, 12);
+
+            // Mouth/Opening
+            g.fillStyle(0x003300, 1);
+            g.fillCircle(24, 16, 6);
+
+            // Spores
+            g.fillStyle(0xccffcc, 0.8);
+            g.fillCircle(16, 12, 2);
+            g.fillCircle(32, 14, 2);
+            g.fillCircle(24, 4, 2);
+        });
+
+        // Charger (Armored Beast)
+        generate('enemy_charger', 56, 56, (g) => {
+            // Body
+            g.fillStyle(0x880088, 1);
+            g.fillCircle(28, 28, 24);
+
+            // Armor Plates
+            g.fillStyle(0xcc00cc, 1);
+            g.beginPath();
+            g.moveTo(28, 4);
+            g.lineTo(48, 20);
+            g.lineTo(40, 48);
+            g.lineTo(16, 48);
+            g.lineTo(8, 20);
+            g.closePath();
+            g.fillPath();
+
+            // Horns
+            g.fillStyle(0xffffff, 1);
+            g.fillTriangle(16, 16, 8, 4, 20, 12);
+            g.fillTriangle(40, 16, 48, 4, 36, 12);
+
+            // Eyes
+            g.fillStyle(0xffff00, 1);
+            g.fillCircle(20, 28, 4);
+            g.fillCircle(36, 28, 4);
+        });
+
+        // Exploder (Volatile Core)
+        generate('enemy_exploder', 48, 48, (g) => {
+            // Unstable Core
+            g.fillStyle(0xff4400, 1);
+            g.fillCircle(24, 24, 20);
+
+            // Cracks/Energy
+            g.lineStyle(3, 0xffff00, 1);
+            g.beginPath();
+            g.moveTo(24, 10); g.lineTo(24, 38);
+            g.moveTo(10, 24); g.lineTo(38, 24);
+            g.strokePath();
+
+            // Pulsing outer ring
+            g.lineStyle(2, 0xff0000, 0.8);
+            g.strokeCircle(24, 24, 22);
+        });
+
+        // Swarm (Insect Group)
+        generate('enemy_swarm', 32, 32, (g) => {
+            // Multiple small entities
+            const drawBug = (x: number, y: number) => {
+                g.fillStyle(0xaa00aa, 1);
+                g.fillCircle(x, y, 5);
+                g.fillStyle(0xffffff, 0.5);
+                g.fillEllipse(x - 3, y - 3, 3, 2);
+                g.fillEllipse(x + 3, y - 3, 3, 2);
+            };
+
+            drawBug(16, 10);
+            drawBug(10, 22);
+            drawBug(22, 22);
+        });
+
+        // Shield (Guardian)
+        generate('enemy_shield', 64, 64, (g) => {
+            // Main Body
+            g.fillStyle(0x0000aa, 1);
+            g.fillRect(16, 16, 32, 32);
+
+            // Shield Overlay
+            g.lineStyle(4, 0x00ffff, 0.8);
+            g.strokeRect(12, 12, 40, 40);
+            g.fillStyle(0x00ffff, 0.2);
+            g.fillRect(12, 12, 40, 40);
+
+            // Cross symbol
+            g.fillStyle(0xffffff, 1);
+            g.fillRect(28, 20, 8, 24);
+            g.fillRect(20, 28, 24, 8);
+        });
+
+        // Boss (The Guardian)
+        generate('boss_guardian', 128, 128, (g) => {
+            // Aura
+            g.fillStyle(0x440000, 0.3);
+            g.fillCircle(64, 64, 60);
+
+            // Main Body
+            g.fillStyle(0x660000, 1);
+            g.fillCircle(64, 64, 48);
+
+            // Armor
+            g.lineStyle(6, 0xff0000, 1);
+            g.strokeCircle(64, 64, 48);
+
+            // Spikes
+            g.fillStyle(0xaa0000, 1);
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const x = 64 + Math.cos(angle) * 56;
+                const y = 64 + Math.sin(angle) * 56;
+                g.fillCircle(x, y, 10);
+            }
+
+            // Evil Face
+            g.fillStyle(0xffff00, 1); // Glowing Eyes
+            g.fillCircle(48, 56, 8);
+            g.fillCircle(80, 56, 8);
+
+            g.lineStyle(4, 0x000000, 1); // Mouth
+            g.beginPath();
+            g.moveTo(40, 80);
+            g.lineTo(56, 90);
+            g.lineTo(72, 80);
+            g.lineTo(88, 90);
+            g.strokePath();
+        });
+
+        // 4. Interactables - Enhanced
+
+        // Chest Small
+        generate('chest_small', 48, 48, (g) => {
+            // Box
+            g.fillStyle(0x8b4513, 1);
+            g.fillRect(4, 12, 40, 28);
+            // Lid
+            g.fillStyle(0xa0522d, 1);
+            g.fillRect(2, 8, 44, 8);
+            // Lock
+            g.fillStyle(0xffd700, 1);
+            g.fillRect(20, 14, 8, 8);
+            // Bands
+            g.fillStyle(0x5c4033, 1);
+            g.fillRect(8, 12, 4, 28);
+            g.fillRect(36, 12, 4, 28);
+        });
+
+        // Chest Large
+        generate('chest_large', 64, 64, (g) => {
+            // Box
+            g.fillStyle(0x5c4033, 1); // Darker wood
+            g.fillRect(8, 16, 48, 36);
+            // Gold Trim
+            g.lineStyle(4, 0xffd700, 1);
+            g.strokeRect(8, 16, 48, 36);
+            // Lid
+            g.fillStyle(0x8b4513, 1);
+            g.beginPath();
+            g.arc(32, 16, 24, Math.PI, 0, false);
+            g.fillPath();
+            // Gem
+            g.fillStyle(0x00ff00, 1);
+            g.fillCircle(32, 34, 6);
+        });
+
+        // Equipment Barrel
+        generate('barrel', 40, 40, (g) => {
+            // Main body
+            g.fillStyle(0x708090, 1); // Slate gray
+            g.fillRect(8, 4, 24, 32);
+            // Ribs
+            g.fillStyle(0x2f4f4f, 1);
+            g.fillRect(6, 8, 28, 4);
+            g.fillRect(6, 28, 28, 4);
+            // Tech symbol
+            g.fillStyle(0x00ffff, 1);
+            g.fillCircle(20, 20, 4);
+        });
+
+        // Tri-Shop
+        generate('trishop', 80, 80, (g) => {
+            // Base
+            g.fillStyle(0x222222, 1);
+            g.fillCircle(40, 40, 36);
+            g.lineStyle(3, 0x444444, 1);
+            g.strokeCircle(40, 40, 36);
+
+            // 3 Pedestals
+            const drawPedestal = (angle: number) => {
+                const x = 40 + Math.cos(angle) * 20;
+                const y = 40 + Math.sin(angle) * 20;
+                g.fillStyle(0x666666, 1);
+                g.fillCircle(x, y, 10);
+                g.fillStyle(0x00ff00, 0.5); // Hologram glow
+                g.fillCircle(x, y, 6);
+            };
+
+            drawPedestal(0);
+            drawPedestal((Math.PI * 2) / 3);
+            drawPedestal((Math.PI * 4) / 3);
+        });
+
+        // Beacon (Major Objective)
+        generate('beacon', 96, 96, (g) => {
+            // Base
+            g.fillStyle(0x333333, 1);
+            g.fillCircle(48, 48, 32);
+
+            // Rings
+            g.lineStyle(4, 0x00ffff, 1);
+            g.strokeCircle(48, 48, 24);
+            g.lineStyle(2, 0x00ffff, 0.5);
+            g.strokeCircle(48, 48, 36);
+
+            // Core beam source
+            g.fillStyle(0xffffff, 1);
+            g.fillCircle(48, 48, 12);
+
+            // Star/Antenna shape
+            g.lineStyle(4, 0x00ffff, 1);
+            g.beginPath();
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2;
+                g.moveTo(48, 48);
+                g.lineTo(48 + Math.cos(angle) * 40, 48 + Math.sin(angle) * 40);
+            }
+            g.strokePath();
+        });
+
+        // Altar of the Apex
+        generate('altar', 80, 80, (g) => {
+            // Pyramid shape
+            g.fillStyle(0x4b0082, 1); // Indigo
+            g.beginPath();
+            g.moveTo(40, 10);
+            g.lineTo(70, 70);
+            g.lineTo(10, 70);
+            g.closePath();
+            g.fillPath();
+
+            // Eye
+            g.fillStyle(0xffd700, 1);
+            g.fillCircle(40, 45, 10);
+            g.fillStyle(0xff0000, 1); // Pupil
+            g.fillCircle(40, 45, 4);
+
+            // Glow
+            g.lineStyle(2, 0xff00ff, 0.5);
+            g.strokeTriangle(10, 70, 70, 70, 40, 10);
+        });
+
+        // 5. Projectiles - Enhanced
+
+        // Player Projectile (Plasma Bolt)
+        generate('projectile_player', 24, 24, (g) => {
+            // Core
+            g.fillStyle(0xffff00, 1);
+            g.fillCircle(12, 12, 6);
+            // Glow
+            g.fillStyle(0xffaa00, 0.4);
+            g.fillCircle(12, 12, 10);
+            // Trail hint
+            g.fillStyle(0xffffff, 0.8);
+            g.fillCircle(10, 10, 3);
+        });
+
+        // Enemy Projectile (Spore/Acid)
+        generate('projectile_enemy', 24, 24, (g) => {
+            g.fillStyle(0x00ff00, 1);
+            g.fillCircle(12, 12, 6);
+            // Bubbles
+            g.fillStyle(0xccffcc, 0.6);
+            g.fillCircle(14, 10, 2);
+            g.fillCircle(10, 14, 2);
+        });
+
+        // Boss Projectile (Dark Energy)
+        generate('projectile_boss', 48, 48, (g) => {
+            g.fillStyle(0x800080, 1);
+            g.fillCircle(24, 24, 16);
+            g.lineStyle(2, 0xff00ff, 1);
+            g.strokeCircle(24, 24, 14);
+            // Core
+            g.fillStyle(0x000000, 1);
+            g.fillCircle(24, 24, 8);
+        });
+    }
+
+    private createExplosion(x: number, y: number, color: number = 0xff4400): void {
+        // Create explosion particles
+        const particleCount = 20;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 100 + 50;
+            const particle = this.add.circle(x, y, Math.random() * 4 + 2, color);
+            particle.setDepth(10);
+
+            this.tweens.add({
+                targets: particle,
+                x: x + Math.cos(angle) * speed,
+                y: y + Math.sin(angle) * speed,
+                alpha: 0,
+                scale: 0,
+                duration: Math.random() * 500 + 300,
+                ease: 'Power2.easeOut',
+                onComplete: () => particle.destroy()
+            });
+        }
+
+        // Flash effect
+        const flash = this.add.circle(x, y, 40, 0xffffff, 0.8);
+        flash.setDepth(9);
+        this.tweens.add({
+            targets: flash,
+            alpha: 0,
+            scale: 2,
+            duration: 200,
+            onComplete: () => flash.destroy()
+        });
+    }
+
+    private createProjectileHit(x: number, y: number, color: number): void {
+        // Create hit sparks
+        const particleCount = 8;
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 50 + 20;
+            const particle = this.add.circle(x, y, Math.random() * 3 + 1, color);
+            particle.setDepth(10);
+
+            this.tweens.add({
+                targets: particle,
+                x: x + Math.cos(angle) * speed,
+                y: y + Math.sin(angle) * speed,
+                alpha: 0,
+                scale: 0,
+                duration: Math.random() * 300 + 100,
+                ease: 'Power2.easeOut',
+                onComplete: () => particle.destroy()
+            });
+        }
+    }
+
+    private createLevelUpEffect(x: number, y: number): void {
+        // Rising particles
+        const particleCount = 30;
+        for (let i = 0; i < particleCount; i++) {
+            const offsetX = (Math.random() - 0.5) * 40;
+            const offsetY = (Math.random() - 0.5) * 40;
+            const particle = this.add.circle(x + offsetX, y + offsetY, Math.random() * 3 + 2, 0xffff00);
+            particle.setDepth(10);
+
+            this.tweens.add({
+                targets: particle,
+                y: y - 100 - Math.random() * 50,
+                alpha: 0,
+                duration: Math.random() * 1000 + 500,
+                ease: 'Power2.easeOut',
+                onComplete: () => particle.destroy()
+            });
+        }
+
+        // Pillar of light
+        const pillar = this.add.rectangle(x, y, 40, 200, 0xffff00, 0.3);
+        pillar.setOrigin(0.5, 1);
+        pillar.setDepth(5);
+        this.tweens.add({
+            targets: pillar,
+            scaleX: 0,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2.easeOut',
+            onComplete: () => pillar.destroy()
+        });
     }
 
     async create() {
+        // Generate procedural textures immediately
+        this.createProceduralTextures();
+
         // Calculate layout based on actual browser window size
         this.calculateLayout();
 
@@ -474,681 +969,695 @@ export class GameScene extends Phaser.Scene {
             this.room.onStateChange.once((state) => {
                 console.log(`Client World Dimensions: ${state.worldWidth}x${state.worldHeight}`);
 
-                // Add a background to represent the world bounds
-                const worldBackground = this.add.rectangle(0, 0, state.worldWidth, state.worldHeight, 0x333366).setOrigin(0);
+                // Add tiled background
+                const background = this.add.tileSprite(0, 0, state.worldWidth, state.worldHeight, 'ground_tile');
+                background.setOrigin(0, 0);
+                background.setDepth(-2); // Behind everything
+
+                // Add a background to represent the world bounds (overlay for tint)
+                const worldBackground = this.add.rectangle(0, 0, state.worldWidth, state.worldHeight, 0x000000).setOrigin(0);
+                worldBackground.setAlpha(0.3); // Darken the ground slightly
                 worldBackground.setStrokeStyle(4, 0x666699);
                 worldBackground.setDepth(-1); // Ensure background is behind everything else
 
-                // Add random dots for visual context
-                const dotGraphics = this.add.graphics({ fillStyle: { color: 0xaaaaaa, alpha: 0.5 } });
-                const numberOfDots = 500;
-                for (let i = 0; i < numberOfDots; i++) {
-                    const x = Phaser.Math.Between(0, state.worldWidth);
-                    const y = Phaser.Math.Between(0, state.worldHeight);
-                    dotGraphics.fillCircle(x, y, 2); // Small dots
-                }
-            dotGraphics.setDepth(0); // Ensure dots are on top of background
-
-            // Set camera bounds and follow player
+                // Set camera bounds and follow player
                 this.cameras.main.setBounds(0, 0, state.worldWidth, state.worldHeight);
 
                 const $ = getStateCallbacks(this.room);
 
                 $(this.room.state).players.onAdd((_player, sessionId) => {
-                console.log(`Adding player: ${sessionId} at (${_player.x}, ${_player.y})`);
-                const rect = this.add.rectangle(_player.x, _player.y, 32, 32, 0xff0000);
-                const entity = this.physics.add.existing(rect, false);
-                entity.setDepth(0); // Explicitly set depth
-                this.playerEntities[sessionId] = entity;                                                    // Make camera follow this client's player
-                                                    if (sessionId === this.room.sessionId) {
-                                                        console.log(`Camera: Starting to follow local player ${sessionId}. Entity:`, entity);
-                                                        console.log(`Camera bounds: 0,0 to ${this.UI_CONFIG.GAME_WIDTH},${this.UI_CONFIG.GAME_HEIGHT}`);
-                                                        console.log(`Camera viewport: 0,0 to ${this.UI_CONFIG.VIEWPORT_WIDTH},${this.UI_CONFIG.VIEWPORT_HEIGHT}`);
+                    console.log(`Adding player: ${sessionId} at (${_player.x}, ${_player.y})`);
+                    const sprite = this.add.sprite(_player.x, _player.y, 'researcher_lemur');
+                    sprite.setDisplaySize(48, 48); // Scale to appropriate size
+                    const entity = this.physics.add.existing(sprite, false);
+                    entity.setDepth(0); // Explicitly set depth
+                    this.playerEntities[sessionId] = entity;                                                    // Make camera follow this client's player
+                    if (sessionId === this.room.sessionId) {
+                        console.log(`Camera: Starting to follow local player ${sessionId}. Entity:`, entity);
+                        console.log(`Camera bounds: 0,0 to ${this.UI_CONFIG.GAME_WIDTH},${this.UI_CONFIG.GAME_HEIGHT}`);
+                        console.log(`Camera viewport: 0,0 to ${this.UI_CONFIG.VIEWPORT_WIDTH},${this.UI_CONFIG.VIEWPORT_HEIGHT}`);
 
-                                                        this.cameras.main.startFollow(entity);
+                        this.cameras.main.startFollow(entity);
 
-                                                        // Configure camera to keep player centered in the game area
-                                                        this.cameras.main.setLerp(0.15); // Responsive but smooth following
+                        // Configure camera to keep player centered in the game area
+                        this.cameras.main.setLerp(0.15); // Responsive but smooth following
 
-                                                        // No deadzone - always keep player centered
-                                                        this.cameras.main.setDeadzone(0, 0);
+                        // No deadzone - always keep player centered
+                        this.cameras.main.setDeadzone(0, 0);
 
-                                                        // Ensure camera stays within game world bounds
-                                                        this.cameras.main.setBounds(0, 0, this.UI_CONFIG.GAME_WIDTH, this.UI_CONFIG.GAME_HEIGHT);
+                        // Ensure camera stays within game world bounds
+                        this.cameras.main.setBounds(0, 0, this.UI_CONFIG.GAME_WIDTH, this.UI_CONFIG.GAME_HEIGHT);
 
-                                                        console.log(`Camera setup: Player-centered camera with smooth following`);
+                        console.log(`Camera setup: Player-centered camera with smooth following`);
 
-                                                        // Handle window resize
-                                                        window.addEventListener('resize', () => {
-                                                            this.handleResize();
-                                                        });
+                        // Handle window resize
+                        window.addEventListener('resize', () => {
+                            this.handleResize();
+                        });
 
-                                                        // Listen for global state changes
-                                                        $(this.room.state).onChange(() => {
-                                                            this.updateStageInformation();
-                                                        });
+                        // Listen for global state changes
+                        $(this.room.state).onChange(() => {
+                            this.updateStageInformation();
+                        });
 
-                                                        // Create left sidebar background for help text
-                                                        const leftSidebarBg = this.add.rectangle(
-                                                            this.UI_CONFIG.LEFT_SIDEBAR_WIDTH/2,
-                                                            this.UI_CONFIG.VIEWPORT_HEIGHT/2,
-                                                            this.UI_CONFIG.LEFT_SIDEBAR_WIDTH,
-                                                            this.UI_CONFIG.VIEWPORT_HEIGHT,
-                                                            0x000000
-                                                        );
-                                                        leftSidebarBg.setAlpha(0.8);
-                                                        leftSidebarBg.setScrollFactor(0);
-                                                        leftSidebarBg.setDepth(30);
+                        // Create left sidebar background for help text
+                        const leftSidebarBg = this.add.rectangle(
+                            this.UI_CONFIG.LEFT_SIDEBAR_WIDTH / 2,
+                            this.UI_CONFIG.VIEWPORT_HEIGHT / 2,
+                            this.UI_CONFIG.LEFT_SIDEBAR_WIDTH,
+                            this.UI_CONFIG.VIEWPORT_HEIGHT,
+                            0x000000
+                        );
+                        leftSidebarBg.setAlpha(0.8);
+                        leftSidebarBg.setScrollFactor(0);
+                        leftSidebarBg.setDepth(30);
 
-                                                        // Create right sidebar background for inventory
-                                                        const rightSidebarBg = this.add.rectangle(
-                                                            this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH/2,
-                                                            this.UI_CONFIG.VIEWPORT_HEIGHT/2,
-                                                            this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH,
-                                                            this.UI_CONFIG.VIEWPORT_HEIGHT,
-                                                            0x000000
-                                                        );
-                                                        rightSidebarBg.setAlpha(0.8);
-                                                        rightSidebarBg.setScrollFactor(0);
-                                                        rightSidebarBg.setDepth(30);
+                        // Create right sidebar background for inventory
+                        const rightSidebarBg = this.add.rectangle(
+                            this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH / 2,
+                            this.UI_CONFIG.VIEWPORT_HEIGHT / 2,
+                            this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH,
+                            this.UI_CONFIG.VIEWPORT_HEIGHT,
+                            0x000000
+                        );
+                        rightSidebarBg.setAlpha(0.8);
+                        rightSidebarBg.setScrollFactor(0);
+                        rightSidebarBg.setDepth(30);
 
-                                                        // LEFT SIDEBAR - Help Text
-                                                        this.helpText = this.add.text(10, 10,
-                                                            `🎮 PRIMAL GENESIS v0.1\n\n` +
-                                                            `📦 OBJECTIVES:\n` +
-                                                            `Find items → Activate beacon →\n` +
-                                                            `Survive holdout → Defeat boss\n\n` +
-                                                            `🎮 CONTROLS:\n` +
-                                                            `WASD - Move\n` +
-                                                            `H - Toggle help\n` +
-                                                            `E - Use equipment (when equipped)\n` +
-                                                            `Auto-attack: ON\n\n` +
-                                                            `💎 ITEMS:\n` +
-                                                            `🟤 Common chests (basic)\n` +
-                                                            `🟠 Large chests (advanced)\n` +
-                                                            `🔵 Equipment (special)\n` +
-                                                            `   → Press E to activate!\n` +
-                                                            `🟣 Research labs (choices)\n\n` +
-                                                            `⚔️ EQUIPMENT GUIDE:\n` +
-                                                            `• Quantum Shifter: E = Dash attack\n` +
-                                                            `• Alien Spore Pod: E = Throw grenade\n` +
-                                                            `• Equipment has cooldowns\n` +
-                                                            `• Only 1 equipment at a time\n\n` +
-                                                            `⚔️ TIPS:\n` +
-                                                            `• Walk over items to pickup\n` +
-                                                            `• Avoid enemy contact\n` +
-                                                            `• Red flash = damage\n\n` +
-                                                            `🔬 MISSION:\n` +
-                                                            `Stranded on Planet X-47.\n` +
-                                                            `Collect alien bio-tech to\n` +
-                                                            `survive and call extraction!`,
-                                                            {
-                                                                fontSize: '14px',
-                                                                color: '#ffff00',
-                                                                backgroundColor: 'rgba(0,0,0,0.9)',
-                                                                padding: { x: 10, y: 10 },
-                                                                wordWrap: { width: this.UI_CONFIG.LEFT_SIDEBAR_WIDTH - 25 },
-                                                                align: 'left',
-                                                                fixedWidth: this.UI_CONFIG.LEFT_SIDEBAR_WIDTH - 25,
-                                                                fixedHeight: this.UI_CONFIG.VIEWPORT_HEIGHT - 20,
-                                                                shadow: {
-                                                                    offsetX: 1,
-                                                                    offsetY: 1,
-                                                                    color: '#000000',
-                                                                    blur: 2,
-                                                                    stroke: true,
-                                                                    fill: true
-                                                                }
-                                                            });
-                                                        this.helpText.setScrollFactor(0);
-                                                        this.helpText.setDepth(100);
-
-                                                        // RIGHT SIDEBAR - Top: Player Health
-                                                        const rightSidebarX = this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH + 10;
-                                                        console.log(`Creating right sidebar at X: ${rightSidebarX}, viewport width: ${this.UI_CONFIG.VIEWPORT_WIDTH}`);
-                                                        this.playerHealthText = this.add.text(rightSidebarX, 10, 'Health: 100/100', {
-                                                            fontSize: '16px',
-                                                            color: '#ffffff',
-                                                            backgroundColor: 'rgba(255,0,0,0.8)',
-                                                            padding: { x: 8, y: 6 },
-                                                            wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
-                                                            shadow: {
-                                                                offsetX: 1,
-                                                                offsetY: 1,
-                                                                color: '#000000',
-                                                                blur: 1,
-                                                                stroke: true,
-                                                                fill: true
-                                                            }
-                                                        });
-                                                        this.playerHealthText.setScrollFactor(0);
-                                                        this.playerHealthText.setDepth(100);
-
-                                                        // TOP LEFT - Stage Information (moved to avoid overlap)
-                                                        this.stageText = this.add.text(10, 10,
-                                                            `STAGE 1: ALIEN JUNGLE\n` +
-                                                            `⏱️ Time: 0:00\n` +
-                                                            `📊 Difficulty: Easy`,
-                                                            {
-                                                                fontSize: '13px',
-                                                                color: '#00ff00',
-                                                                backgroundColor: 'rgba(0,0,0,0.8)',
-                                                                padding: { x: 8, y: 6 },
-                                                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
-                                                                shadow: {
-                                                                    offsetX: 1,
-                                                                    offsetY: 1,
-                                                                    color: '#000000',
-                                                                    blur: 1,
-                                                                    stroke: true,
-                                                                    fill: true
-                                                                }
-                                                            });
-                                                        this.stageText.setScrollFactor(0);
-                                                        this.stageText.setDepth(100);
-
-                                                        // RIGHT SIDEBAR - Objective Information (moved up to create more space)
-                                                        this.objectiveText = this.add.text(rightSidebarX, 100,
-                                                            `🎯 PRIMARY OBJECTIVE:\n` +
-                                                            `Survive and collect items\n\n` +
-                                                            `📦 Find: Bio-Resonance Beacon\n` +
-                                                            `⚡ Activate beacon to call extraction\n` +
-                                                            `🛡️ Defend against alien wildlife`,
-                                                            {
-                                                                fontSize: '12px',
-                                                                color: '#ffff00',
-                                                                backgroundColor: 'rgba(0,0,0,0.8)',
-                                                                padding: { x: 8, y: 6 },
-                                                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
-                                                                shadow: {
-                                                                    offsetX: 1,
-                                                                    offsetY: 1,
-                                                                    color: '#000000',
-                                                                    blur: 1,
-                                                                    stroke: true,
-                                                                    fill: true
-                                                                }
-                                                            });
-                                                        this.objectiveText.setScrollFactor(0);
-                                                        this.objectiveText.setDepth(100);
-
-                                                        // RIGHT SIDEBAR - Inventory (moved down to create more space for objectives)
-                                                        this.inventoryText = this.add.text(rightSidebarX, 320,
-                                                            `🎒 INVENTORY:\nNo items collected\n\n💡 Explore to find alien tech!`,
-                                                            {
-                                                                fontSize: '12px',
-                                                                color: '#00ff00',
-                                                                backgroundColor: 'rgba(0,0,0,0.7)',
-                                                                padding: { x: 6, y: 6 },
-                                                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
-                                                                shadow: {
-                                                                    offsetX: 1,
-                                                                    offsetY: 1,
-                                                                    color: '#000000',
-                                                                    blur: 1,
-                                                                    stroke: true,
-                                                                    fill: true
-                                                                }
-                                                            });
-                                                        this.inventoryText.setScrollFactor(0);
-                                                        this.inventoryText.setDepth(100);
-
-                                                        // Level and XP display
-                                                        this.levelText = this.add.text(rightSidebarX, 280,
-                                                            `⭐ LEVEL: ${_player.level}\n💎 XP: ${_player.xp}/${Math.floor(100 * Math.pow(1.2, _player.level))}`,
-                                                            {
-                                                                fontSize: '14px',
-                                                                color: '#ffff00',
-                                                                backgroundColor: 'rgba(0,0,0,0.7)',
-                                                                padding: { x: 6, y: 6 },
-                                                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
-                                                                shadow: {
-                                                                    offsetX: 1,
-                                                                    offsetY: 1,
-                                                                    color: '#000000',
-                                                                    blur: 1,
-                                                                    stroke: true,
-                                                                    fill: true
-                                                                }
-                                                            });
-                                                        this.levelText.setScrollFactor(0);
-                                                        this.levelText.setDepth(100);
-
-                                                        // Initialize previous health for damage feedback
-                                                        entity.setData('previousHealth', _player.health);
-                                                    }
-
-                                                    $(_player).onChange(() => {
-                                                        entity.x = _player.x;
-                                                        entity.y = _player.y;
-
-                                                        // Debug camera following for local player
-                                                        if (sessionId === this.room.sessionId) {
-                                                            console.log(`Local player position: (${entity.x}, ${entity.y})`);
-                                                            console.log(`Camera position: (${this.cameras.main.scrollX}, ${this.cameras.main.scrollY})`);
-                                                        }
-
-                                                        if (sessionId === this.room.sessionId) {
-                                                            // Cap health display at maximum to prevent showing over max (e.g., 120/100)
-                                                            const currentHealth = Math.min(Math.round(_player.health), Math.round(_player.calculatedMaxHealth));
-                                                            this.playerHealthText.setText(`Health: ${currentHealth}/${Math.round(_player.calculatedMaxHealth)}`);
-
-                                                            // Update level and XP display
-                                                            const xpForNextLevel = Math.floor(100 * Math.pow(1.2, _player.level));
-                                                            this.levelText.setText(`⭐ LEVEL: ${_player.level}\n💎 XP: ${_player.xp}/${xpForNextLevel}`);
-
-                                                            // Enhanced damage feedback with screen shake and damage indicators
-                                                            const previousHealth = entity.getData('previousHealth');
-                                                            if (_player.health < previousHealth) {
-                                                                const damageAmount = previousHealth - _player.health;
-
-                                                                // Screen shake for local player
-                                                                if (sessionId === this.room.sessionId) {
-                                                                    this.cameras.main.shake(200, 0.015);
-
-                                                                    // Red damage flash effect
-                                                                    this.cameras.main.flash(150, 255, 0, 0, false);
-                                                                }
-
-                                                                // Damage color flash on player
-                                                                entity.fillColor = 0xff0000;
-                                                                this.time.delayedCall(100, () => {
-                                                                    entity.fillColor = 0xff0000; // Original player color
-                                                                });
-
-                                                                // Show floating damage indicator
-                                                                this.showDamageIndicator(entity.x, entity.y - 20, damageAmount, '#ff0000');
-                                                            }
-                                                            entity.setData('previousHealth', _player.health);
-
-                                                            // Visual effects for dashing
-                                                            if (_player.isDashing) {
-                                                                // Create cyan dash aura
-                                                                (entity as any).setTint(0x00ffff);
-                                                                entity.setAlpha(0.8);
-
-                                                                // Add dash trail effect
-                                                                if (Math.random() < 0.3) { // 30% chance per frame
-                                                                    const trail = this.add.circle(entity.x, entity.y, 12, 0x00ffff, 0.4);
-                                                                    trail.setScrollFactor(0);
-                                                                    trail.setDepth(3);
-
-                                                                    this.tweens.add({
-                                                                        targets: trail,
-                                                                        alpha: 0,
-                                                                        scale: 0.5,
-                                                                        duration: 200,
-                                                                        ease: 'Power2.easeOut',
-                                                                        onComplete: () => trail.destroy()
-                                                                    });
-                                                                }
-                                                            } else {
-                                                                // Reset visual effects when not dashing
-                                                                if (entity) {
-                                                                    (entity as any).clearTint?.();
-                                                                }
-                                                                if (entity && typeof entity.setAlpha === 'function') {
-                                                                    entity.setAlpha(1);
-                                                                }
-                                                            }
-
-                                                            // Track item pickups for this client's player
-                                                            $(_player.items).onAdd((item, _index) => {
-                                                                this.showPickupMessage(`Picked up: ${item.name} (${item.rarity})`);
-                                                                console.log(`Player picked up item: ${item.name} - ${item.description}`);
-                                                                this.updateInventoryDisplay(_player);
-                                                            });
-                                                        }
-                                                    });
-                                                });
-                                    
-                                                $(this.room.state).players.onRemove((_player, sessionId) => {
-                                                    console.log(`Removing player: ${sessionId}`);
-                                                    const entity = this.playerEntities[sessionId];
-                                                    if (entity) {
-                                                        entity.destroy();
-                                                        delete this.playerEntities[sessionId];
-                                                    }
-                                                    if (sessionId === this.room.sessionId && this.playerHealthText) {
-                                                        this.playerHealthText.destroy();
-                                                    }
-                                                });
-                                    
-            $(this.room.state).enemies.onAdd((enemy, sessionId) => {
-                console.log(`Adding enemy: ${sessionId} of type ${enemy.typeId} at (${enemy.x}, ${enemy.y})`);
-
-                // Check if this is an Elite enemy
-                const isElite = (enemy as any).isElite;
-                const eliteModifier = (enemy as any).eliteModifier;
-
-                let enemyColor = 0x0000ff; // Default to blue for waspDrone
-                let healthBarColor = 0x00ff00; // Default green health bar
-                let enemySize = 28;
-                let borderWidth = 2;
-                let borderColor = 0xff0000; // Red border for regular enemies
-
-                // let enemyImageKey = 'enemy'; // Default image key
-                if (enemy.typeId === "spitter") {
-                    enemyColor = 0x00ff00; // Green for spitter
-                    healthBarColor = 0xff0000; // Red health bar for spitter
-                    // If we had a spitter.png, we'd use enemyImageKey = 'spitter';
-                } else if (enemy.typeId === "charger") {
-                    enemyColor = 0x800080; // Purple for charger
-                    healthBarColor = 0x00ff00; // Green health bar for charger
-                    // If we had a charger.png, we'd use enemyImageKey = 'charger';
-                } else if (enemy.typeId === "exploder") {
-                    enemyColor = 0xff4500; // Orange-red for exploder
-                    healthBarColor = 0xff6600; // Orange health bar for exploder
-                    enemySize = 32; // Slightly larger to show threat
-                } else if (enemy.typeId === "swarm") {
-                    enemyColor = 0x9932cc; // Dark orchid for swarm
-                    healthBarColor = 0xda70d6; // Orchid health bar for swarm
-                    enemySize = 20; // Smaller size to show they're weaker
-                } else if (enemy.typeId === "shield") {
-                    enemyColor = 0x4169e1; // Royal blue for shield
-                    healthBarColor = 0x1e90ff; // Dodger blue health bar for shield
-                    enemySize = 34; // Larger to show they're tanky
-                    borderWidth = 4; // Thicker border to indicate armor
-                }
-
-                // Apply Elite enemy visual enhancements
-                if (isElite) {
-                    enemySize = 36; // Larger size for elite enemies
-                    borderWidth = 4; // Thicker border
-
-                    // Set color based on elite modifier
-                    switch (eliteModifier) {
-                        case "glacial":
-                            borderColor = 0x00ffff; // Cyan border for glacial
-                            enemyColor = 0x4169e1; // Ice blue color
-                            console.log(`❄️ Adding GLACIAL elite enemy`);
-                            break;
-                        case "overloading":
-                            borderColor = 0xffff00; // Yellow border for overloading
-                            enemyColor = 0xff8c00; // Orange color
-                            console.log(`⚡ Adding OVERLOADING elite enemy`);
-                            break;
-                        case "venomous":
-                            borderColor = 0x800080; // Purple border for venomous
-                            enemyColor = 0x32cd32; // Lime green color
-                            console.log(`☠️ Adding VENOMOUS elite enemy`);
-                            break;
-                        case "swift":
-                            borderColor = 0xff69b4; // Pink border for swift
-                            enemyColor = 0xffd700; // Gold color
-                            console.log(`💨 Adding SWIFT elite enemy`);
-                            break;
-                        default:
-                            borderColor = 0xffffff; // White border for unknown elite
-                            enemyColor = 0xff0000; // Red color
-                            console.log(`👹 Adding UNKNOWN elite enemy`);
-                            break;
-                    }
-                }
-
-                // Enemies are SQUARES - clear distinction from items
-                const enemySquare = this.add.rectangle(enemy.x, enemy.y, enemySize, enemySize, enemyColor);
-                enemySquare.setStrokeStyle(borderWidth, borderColor);
-                const entity = this.physics.add.existing(enemySquare, false);
-                entity.setDepth(0); // Explicitly set depth
-                this.enemyEntities[sessionId] = entity;
-
-                // Create health bar
-                const healthBar = this.createHealthBar(32, 4, healthBarColor);
-                healthBar.setDepth(1); // Health bar on top of enemy
-                healthBar.x = enemy.x - 16;
-                healthBar.y = enemy.y - 20;
-                entity.setData('healthBar', healthBar);
-
-                // Initialize previous health for damage indicators
-                entity.setData('previousHealth', enemy.health);
-
-                // Add visual aura for Elite enemies
-                if (isElite) {
-                    // Create pulsing aura effect
-                    const auraSize = enemySize + 12;
-                    const aura = this.add.circle(enemy.x, enemy.y, auraSize/2, 0xffffff);
-                    aura.setStrokeStyle(3, borderColor);
-                    aura.setAlpha(0.3);
-                    aura.setDepth(-1); // Behind the enemy but above ground
-
-                    // Store aura reference for animation
-                    entity.setData('eliteAura', aura);
-
-                    // Start pulsing animation
-                    this.tweens.add({
-                        targets: aura,
-                        alpha: 0.6,
-                        scale: 1.1,
-                        duration: 800,
-                        yoyo: true,
-                        repeat: -1,
-                        ease: 'Sine.easeInOut'
-                    });
-
-                    console.log(`✨ Added ${eliteModifier} elite aura effect`);
-                }
-
-                $(enemy).onChange(() => {
-                    // Update position - this fixes the charger movement bug
-                    entity.x = enemy.x;
-                    entity.y = enemy.y;
-
-                    // Visual feedback for charger's charging state
-                    if (enemy.typeId === "charger") {
-                        if (enemy.isCharging) {
-                            entity.fillColor = 0xffff00; // Yellow color during charge
-                        } else {
-                            entity.fillColor = 0x800080; // Original charger color (purple)
-                        }
-                    }
-
-                    // Visual feedback for exploder's explosion state
-                    if (enemy.typeId === "exploder") {
-                        if (enemy.isExploding) {
-                            entity.fillColor = 0xffffff; // White when about to explode
-                            entity.setScale(1.5); // Pulsing effect
-                            // Add rapid pulsing
-                            this.tweens.add({
-                                targets: entity,
-                                scaleX: 1.8,
-                                scaleY: 1.8,
-                                duration: 100,
-                                yoyo: true,
-                                repeat: -1
+                        // LEFT SIDEBAR - Help Text
+                        this.helpText = this.add.text(10, 10,
+                            `🎮 PRIMAL GENESIS v0.1\n\n` +
+                            `📦 OBJECTIVES:\n` +
+                            `Find items → Activate beacon →\n` +
+                            `Survive holdout → Defeat boss\n\n` +
+                            `🎮 CONTROLS:\n` +
+                            `WASD - Move\n` +
+                            `H - Toggle help\n` +
+                            `E - Use equipment (when equipped)\n` +
+                            `Auto-attack: ON\n\n` +
+                            `💎 ITEMS:\n` +
+                            `🟤 Common chests (basic)\n` +
+                            `🟠 Large chests (advanced)\n` +
+                            `🔵 Equipment (special)\n` +
+                            `   → Press E to activate!\n` +
+                            `🟣 Research labs (choices)\n\n` +
+                            `⚔️ EQUIPMENT GUIDE:\n` +
+                            `• Quantum Shifter: E = Dash attack\n` +
+                            `• Alien Spore Pod: E = Throw grenade\n` +
+                            `• Equipment has cooldowns\n` +
+                            `• Only 1 equipment at a time\n\n` +
+                            `⚔️ TIPS:\n` +
+                            `• Walk over items to pickup\n` +
+                            `• Avoid enemy contact\n` +
+                            `• Red flash = damage\n\n` +
+                            `🔬 MISSION:\n` +
+                            `Stranded on Planet X-47.\n` +
+                            `Collect alien bio-tech to\n` +
+                            `survive and call extraction!`,
+                            {
+                                fontSize: '14px',
+                                color: '#ffff00',
+                                backgroundColor: 'rgba(0,0,0,0.9)',
+                                padding: { x: 10, y: 10 },
+                                wordWrap: { width: this.UI_CONFIG.LEFT_SIDEBAR_WIDTH - 25 },
+                                align: 'left',
+                                fixedWidth: this.UI_CONFIG.LEFT_SIDEBAR_WIDTH - 25,
+                                fixedHeight: this.UI_CONFIG.VIEWPORT_HEIGHT - 20,
+                                shadow: {
+                                    offsetX: 1,
+                                    offsetY: 1,
+                                    color: '#000000',
+                                    blur: 2,
+                                    stroke: true,
+                                    fill: true
+                                }
                             });
-                        } else {
-                            entity.fillColor = 0xff4500; // Original exploder color
-                            entity.setScale(1);
+                        this.helpText.setScrollFactor(0);
+                        this.helpText.setDepth(100);
+
+                        // RIGHT SIDEBAR - Top: Player Health
+                        const rightSidebarX = this.UI_CONFIG.VIEWPORT_WIDTH - this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH + 10;
+                        console.log(`Creating right sidebar at X: ${rightSidebarX}, viewport width: ${this.UI_CONFIG.VIEWPORT_WIDTH}`);
+                        this.playerHealthText = this.add.text(rightSidebarX, 10, 'Health: 100/100', {
+                            fontSize: '16px',
+                            color: '#ffffff',
+                            backgroundColor: 'rgba(255,0,0,0.8)',
+                            padding: { x: 8, y: 6 },
+                            wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+                            shadow: {
+                                offsetX: 1,
+                                offsetY: 1,
+                                color: '#000000',
+                                blur: 1,
+                                stroke: true,
+                                fill: true
+                            }
+                        });
+                        this.playerHealthText.setScrollFactor(0);
+                        this.playerHealthText.setDepth(100);
+
+                        // TOP LEFT - Stage Information (moved to avoid overlap)
+                        this.stageText = this.add.text(10, 10,
+                            `STAGE 1: ALIEN JUNGLE\n` +
+                            `⏱️ Time: 0:00\n` +
+                            `📊 Difficulty: Easy`,
+                            {
+                                fontSize: '13px',
+                                color: '#00ff00',
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                padding: { x: 8, y: 6 },
+                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+                                shadow: {
+                                    offsetX: 1,
+                                    offsetY: 1,
+                                    color: '#000000',
+                                    blur: 1,
+                                    stroke: true,
+                                    fill: true
+                                }
+                            });
+                        this.stageText.setScrollFactor(0);
+                        this.stageText.setDepth(100);
+
+                        // RIGHT SIDEBAR - Objective Information (moved up to create more space)
+                        this.objectiveText = this.add.text(rightSidebarX, 100,
+                            `🎯 PRIMARY OBJECTIVE:\n` +
+                            `Survive and collect items\n\n` +
+                            `📦 Find: Bio-Resonance Beacon\n` +
+                            `⚡ Activate beacon to call extraction\n` +
+                            `🛡️ Defend against alien wildlife`,
+                            {
+                                fontSize: '12px',
+                                color: '#ffff00',
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                padding: { x: 8, y: 6 },
+                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+                                shadow: {
+                                    offsetX: 1,
+                                    offsetY: 1,
+                                    color: '#000000',
+                                    blur: 1,
+                                    stroke: true,
+                                    fill: true
+                                }
+                            });
+                        this.objectiveText.setScrollFactor(0);
+                        this.objectiveText.setDepth(100);
+
+                        // RIGHT SIDEBAR - Inventory (moved down to create more space for objectives)
+                        this.inventoryText = this.add.text(rightSidebarX, 320,
+                            `🎒 INVENTORY:\nNo items collected\n\n💡 Explore to find alien tech!`,
+                            {
+                                fontSize: '12px',
+                                color: '#00ff00',
+                                backgroundColor: 'rgba(0,0,0,0.7)',
+                                padding: { x: 6, y: 6 },
+                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+                                shadow: {
+                                    offsetX: 1,
+                                    offsetY: 1,
+                                    color: '#000000',
+                                    blur: 1,
+                                    stroke: true,
+                                    fill: true
+                                }
+                            });
+                        this.inventoryText.setScrollFactor(0);
+                        this.inventoryText.setDepth(100);
+
+                        // Level and XP display
+                        this.levelText = this.add.text(rightSidebarX, 280,
+                            `⭐ LEVEL: ${_player.level}\n💎 XP: ${_player.xp}/${Math.floor(100 * Math.pow(1.2, _player.level))}`,
+                            {
+                                fontSize: '14px',
+                                color: '#ffff00',
+                                backgroundColor: 'rgba(0,0,0,0.7)',
+                                padding: { x: 6, y: 6 },
+                                wordWrap: { width: this.UI_CONFIG.RIGHT_SIDEBAR_WIDTH - 20 },
+                                shadow: {
+                                    offsetX: 1,
+                                    offsetY: 1,
+                                    color: '#000000',
+                                    blur: 1,
+                                    stroke: true,
+                                    fill: true
+                                }
+                            });
+                        this.levelText.setScrollFactor(0);
+                        this.levelText.setDepth(100);
+
+                        // Initialize previous health for damage feedback
+                        entity.setData('previousHealth', _player.health);
+                    }
+
+                    $(_player).onChange(() => {
+                        // Calculate rotation based on movement
+                        if (_player.x !== entity.x || _player.y !== entity.y) {
+                            const angle = Phaser.Math.Angle.Between(entity.x, entity.y, _player.x, _player.y);
+                            entity.rotation = angle;
                         }
-                    }
+                        entity.x = _player.x;
+                        entity.y = _player.y;
 
-                    // Visual feedback for shield state
-                    if (enemy.typeId === "shield") {
-                        if (enemy.shieldActive) {
-                            entity.setStrokeStyle(6, 0x00ffff); // Cyan border when shield is active
-                        } else {
-                            entity.setStrokeStyle(4, 0xff0000); // Red border when shield is down
+                        // Debug camera following for local player
+                        if (sessionId === this.room.sessionId) {
+                            console.log(`Local player position: (${entity.x}, ${entity.y})`);
+                            console.log(`Camera position: (${this.cameras.main.scrollX}, ${this.cameras.main.scrollY})`);
                         }
-                    }
 
-                    // Check for enemy damage and show indicators
-                    const previousHealth = entity.getData('previousHealth');
-                    if (enemy.health < previousHealth) {
-                        const damageAmount = previousHealth - enemy.health;
+                        if (sessionId === this.room.sessionId) {
+                            // Cap health display at maximum to prevent showing over max (e.g., 120/100)
+                            const currentHealth = Math.min(Math.round(_player.health), Math.round(_player.calculatedMaxHealth));
+                            this.playerHealthText.setText(`Health: ${currentHealth}/${Math.round(_player.calculatedMaxHealth)}`);
 
-                        // Show damage indicator for enemy
-                        this.showDamageIndicator(entity.x, entity.y - 25, damageAmount, '#ff6600');
+                            // Update level and XP display
+                            const xpForNextLevel = Math.floor(100 * Math.pow(1.2, _player.level));
+                            this.levelText.setText(`⭐ LEVEL: ${_player.level}\n💎 XP: ${_player.xp}/${xpForNextLevel}`);
 
-                        // Screen shake for big hits
-                        if (damageAmount >= 20) {
-                            this.cameras.main.shake(100, 0.008);
+                            // Level up effect
+                            const previousLevel = entity.getData('previousLevel') || _player.level;
+                            if (_player.level > previousLevel) {
+                                this.createLevelUpEffect(entity.x, entity.y);
+                                this.showPickupMessage(`⭐ LEVEL UP! Reached Level ${_player.level}`);
+                            }
+                            entity.setData('previousLevel', _player.level);
+
+                            // Enhanced damage feedback with screen shake and damage indicators
+                            const previousHealth = entity.getData('previousHealth');
+                            if (_player.health < previousHealth) {
+                                const damageAmount = previousHealth - _player.health;
+
+                                // Screen shake for local player
+                                if (sessionId === this.room.sessionId) {
+                                    this.cameras.main.shake(200, 0.015);
+
+                                    // Red damage flash effect
+                                    this.cameras.main.flash(150, 255, 0, 0, false);
+                                }
+
+                                // Damage color flash on player
+                                entity.setTint(0xff0000);
+                                this.time.delayedCall(100, () => {
+                                    entity.clearTint(); // Original player color
+                                });
+
+                                // Show floating damage indicator
+                                this.showDamageIndicator(entity.x, entity.y - 20, damageAmount, '#ff0000');
+                            }
+                            entity.setData('previousHealth', _player.health);
+
+                            // Visual effects for dashing
+                            if (_player.isDashing) {
+                                // Create cyan dash aura
+                                (entity as any).setTint(0x00ffff);
+                                entity.setAlpha(0.8);
+
+                                // Add dash trail effect
+                                if (Math.random() < 0.3) { // 30% chance per frame
+                                    const trail = this.add.circle(entity.x, entity.y, 12, 0x00ffff, 0.4);
+                                    trail.setScrollFactor(0);
+                                    trail.setDepth(3);
+
+                                    this.tweens.add({
+                                        targets: trail,
+                                        alpha: 0,
+                                        scale: 0.5,
+                                        duration: 200,
+                                        ease: 'Power2.easeOut',
+                                        onComplete: () => trail.destroy()
+                                    });
+                                }
+                            } else {
+                                // Reset visual effects when not dashing
+                                if (entity) {
+                                    (entity as any).clearTint?.();
+                                }
+                                if (entity && typeof entity.setAlpha === 'function') {
+                                    entity.setAlpha(1);
+                                }
+                            }
+
+                            // Track item pickups for this client's player
+                            $(_player.items).onAdd((item, _index) => {
+                                this.showPickupMessage(`Picked up: ${item.name} (${item.rarity})`);
+                                console.log(`Player picked up item: ${item.name} - ${item.description}`);
+                                this.updateInventoryDisplay(_player);
+                            });
                         }
-                    }
-                    entity.setData('previousHealth', enemy.health);
+                    });
+                });
 
-                    // Update health bar position and width
-                    const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
-                    if (healthBar) {
-                        healthBar.x = entity.x - 16;
-                        healthBar.y = entity.y - 20;
-                        healthBar.clear();
-                        healthBar.fillStyle(0x00ff00, 1);
-                        healthBar.fillRect(0, 0, (enemy.health / enemy.maxHealth) * 32, 4);
+                $(this.room.state).players.onRemove((_player, sessionId) => {
+                    console.log(`Removing player: ${sessionId}`);
+                    const entity = this.playerEntities[sessionId];
+                    if (entity) {
+                        entity.destroy();
+                        delete this.playerEntities[sessionId];
                     }
-
-                    // Update Elite enemy aura position
-                    const eliteAura = entity.getData('eliteAura') as Phaser.GameObjects.Arc;
-                    if (eliteAura) {
-                        eliteAura.x = entity.x;
-                        eliteAura.y = entity.y;
+                    if (sessionId === this.room.sessionId && this.playerHealthText) {
+                        this.playerHealthText.destroy();
                     }
                 });
-            });
 
-                            $(this.room.state).enemies.onRemove((_enemy, sessionId) => {
-                                console.log(`Removing enemy: ${sessionId}`);
-                                const entity = this.enemyEntities[sessionId];
-                                if (entity) {
-                                    const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
-                                    const eliteAura = entity.getData('eliteAura') as Phaser.GameObjects.Arc;
+                $(this.room.state).enemies.onAdd((enemy, sessionId) => {
+                    console.log(`Adding enemy: ${sessionId} of type ${enemy.typeId} at (${enemy.x}, ${enemy.y})`);
 
-                                    if (healthBar) healthBar.destroy();
-                                    if (eliteAura) eliteAura.destroy(); // Clean up Elite aura
-                                    entity.destroy();
-                                    delete this.enemyEntities[sessionId];
+                    // Check if this is an Elite enemy
+                    const isElite = (enemy as any).isElite;
+                    const eliteModifier = (enemy as any).eliteModifier;
 
-                                    // Increment enemy defeat counter for beacon progress tracking
-                                    this.enemiesDefeatedCount++;
-                                    console.log(`🎯 Enemies defeated: ${this.enemiesDefeatedCount}/3 (Beacon spawns at 3)`);
-                                }
-                            });
-            
-                                            $(this.room.state).projectiles.onAdd((projectile, projectileId) => {
-                                                console.log(`Adding projectile: ${projectileId} of type ${projectile.projectileType} at (${projectile.x}, ${projectile.y})`);
+                    let enemyColor = 0x0000ff; // Default to blue for waspDrone
+                    let healthBarColor = 0x00ff00; // Default green health bar
+                    let enemySize = 28;
+                    let borderColor = 0xff0000; // Red border for regular enemies
 
-                                                let projectileColor = 0xff0000; // Red for player projectiles
-                                                let projectileSize = 12; // Default size
-                                                if (projectile.projectileType === "spitterProjectile") {
-                                                    projectileColor = 0x00ff88; // More vibrant cyan-green for spitter projectiles
-                                                    projectileSize = 28; // Much larger size for better visibility
-                                                }
-                                                const projectileRect = this.add.rectangle(projectile.x, projectile.y, projectileSize, projectileSize, projectileColor);
-                                                projectileRect.setStrokeStyle(4, 0xffffff); // Thicker white border for better visibility
-                                                projectileRect.setDepth(999); // Ensure it's always on top
+                    let enemyImageKey = 'enemy_wasp'; // Default
+                    if (enemy.typeId === "spitter") {
+                        enemyImageKey = 'enemy_spitter';
+                        healthBarColor = 0xff0000;
+                    } else if (enemy.typeId === "charger") {
+                        enemyImageKey = 'enemy_charger';
+                        healthBarColor = 0x00ff00;
+                    } else if (enemy.typeId === "exploder") {
+                        enemyImageKey = 'enemy_exploder';
+                        healthBarColor = 0xff6600;
+                        enemySize = 32;
+                    } else if (enemy.typeId === "swarm") {
+                        enemyImageKey = 'enemy_swarm';
+                        healthBarColor = 0xda70d6;
+                        enemySize = 20;
+                    } else if (enemy.typeId === "shield") {
+                        enemyImageKey = 'enemy_shield';
+                        healthBarColor = 0x1e90ff;
+                        enemySize = 34;
+                    } else if (enemy.typeId === "boss_guardian") {
+                        enemyImageKey = 'boss_guardian';
+                        enemySize = 64;
+                    }
 
-                                                // Add pulsing glow effect for spitter projectiles
-                                                if (projectile.projectileType === "spitterProjectile") {
-                                                    this.tweens.add({
-                                                        targets: projectileRect,
-                                                        scaleX: 1.2,
-                                                        scaleY: 1.2,
-                                                        duration: 500,
-                                                        yoyo: true,
-                                                        repeat: -1,
-                                                        ease: 'Sine.easeInOut'
-                                                    });
-                                                }
+                    // Apply Elite enemy visual enhancements
+                    if (isElite) {
+                        enemySize = 36; // Larger size for elite enemies
 
-                                                console.log(`DEBUG Client: Projectile ${projectileId} created. Active: ${projectileRect.active}, Visible: ${projectileRect.visible}, Depth: ${projectileRect.depth}, Pos: (${projectileRect.x}, ${projectileRect.y})`);
-                                                                    this.projectileEntities[projectileId] = projectileRect;
-                                                
-                                                                    $(projectile).onChange(() => {
-                                                                        projectileRect.x = projectile.x;
-                                                                        projectileRect.y = projectile.y;
-                                                                        projectileRect.rotation = projectile.rotation;
+                        // Set color based on elite modifier
+                        switch (eliteModifier) {
+                            case "glacial":
+                                borderColor = 0x00ffff; // Cyan border for glacial
+                                enemyColor = 0x4169e1; // Ice blue color
+                                console.log(`❄️ Adding GLACIAL elite enemy`);
+                                break;
+                            case "overloading":
+                                borderColor = 0xffff00; // Yellow border for overloading
+                                enemyColor = 0xff8c00; // Orange color
+                                console.log(`⚡ Adding OVERLOADING elite enemy`);
+                                break;
+                            case "venomous":
+                                borderColor = 0x800080; // Purple border for venomous
+                                enemyColor = 0x32cd32; // Lime green color
+                                console.log(`☠️ Adding VENOMOUS elite enemy`);
+                                break;
+                            case "swift":
+                                borderColor = 0xff69b4; // Pink border for swift
+                                enemyColor = 0xffd700; // Gold color
+                                console.log(`💨 Adding SWIFT elite enemy`);
+                                break;
+                            default:
+                                borderColor = 0xffffff; // White border for unknown elite
+                                enemyColor = 0xff0000; // Red color
+                                console.log(`👹 Adding UNKNOWN elite enemy`);
+                                break;
+                        }
+                    }
 
-                                                                                  });
-                            });
-            
-                            $(this.room.state).projectiles.onRemove((projectile, projectileId) => {
-                                console.log(`Removing projectile: ${projectileId}. Final TTL: ${projectile.timeToLive.toFixed(2)}`);
+                    // Create sprite instead of rectangle
+                    const enemySprite = this.add.sprite(enemy.x, enemy.y, enemyImageKey);
+                    enemySprite.setDisplaySize(enemySize, enemySize);
 
-                                const entity = this.projectileEntities[projectileId];
-                                if (entity) {
-                                    entity.destroy();
-                                    delete this.projectileEntities[projectileId];
-                                }
-                            });
+                    // Add border/tint for elites since we can't stroke a sprite easily
+                    if (isElite) {
+                        enemySprite.setTint(enemyColor);
+                    }
+
+                    const entity = this.physics.add.existing(enemySprite, false);
+                    entity.setDepth(0); // Explicitly set depth
+                    this.enemyEntities[sessionId] = entity;
+
+                    // Create health bar
+                    const healthBar = this.createHealthBar(32, 4, healthBarColor);
+                    healthBar.setDepth(1); // Health bar on top of enemy
+                    healthBar.x = enemy.x - 16;
+                    healthBar.y = enemy.y - 20;
+                    entity.setData('healthBar', healthBar);
+
+                    // Initialize previous health for damage indicators
+                    entity.setData('previousHealth', enemy.health);
+
+                    // Add visual aura for Elite enemies
+                    if (isElite) {
+                        // Create pulsing aura effect
+                        const auraSize = enemySize + 12;
+                        const aura = this.add.circle(enemy.x, enemy.y, auraSize / 2, 0xffffff);
+                        aura.setStrokeStyle(3, borderColor);
+                        aura.setAlpha(0.3);
+                        aura.setDepth(-1); // Behind the enemy but above ground
+
+                        // Store aura reference for animation
+                        entity.setData('eliteAura', aura);
+
+                        // Start pulsing animation
+                        this.tweens.add({
+                            targets: aura,
+                            alpha: 0.6,
+                            scale: 1.1,
+                            duration: 800,
+                            yoyo: true,
+                            repeat: -1,
+                            ease: 'Sine.easeInOut'
+                        });
+
+                        console.log(`✨ Added ${eliteModifier} elite aura effect`);
+                    }
+
+                    $(enemy).onChange(() => {
+                        // Calculate rotation
+                        if (enemy.x !== entity.x || enemy.y !== entity.y) {
+                            const angle = Phaser.Math.Angle.Between(entity.x, entity.y, enemy.x, enemy.y);
+                            entity.rotation = angle;
+                        }
+                        // Update position - this fixes the charger movement bug
+                        entity.x = enemy.x;
+                        entity.y = enemy.y;
+
+                        // Visual feedback for charger's charging state
+                        if (enemy.typeId === "charger") {
+                            if (enemy.isCharging) {
+                                entity.setTint(0xffff00); // Yellow color during charge
+                            } else {
+                                entity.clearTint(); // Original charger color
+                                // Re-apply elite tint if needed
+                                if (isElite) entity.setTint(enemyColor);
+                            }
+                        }
+
+                        // Visual feedback for exploder's explosion state
+                        if (enemy.typeId === "exploder") {
+                            if (enemy.isExploding) {
+                                entity.setTint(0xffffff); // White when about to explode
+                                entity.setScale(1.5); // Pulsing effect
+                                // Add rapid pulsing
+                                this.tweens.add({
+                                    targets: entity,
+                                    scaleX: 1.8,
+                                    scaleY: 1.8,
+                                    duration: 100,
+                                    yoyo: true,
+                                    repeat: -1
+                                });
+                            } else {
+                                entity.clearTint(); // Original exploder color
+                                // Re-apply elite tint if needed
+                                if (isElite) entity.setTint(enemyColor);
+                                entity.setScale(1);
+                            }
+                        }
+
+                        // Visual feedback for shield state
+                        if (enemy.typeId === "shield") {
+                            if (enemy.shieldActive) {
+                                // entity.setStrokeStyle(6, 0x00ffff); // Sprites don't support stroke
+                                entity.setTint(0x00ffff); // Cyan tint when shield is active
+                            } else {
+                                // entity.setStrokeStyle(4, 0xff0000); // Sprites don't support stroke
+                                entity.clearTint();
+                                // Re-apply elite tint if needed
+                                if (isElite) entity.setTint(enemyColor);
+                            }
+                        }
+
+                        // Check for enemy damage and show indicators
+                        const previousHealth = entity.getData('previousHealth');
+                        if (enemy.health < previousHealth) {
+                            const damageAmount = previousHealth - enemy.health;
+
+                            // Show damage indicator for enemy
+                            this.showDamageIndicator(entity.x, entity.y - 25, damageAmount, '#ff6600');
+
+                            // Screen shake for big hits
+                            if (damageAmount >= 20) {
+                                this.cameras.main.shake(100, 0.008);
+                            }
+                        }
+                        entity.setData('previousHealth', enemy.health);
+
+                        // Update health bar position and width
+                        const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
+                        if (healthBar) {
+                            healthBar.x = entity.x - 16;
+                            healthBar.y = entity.y - 20;
+                            healthBar.clear();
+                            healthBar.fillStyle(0x00ff00, 1);
+                            healthBar.fillRect(0, 0, (enemy.health / enemy.maxHealth) * 32, 4);
+                        }
+
+                        // Update Elite enemy aura position
+                        const eliteAura = entity.getData('eliteAura') as Phaser.GameObjects.Arc;
+                        if (eliteAura) {
+                            eliteAura.x = entity.x;
+                            eliteAura.y = entity.y;
+                        }
+                    });
+                });
+
+                $(this.room.state).enemies.onRemove((_enemy, sessionId) => {
+                    console.log(`Removing enemy: ${sessionId}`);
+                    const entity = this.enemyEntities[sessionId];
+                    if (entity) {
+                        const healthBar = entity.getData('healthBar') as Phaser.GameObjects.Graphics;
+                        const eliteAura = entity.getData('eliteAura') as Phaser.GameObjects.Arc;
+
+                        if (healthBar) healthBar.destroy();
+                        if (eliteAura) eliteAura.destroy(); // Clean up Elite aura
+                        entity.destroy();
+                        entity.destroy();
+                        delete this.enemyEntities[sessionId];
+
+                        // Explosion effect
+                        this.createExplosion(entity.x, entity.y, 0xff4400);
+
+                        // Increment enemy defeat counter for beacon progress tracking
+                        this.enemiesDefeatedCount++;
+                        console.log(`🎯 Enemies defeated: ${this.enemiesDefeatedCount}/3 (Beacon spawns at 3)`);
+                    }
+                });
+
+                $(this.room.state).projectiles.onAdd((projectile, projectileId) => {
+                    console.log(`Adding projectile: ${projectileId} of type ${projectile.projectileType} at (${projectile.x}, ${projectile.y})`);
+
+                    let projectileImage = 'projectile_player'; // Default
+                    let projectileSize = 16; // Default size
+                    if (projectile.projectileType === "spitterProjectile") {
+                        projectileImage = 'projectile_enemy';
+                        projectileSize = 28; // Much larger size for better visibility
+                    } else if (projectile.projectileType === "bossProjectile") {
+                        projectileImage = 'projectile_boss';
+                        projectileSize = 40;
+                    }
+
+                    const projectileSprite = this.add.sprite(projectile.x, projectile.y, projectileImage);
+                    projectileSprite.setDisplaySize(projectileSize, projectileSize);
+                    projectileSprite.setDepth(999); // Ensure it's always on top
+
+                    // Add pulsing glow effect for spitter projectiles
+                    if (projectile.projectileType === "spitterProjectile") {
+                        this.tweens.add({
+                            targets: projectileSprite,
+                            scaleX: 1.2,
+                            scaleY: 1.2,
+                            duration: 500,
+                            yoyo: true,
+                            repeat: -1,
+                            ease: 'Sine.easeInOut'
+                        });
+                    }
+
+                    console.log(`DEBUG Client: Projectile ${projectileId} created. Active: ${projectileSprite.active}, Visible: ${projectileSprite.visible}, Depth: ${projectileSprite.depth}, Pos: (${projectileSprite.x}, ${projectileSprite.y})`);
+                    this.projectileEntities[projectileId] = projectileSprite;
+
+                    $(projectile).onChange(() => {
+                        projectileSprite.x = projectile.x;
+                        projectileSprite.y = projectile.y;
+                        projectileSprite.rotation = projectile.rotation;
+
+                    });
+                });
+
+                $(this.room.state).projectiles.onRemove((projectile, projectileId) => {
+                    console.log(`Removing projectile: ${projectileId}. Final TTL: ${projectile.timeToLive.toFixed(2)}`);
+
+                    const entity = this.projectileEntities[projectileId];
+                    if (entity) {
+                        entity.destroy();
+                        entity.destroy();
+                        delete this.projectileEntities[projectileId];
+
+                        // Hit effect
+                        this.createProjectileHit(entity.x, entity.y, 0xffff00);
+                    }
+                });
 
                 // Interactables rendering
                 $(this.room.state).interactables.onAdd((interactable, interactableId) => {
                     console.log(`Adding interactable: ${interactableId} of type ${interactable.type} at (${interactable.x}, ${interactable.y})`);
 
-                    let color = 0xffd700; // Default gold color
-                    let size = 40; // Default size
+                    // Use sprites for interactables
+                    let itemSpriteKey = 'chest_small';
+                    let itemSize = 40;
 
                     switch (interactable.type) {
                         case "smallChest":
-                            color = 0x8b4513; // Brown
-                            size = 20; // Smaller (was 30)
+                            itemSpriteKey = 'chest_small';
+                            itemSize = 32;
                             break;
                         case "largeChest":
-                            color = 0xff8c00; // Dark orange
-                            size = 25; // Smaller (was 40)
+                            itemSpriteKey = 'chest_large';
+                            itemSize = 40;
                             break;
                         case "equipmentBarrel":
-                            color = 0x4169e1; // Royal blue
-                            size = 22; // Smaller (was 35)
+                            itemSpriteKey = 'barrel';
+                            itemSize = 32;
                             break;
                         case "triShop":
-                            color = 0x9370db; // Medium purple
-                            size = 28; // Smaller (was 45)
+                            itemSpriteKey = 'trishop';
+                            itemSize = 48;
                             break;
                         case "whisperingTotem":
-                            color = 0x800080; // Dark purple - mystical
-                            size = 30; // Slightly larger - important
+                            itemSpriteKey = 'altar'; // Reusing altar for now or generate totem
+                            itemSize = 40;
                             break;
                         case "altarOfTheApex":
-                            color = 0xff4500; // Dark orange-red - dangerous/powerful
-                            size = 32; // Large - very important
+                            itemSpriteKey = 'altar';
+                            itemSize = 64;
                             break;
                         case "bioResonanceBeacon":
-                            color = 0x00ff00; // Bright green for beacon
-                            size = 60; // Make beacon much larger and more visible than altar
+                            itemSpriteKey = 'beacon';
+                            itemSize = 96; // Make beacon large
                             break;
                     }
 
-                    // Most items are CIRCLES, but BEACON is special - make it a star!
-                    let itemShape: Phaser.GameObjects.GameObject;
+                    const itemSprite = this.add.sprite(interactable.x, interactable.y, itemSpriteKey);
+                    itemSprite.setDisplaySize(itemSize, itemSize);
+                    itemSprite.setDepth(2);
 
-                    if (interactable.type === "bioResonanceBeacon") {
-                        // Create a star shape for the beacon - very distinctive!
-                        itemShape = this.add.star(interactable.x, interactable.y, 5, size/2, size/4, color);
-                        (itemShape as any).setStrokeStyle(4, 0xffffff); // Thick white border for beacon
-                        (itemShape as any).setDepth(5); // Higher depth for important objective
-                        console.log(`🌟 Created star beacon at (${interactable.x}, ${interactable.y})`);
-                    } else if (interactable.type === "altarOfTheApex") {
-                        // Create triangle shape for altar - distinctive and mystical
-                        itemShape = this.add.triangle(interactable.x, interactable.y, size, size/2, -size/2, -size/2, color);
-                        (itemShape as any).setStrokeStyle(4, 0xffffff); // Thick white border for altar
-                        (itemShape as any).setDepth(5); // High depth for important interactable
-                        console.log(`🗿 Created triangle altar at (${interactable.x}, ${interactable.y})`);
-                    } else if (interactable.type === "whisperingTotem") {
-                        // Create diamond shape for totem - mystical appearance
-                        const points = [
-                            { x: 0, y: -size/2 },     // Top
-                            { x: size/3, y: 0 },      // Right
-                            { x: 0, y: size/2 },      // Bottom
-                            { x: -size/3, y: 0 }      // Left
-                        ];
-                        itemShape = this.add.polygon(interactable.x, interactable.y, points, color);
-                        (itemShape as any).setStrokeStyle(3, 0xffffff); // White border for totem
-                        (itemShape as any).setDepth(3); // Medium depth
-                        console.log(`✨ Created diamond totem at (${interactable.x}, ${interactable.y})`);
-                    } else {
-                        // Regular items are circles
-                        itemShape = this.add.circle(interactable.x, interactable.y, size/2, color);
-                        (itemShape as any).setStrokeStyle(3, 0xffffff); // White border for items
-                        (itemShape as any).setDepth(2); // Above enemies but below UI
+                    if (interactable.type === "bioResonanceBeacon" || interactable.type === "altarOfTheApex") {
+                        itemSprite.setDepth(5);
                     }
 
-                    this.interactableEntities[interactableId] = itemShape;
+                    this.interactableEntities[interactableId] = itemSprite;
 
                     // Add floating effect
                     this.tweens.add({
-                        targets: itemShape,
-                        y: (itemShape as any).y - 5,
+                        targets: itemSprite,
+                        y: (itemSprite as any).y - 5,
                         duration: 1000,
                         ease: 'Sine.easeInOut',
                         yoyo: true,
@@ -1158,17 +1667,12 @@ export class GameScene extends Phaser.Scene {
                     $(interactable).onChange(() => {
                         if (interactable.isOpen) {
                             // Visual feedback for opened interactable
-                            if (interactable.type === "bioResonanceBeacon") {
-                                (itemShape as any).setFillStyle(0x444444); // Dark gray when opened
-                                (itemShape as any).setAlpha(0.5); // Semi-transparent
-                            } else {
-                                (itemShape as any).setFillStyle(0x444444); // Dark gray when opened
-                                (itemShape as any).setAlpha(0.5); // Semi-transparent
-                            }
+                            (itemSprite as any).setTint(0x444444); // Darken when opened
+                            (itemSprite as any).setAlpha(0.5); // Semi-transparent
                         } else {
                             // Restore original appearance
-                            (itemShape as any).setFillStyle(color);
-                            (itemShape as any).setAlpha(1);
+                            (itemSprite as any).clearTint();
+                            (itemSprite as any).setAlpha(1);
                         }
                     });
                 });

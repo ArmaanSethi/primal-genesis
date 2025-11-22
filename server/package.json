@@ -6,6 +6,8 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "start:silent": "LOG_LEVEL=NONE ts-node src/index.ts",
+    "start:production": "LOG_LEVEL=ERROR ts-node src/index.ts",
     "test": "mocha --timeout 90000 -r ts-node/register \"src/**/*.test.ts\""
   },
   "keywords": [],
