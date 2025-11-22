@@ -177,27 +177,32 @@ export class GameScene extends Phaser.Scene {
         if (player.items.length === 0) {
             inventoryText += `No items collected yet\n\n💡 HINT: Walk near colored chests to collect items!`;
         } else {
-            // Group items by rarity
-            const itemsByRarity: { [key: string]: any[] } = {
-                common: [],
-                uncommon: [],
-                rare: [],
-                equipment: []
+            // Group items by rarity and then by name
+            const itemsByRarity: { [key: string]: { [name: string]: number } } = {
+                common: {},
+                uncommon: {},
+                rare: {},
+                equipment: {}
             };
 
             player.items.forEach((item: any) => {
                 const rarity = item.rarity;
-                if (rarity === 'common' || rarity === 'uncommon' || rarity === 'rare' || rarity === 'equipment') {
-                    itemsByRarity[rarity].push(item);
+                if (itemsByRarity[rarity]) {
+                    if (!itemsByRarity[rarity][item.name]) {
+                        itemsByRarity[rarity][item.name] = 0;
+                    }
+                    itemsByRarity[rarity][item.name]++;
                 }
             });
 
             // Display items grouped by rarity
             Object.entries(itemsByRarity).forEach(([rarity, items]) => {
-                if (items.length > 0) {
-                    inventoryText += `\n${rarity.toUpperCase()} (${items.length}):\n`;
-                    items.forEach((item: any) => {
-                        inventoryText += `  • ${item.name}\n`;
+                const itemNames = Object.keys(items);
+                if (itemNames.length > 0) {
+                    inventoryText += `\n${rarity.toUpperCase()}:\n`;
+                    itemNames.forEach((name) => {
+                        const count = items[name];
+                        inventoryText += `  • ${name} x${count}\n`;
                     });
                 }
             });
@@ -1216,8 +1221,16 @@ export class GameScene extends Phaser.Scene {
                             const angle = Phaser.Math.Angle.Between(entity.x, entity.y, _player.x, _player.y);
                             entity.rotation = angle;
                         }
-                        entity.x = _player.x;
-                        entity.y = _player.y;
+                        // Store target position for interpolation
+                        entity.setData('targetX', _player.x);
+                        entity.setData('targetY', _player.y);
+
+                        // If distance is too large (teleport), snap immediately
+                        const dist = Phaser.Math.Distance.Between(entity.x, entity.y, _player.x, _player.y);
+                        if (dist > 100) {
+                            entity.x = _player.x;
+                            entity.y = _player.y;
+                        }
 
                         // Debug camera following for local player
                         if (sessionId === this.room.sessionId) {
@@ -1445,8 +1458,16 @@ export class GameScene extends Phaser.Scene {
                             entity.rotation = angle;
                         }
                         // Update position - this fixes the charger movement bug
-                        entity.x = enemy.x;
-                        entity.y = enemy.y;
+                        // Store target position for interpolation
+                        entity.setData('targetX', enemy.x);
+                        entity.setData('targetY', enemy.y);
+
+                        // If distance is too large (teleport), snap immediately
+                        const dist = Phaser.Math.Distance.Between(entity.x, entity.y, enemy.x, enemy.y);
+                        if (dist > 100) {
+                            entity.x = enemy.x;
+                            entity.y = enemy.y;
+                        }
 
                         // Visual feedback for charger's charging state
                         if (enemy.typeId === "charger") {
@@ -1584,10 +1605,11 @@ export class GameScene extends Phaser.Scene {
                     this.projectileEntities[projectileId] = projectileSprite;
 
                     $(projectile).onChange(() => {
-                        projectileSprite.x = projectile.x;
-                        projectileSprite.y = projectile.y;
+                        // Projectiles move fast, so we might want to snap or use very fast lerp
+                        // For now, let's try interpolation for smoother trails
+                        (projectileSprite as any).setData('targetX', projectile.x);
+                        (projectileSprite as any).setData('targetY', projectile.y);
                         projectileSprite.rotation = projectile.rotation;
-
                     });
                 });
 
@@ -1890,6 +1912,45 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.room.send('input', this.inputPayload);
+
+        // --- INTERPOLATION UPDATE ---
+        const lerpFactor = 0.2; // Adjust for smoothness vs responsiveness (0.1 - 0.3)
+
+        // Interpolate Players
+        for (const sessionId in this.playerEntities) {
+            const entity = this.playerEntities[sessionId];
+            const targetX = entity.getData('targetX');
+            const targetY = entity.getData('targetY');
+
+            if (targetX !== undefined && targetY !== undefined) {
+                entity.x = Phaser.Math.Linear(entity.x, targetX, lerpFactor);
+                entity.y = Phaser.Math.Linear(entity.y, targetY, lerpFactor);
+            }
+        }
+
+        // Interpolate Enemies
+        for (const sessionId in this.enemyEntities) {
+            const entity = this.enemyEntities[sessionId];
+            const targetX = entity.getData('targetX');
+            const targetY = entity.getData('targetY');
+
+            if (targetX !== undefined && targetY !== undefined) {
+                entity.x = Phaser.Math.Linear(entity.x, targetX, lerpFactor);
+                entity.y = Phaser.Math.Linear(entity.y, targetY, lerpFactor);
+            }
+        }
+
+        // Interpolate Projectiles
+        for (const projectileId in this.projectileEntities) {
+            const entity = this.projectileEntities[projectileId];
+            const targetX = entity.getData('targetX');
+            const targetY = entity.getData('targetY');
+
+            if (targetX !== undefined && targetY !== undefined) {
+                entity.x = Phaser.Math.Linear(entity.x, targetX, 0.5); // Faster lerp for projectiles
+                entity.y = Phaser.Math.Linear(entity.y, targetY, 0.5);
+            }
+        }
     }
 
     private useEquipment(): void {

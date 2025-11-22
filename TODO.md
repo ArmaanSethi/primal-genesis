@@ -164,7 +164,8 @@ const nearbyInteractableIds = this.getNearbyEntities(player.x, player.y, 60);
 - ✅ Beacon visibility and distance tracking
 
 **What Blocks Gameplay**:
-- ❌ **Item pickup lag** makes collection unbearable
+- ❌ **Item pickup lag** makes collection unbearable (O(N) text rendering)
+- ❌ **Choppy movement** due to lack of interpolation
 - ❌ **Beacon interaction broken** prevents game progression
 - ❌ **Performance issues** make the game unplayable
 
